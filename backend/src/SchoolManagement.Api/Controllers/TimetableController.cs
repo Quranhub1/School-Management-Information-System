@@ -28,7 +28,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
                 ProgrammeId = offering.ProgrammeId, SemesterId = offering.SemesterId, CourseId = offering.CourseId
             }).ToListAsync(cancellationToken);
         var courses = await db.Courses.AsNoTracking()
-            .Where(x => x.IsActive)
+            .Where(x => x.IsActive && !x.IsDeleted)
             .OrderBy(x => x.Code)
             .Select(x => new { x.Id, Label = x.Code + " — " + x.Name })
             .ToListAsync(cancellationToken);
@@ -52,6 +52,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             from semester in db.Semesters.AsNoTracking()
             join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id into academicYears
             from academicYear in academicYears.DefaultIfEmpty()
+            where semester.IsActive
             orderby semester.IsCurrent descending, semester.StartDate descending
             select new
             {
@@ -67,13 +68,13 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
             .OrderBy(x => x.Name).ThenBy(x => x.Code)
             .Select(x => new { x.Id, x.Code, x.DurationYears, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
-        var curricula = await db.Curricula.AsNoTracking().Where(x => x.IsActive).OrderByDescending(x => x.EffectiveFrom)
+        var curricula = await db.Curricula.AsNoTracking().Where(x => x.IsActive && !x.IsDeleted).OrderByDescending(x => x.EffectiveFrom)
             .Select(x => new { x.Id, x.ProgrammeId, Label = x.Title + " — " + x.Version }).ToListAsync(cancellationToken);
         var curriculumCourses = await (
             from mapping in db.CurriculumCourses.AsNoTracking()
             join curriculum in db.Curricula.AsNoTracking() on mapping.CurriculumId equals curriculum.Id
             join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
-            where curriculum.IsActive && course.IsActive
+            where curriculum.IsActive && !curriculum.IsDeleted && course.IsActive && !course.IsDeleted && !mapping.IsDeleted
             orderby mapping.YearOfStudy, mapping.SemesterNumber, course.Code
             select new { mapping.CurriculumId, curriculum.ProgrammeId, mapping.CourseId,
                 CourseLabel = course.Code + " — " + course.Name, mapping.YearOfStudy, mapping.SemesterNumber, mapping.IsCore
