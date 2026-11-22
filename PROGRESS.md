@@ -549,3 +549,10 @@ PR #290 is superseded; its payment-account resolver and clearing-account changes
 - [ ] Verify SMTP delivery with an institution-approved test mailbox and confirm PDF receipt content before enabling email in production.
 
 **Operational boundary:** SMTP remains disabled by default. The email service does not need internet access at runtime beyond the institution's configured SMTP server; build/package dependencies before deploying to an offline host. Keep EMAIL_SERVICE_API_KEY out of Git and protect the ASP.NET Core Data Protection key directory.
+
+
+## Timetable year-of-study dropdown — 2026-11-22
+- [x] Expose each programme's configured `DurationYears` in `/api/timetable/options`.
+- [x] Populate the timetable year selector from curriculum course mappings when available, with programme duration as a fallback when mappings are absent.
+- [ ] Run backend/frontend builds and verify the dropdown in the running application.
+- [ ] Confirm curriculum course mappings are configured so course choices and saving remain available for each selected year/semester.
