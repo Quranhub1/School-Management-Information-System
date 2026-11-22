@@ -101,6 +101,22 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
 
         return $"""
             {sourceRows}
+            UPDATE "Courses" c
+            SET "CreditUnits"=s."CreditUnits",
+                "Description"='Imported from KSHS Master Curriculum & Course Units Catalog. Assessment: ' || s."Assessment",
+                "CourseType"=s."Assessment",
+                "IsActive"=TRUE,
+                "IsDeleted"=FALSE
+            FROM (
+                SELECT DISTINCT p."Regulator" AS "AuthorityCode",r."Code",r."Name",r."CreditUnits",r."Assessment"
+                FROM source_rows r
+                INNER JOIN "Programmes" p ON p."Code"=r."ProgrammeCode"
+            ) s
+            WHERE c."AuthorityCode"=s."AuthorityCode"
+              AND c."Code"=s."Code"
+              AND c."Name"=s."Name";
+
+            {sourceRows}
             INSERT INTO "Courses"
             ("Id","AuthorityCode","Code","Name","CreditUnits","Description","CourseType","IsActive","IsDeleted")
             SELECT gen_random_uuid(),s."AuthorityCode",s."Code",s."Name",s."CreditUnits",
