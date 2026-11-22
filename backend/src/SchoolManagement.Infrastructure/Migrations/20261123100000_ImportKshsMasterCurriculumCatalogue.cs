@@ -38,7 +38,6 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
             (gen_random_uuid(),NULL,'KSHS-CBME','Certificate in Biomedical Engineering','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
             (gen_random_uuid(),NULL,'KSHS-DBME','Diploma in Biomedical Engineering','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
             (gen_random_uuid(),NULL,'DSSOM','Diploma in Secretarial Studies and Office Management','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'DSSOM','Diploma in Secretarial Studies and Office Management','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
             (gen_random_uuid(),NULL,'KSHS-CSSOM','Certificate in Secretarial Studies and Office Management','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
             (gen_random_uuid(),NULL,'KSHS-ADHPE','Advanced Diploma in Health Promotion and Education','Advanced Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
             (gen_random_uuid(),NULL,'KSHS-DFST','Diploma in Food Science and Technology','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE)
@@ -104,14 +103,17 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
             {sourceRows}
             INSERT INTO "Courses"
             ("Id","AuthorityCode","Code","Name","CreditUnits","Description","CourseType","IsActive","IsDeleted")
-            SELECT gen_random_uuid(),p."Regulator",s."Code",s."Name",s."CreditUnits",
+            SELECT gen_random_uuid(),s."AuthorityCode",s."Code",s."Name",s."CreditUnits",
                    'Imported from KSHS Master Curriculum & Course Units Catalog. Assessment: ' || s."Assessment",
                    s."Assessment",TRUE,FALSE
-            FROM (SELECT DISTINCT "ProgrammeCode","Code","Name","CreditUnits","Assessment" FROM source_rows) s
-            INNER JOIN "Programmes" p ON p."Code"=s."ProgrammeCode"
+            FROM (
+                SELECT DISTINCT p."Regulator" AS "AuthorityCode",r."Code",r."Name",r."CreditUnits",r."Assessment"
+                FROM source_rows r
+                INNER JOIN "Programmes" p ON p."Code"=r."ProgrammeCode"
+            ) s
             WHERE NOT EXISTS (
                 SELECT 1 FROM "Courses" c
-                WHERE c."AuthorityCode"=p."Regulator"
+                WHERE c."AuthorityCode"=s."AuthorityCode"
                   AND c."Code"=s."Code"
                   AND c."Name"=s."Name"
                   AND c."IsActive"=TRUE
