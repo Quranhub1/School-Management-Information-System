@@ -7,6 +7,7 @@ export type TimetableSelection = {
   curriculumSemesters: number[]
   courseUnits: TimetableOptions['courses']
   teachingGroups: TimetableOptions['teachingGroups']
+  allTeachingGroups: TimetableOptions['teachingGroups']
   tutors: TimetableOptions['teachers']
 }
 
@@ -64,13 +65,15 @@ export function deriveTimetableSelection(
   const selectedCourseId = courseUnitId && eligibleCourseIds.has(courseUnitId)
     ? courseUnitId
     : ''
-  const groupCourseIds = selectedCourseId ? new Set([selectedCourseId]) : eligibleCourseIds
-  const teachingGroups = options.teachingGroups.filter(
+  const allTeachingGroups = options.teachingGroups.filter(
     item =>
       item.programmeId === selectedCurriculum?.programmeId &&
       item.semesterId === academicPeriodId &&
-      groupCourseIds.has(item.courseId)
+      eligibleCourseIds.has(item.courseId)
   )
+  const teachingGroups = selectedCourseId
+    ? allTeachingGroups.filter(item => item.courseId === selectedCourseId)
+    : allTeachingGroups
   const tutors = options.teachers.filter(
     item =>
       !item.courseUnitIds?.length ||
@@ -85,6 +88,7 @@ export function deriveTimetableSelection(
     curriculumSemesters,
     courseUnits,
     teachingGroups,
+    allTeachingGroups,
     tutors,
   }
 }
