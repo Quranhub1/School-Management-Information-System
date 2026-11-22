@@ -179,9 +179,18 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                   AND existing."IsDeleted"=FALSE
             );
 
-            WITH dmhn_rows("YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
-                (3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
-                (3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
+            -- Four individually specified units were printed outside the regular
+            -- semester-label pattern in the source. Import them explicitly:
+            -- DHND 2202/2203 (shared by three aliases) and DMHN 3101/3201.
+            WITH extra_rows("ProgrammeCode","YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
+                ('SB-DHND',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('KSHS-DHND',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('KSHS-DFSN',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('SB-DHND',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('KSHS-DHND',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('KSHS-DFSN',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('DMHN',3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
+                ('DMHN',3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
             )
             UPDATE "Courses" c
             SET "CreditUnits"=s."CreditUnits",
@@ -189,46 +198,66 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                 "CourseType"=s."Assessment",
                 "IsActive"=TRUE,
                 "IsDeleted"=FALSE
-            FROM dmhn_rows s
-            WHERE c."AuthorityCode"='UHPAB'
+            FROM (
+                SELECT DISTINCT p."Regulator" AS "AuthorityCode",r."Code",r."Name",r."CreditUnits",r."Assessment"
+                FROM extra_rows r
+                INNER JOIN "Programmes" p ON p."Code"=r."ProgrammeCode"
+            ) s
+            WHERE c."AuthorityCode"=s."AuthorityCode"
               AND c."Code"=s."Code"
               AND c."Name"=s."Name";
 
-            WITH dmhn_rows("YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
-                (3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
-                (3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
+            WITH extra_rows("ProgrammeCode","YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
+                ('SB-DHND',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('KSHS-DHND',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('KSHS-DFSN',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('SB-DHND',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('KSHS-DHND',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('KSHS-DFSN',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('DMHN',3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
+                ('DMHN',3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
             )
             INSERT INTO "Courses"
             ("Id","AuthorityCode","Code","Name","CreditUnits","Description","CourseType","IsActive","IsDeleted")
-            SELECT gen_random_uuid(),'UHPAB',s."Code",s."Name",s."CreditUnits",
+            SELECT gen_random_uuid(),s."AuthorityCode",s."Code",s."Name",s."CreditUnits",
                    'Imported from KSHS Master Curriculum & Course Units Catalog. Assessment: ' || s."Assessment",
                    s."Assessment",TRUE,FALSE
-            FROM dmhn_rows s
+            FROM (
+                SELECT DISTINCT p."Regulator" AS "AuthorityCode",r."Code",r."Name",r."CreditUnits",r."Assessment"
+                FROM extra_rows r
+                INNER JOIN "Programmes" p ON p."Code"=r."ProgrammeCode"
+            ) s
             WHERE NOT EXISTS (
                 SELECT 1 FROM "Courses" c
-                WHERE c."AuthorityCode"='UHPAB'
+                WHERE c."AuthorityCode"=s."AuthorityCode"
                   AND c."Code"=s."Code"
                   AND c."Name"=s."Name"
                   AND c."IsActive"=TRUE
                   AND c."IsDeleted"=FALSE
             );
 
-            WITH dmhn_rows("YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
-                (3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
-                (3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
+            WITH extra_rows("ProgrammeCode","YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
+                ('SB-DHND',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('KSHS-DHND',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('KSHS-DFSN',2,2,'DHND 2202','Nutrition Programme Planning, M&E & Entrepreneurship',4,'Theory'),
+                ('SB-DHND',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('KSHS-DHND',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('KSHS-DFSN',2,2,'DHND 2203','Nutrition & Dietetics Research Dissertation',4,'Project'),
+                ('DMHN',3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
+                ('DMHN',3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
             )
             INSERT INTO "CurriculumCourses"
             ("Id","CurriculumId","CourseId","YearOfStudy","SemesterNumber","IsCore","IsDeleted")
             SELECT gen_random_uuid(),cu."Id",course."Id",s."YearOfStudy",s."SemesterNumber",TRUE,FALSE
-            FROM dmhn_rows s
-            INNER JOIN "Programmes" p ON p."Code"='DMHN'
+            FROM extra_rows s
+            INNER JOIN "Programmes" p ON p."Code"=s."ProgrammeCode"
             INNER JOIN "Curricula" cu
                 ON cu."ProgrammeId"=p."Id"
                AND cu."Version"='KSHS-MASTER-CATALOG-2026-11'
             JOIN LATERAL (
                 SELECT c."Id"
                 FROM "Courses" c
-                WHERE c."AuthorityCode"='UHPAB'
+                WHERE c."AuthorityCode"=p."Regulator"
                   AND c."Code"=s."Code"
                   AND c."Name"=s."Name"
                   AND c."IsActive"=TRUE
@@ -313,6 +342,35 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                   AND existing."SemesterNumber"=sourceMapping."SemesterNumber"
                   AND existing."IsDeleted"=FALSE
             );
+
+            -- The source explicitly labels CEH 1202 as shared by CEC and CEH.
+            INSERT INTO "CurriculumCourses"
+            ("Id","CurriculumId","CourseId","YearOfStudy","SemesterNumber","IsCore","IsDeleted")
+            SELECT gen_random_uuid(),targetCurriculum."Id",sourceMapping."CourseId",
+                   sourceMapping."YearOfStudy",sourceMapping."SemesterNumber",TRUE,FALSE
+            FROM "Programmes" sourceProgramme
+            INNER JOIN "Curricula" sourceCurriculum
+                ON sourceCurriculum."ProgrammeId"=sourceProgramme."Id"
+               AND sourceCurriculum."Version"='KSHS-MASTER-CATALOG-2026-11'
+            INNER JOIN "CurriculumCourses" sourceMapping
+                ON sourceMapping."CurriculumId"=sourceCurriculum."Id"
+               AND sourceMapping."IsDeleted"=FALSE
+            INNER JOIN "Courses" sharedCourse
+                ON sharedCourse."Id"=sourceMapping."CourseId"
+               AND sharedCourse."Code"='CEH 1202'
+            INNER JOIN "Programmes" targetProgramme ON targetProgramme."Code"='CEC'
+            INNER JOIN "Curricula" targetCurriculum
+                ON targetCurriculum."ProgrammeId"=targetProgramme."Id"
+               AND targetCurriculum."Version"='KSHS-MASTER-CATALOG-2026-11'
+            WHERE sourceProgramme."Code"='CEH'
+              AND NOT EXISTS (
+                  SELECT 1 FROM "CurriculumCourses" existing
+                  WHERE existing."CurriculumId"=targetCurriculum."Id"
+                    AND existing."CourseId"=sourceMapping."CourseId"
+                    AND existing."YearOfStudy"=sourceMapping."YearOfStudy"
+                    AND existing."SemesterNumber"=sourceMapping."SemesterNumber"
+                    AND existing."IsDeleted"=FALSE
+              );
 
             UPDATE "Curricula" cu
             SET "MinimumCredits"=COALESCE((
