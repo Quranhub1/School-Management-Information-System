@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TimetableOptions } from '../api/timetable'
-import { deriveTimetableSelection } from './timetableSelection'
+import { deriveTimetableSelection, filterTutorsForCourse } from './timetableSelection'
 
 const options: TimetableOptions = {
   programmes: [
@@ -73,6 +73,11 @@ describe('timetable programme-to-template selection flow', () => {
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '1', 'period-1', 'course-a1')
     expect(result.tutors.map(item => item.id)).toEqual(['tutor-a1', 'tutor-general'])
+  })
+
+  it('filters assigned tutors by course unit and retains tutors without a course restriction', () => {
+    expect(filterTutorsForCourse(options.teachers, 'course-a2').map(item => item.id))
+      .toEqual(['tutor-a2', 'tutor-general'])
   })
 
   it('uses programme duration only when curriculum year mappings are absent', () => {
