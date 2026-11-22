@@ -23,10 +23,10 @@ vi.mock('../api/timetable', () => ({
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
     semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [
-      { id: 'programme-1', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH', durationYears: 2 },
-      { id: 'programme-duplicate', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH' },
-      { id: 'programme-2', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH', durationYears: 3 },
-      { id: 'programme-2-duplicate', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH' },
+      { id: 'programme-1', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH', durationYears: 0 },
+      { id: 'programme-duplicate', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH', durationYears: 2 },
+      { id: 'programme-2', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH', durationYears: 0 },
+      { id: 'programme-2-duplicate', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH', durationYears: 3 },
     ],
     curricula: [
       { id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' },
