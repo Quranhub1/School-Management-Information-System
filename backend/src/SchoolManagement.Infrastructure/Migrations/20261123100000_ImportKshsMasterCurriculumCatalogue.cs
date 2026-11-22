@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.IO.Compression;
 using System.Text;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -59,6 +62,13 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                 'SB-DHCG','SB-DRM','DSSOM','KSHS-ADHPE','SB-BRIDGE','KSHS-DFST',
                 'CMHN','CEC','CEH','CTA','DMHN'
             );
+
+            -- The source specifies a three-year DMHN award, but only provides
+            -- individual unit rows for Years 1 and 2; retain Year 3 as a study year
+            -- without inventing its missing semester course units.
+            UPDATE "Programmes"
+            SET "DurationYears"=3, "DurationUnit"='Years'
+            WHERE "Code"='DMHN';
             """);
 
         migrationBuilder.Sql(BuildCurriculumImportSql());
