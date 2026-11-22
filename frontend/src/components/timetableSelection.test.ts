@@ -26,6 +26,7 @@ const options: TimetableOptions = {
   ],
   teachingGroups: [
     { id: 'group-a1', label: 'A1', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a1' },
+    { id: 'group-a1b', label: 'A1B', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a1' },
     { id: 'group-a2', label: 'A2', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a2' },
     { id: 'group-a3', label: 'A3', programmeId: 'programme-a', semesterId: 'period-2', courseId: 'course-a3' },
     { id: 'group-b1', label: 'B1', programmeId: 'programme-b', semesterId: 'period-1', courseId: 'course-b1' },
@@ -48,7 +49,7 @@ describe('timetable programme-to-template selection flow', () => {
   it('drops a stale curriculum when the programme changes', () => {
     const result = deriveTimetableSelection(options, ['programme-b'], 'curriculum-a', '', '', 'period-1', '')
     expect(result.selectedCurriculum?.id).toBe('curriculum-b')
-    expect(result.studyYears).toEqual([1])
+    expect(result.studyYears).toEqual([1, 2])
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-b1'])
   })
 
@@ -66,7 +67,7 @@ describe('timetable programme-to-template selection flow', () => {
   it('loads teaching groups for the selected course unit and academic period', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '1', 'period-1', 'course-a1')
     expect(result.teachingGroups.map(item => item.id)).toEqual(['group-a1'])
-    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1', 'group-a2'])
+    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1', 'group-a1b'])
   })
 
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {
