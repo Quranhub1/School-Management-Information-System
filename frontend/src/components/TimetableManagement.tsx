@@ -1176,6 +1176,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
+                  setTeacherId('')
                   setTemplateLoadedGroupId('')
                 }}
               >
@@ -1200,6 +1201,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
+                  setTeacherId('')
                   setTemplateLoadedGroupId('')
                 }}
               >
@@ -1223,6 +1225,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
+                  setTeacherId('')
                   setTemplateLoadedGroupId('')
                 }}
               >
@@ -1245,6 +1248,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
+                  setTeacherId('')
                   setTemplateLoadedGroupId('')
                 }}
               >
@@ -1293,6 +1297,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 )
                 setSelectedCourseUnitId(nextCourseId)
                 setSelectedTeachingGroupIds([])
+                setTeacherId('')
                 setTeachingGroupId(nextGroup?.id ?? '')
                 setTemplateGroupId(nextGroup?.id ?? '')
                 setTemplateLoadedGroupId('')
@@ -1493,6 +1498,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     setTeachingGroupId(nextGroupId)
                     setSelectedCourseUnitId(nextGroup?.courseId ?? '')
                     setCourseId(nextGroup?.courseId ?? '')
+                    setTeacherId('')
                     setTemplateLoadedGroupId('')
                     setTemplateCells({})
                     setTemplateSlots(defaultTemplateSlots)
@@ -1944,7 +1950,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 templateLoadedGroupId !== templateGroupId ||
                 templateSaving ||
                 !availableCourses.length ||
-                !options.teachers.length
+                !availableTutors.length
               }
             >
               <Save size={15} />
