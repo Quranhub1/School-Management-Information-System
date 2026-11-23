@@ -24,8 +24,20 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
             where teachingGroup.IsActive && offering.IsActive
             orderby teachingGroup.GroupCode
-            select new { teachingGroup.Id, Label = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name,
-                ProgrammeId = offering.ProgrammeId, SemesterId = offering.SemesterId, CourseId = offering.CourseId
+            select new
+            {
+                teachingGroup.Id,
+                Label = teachingGroup.CurriculumId != null
+                    ? teachingGroup.Name
+                    : teachingGroup.Name == null || teachingGroup.Name == ""
+                        ? teachingGroup.GroupCode
+                        : teachingGroup.GroupCode + " — " + teachingGroup.Name,
+                ProgrammeId = teachingGroup.ProgrammeId ?? offering.ProgrammeId,
+                SemesterId = teachingGroup.SemesterId ?? offering.SemesterId,
+                CourseId = offering.CourseId,
+                CurriculumId = teachingGroup.CurriculumId,
+                YearOfStudy = teachingGroup.YearOfStudy,
+                IsProgrammeYearClass = teachingGroup.CurriculumId != null
             }).ToListAsync(cancellationToken);
         var courses = await db.Courses.AsNoTracking()
             .Where(x => x.IsActive && !x.IsDeleted)
@@ -102,7 +114,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             candidateQuery = candidateQuery.Where(entry => db.TeachingGroups
                 .Where(group => group.Id == entry.TeachingGroupId)
                 .Join(db.CourseOfferings, group => group.CourseOfferingId, offering => offering.Id,
-                    (group, offering) => offering.SemesterId)
+                    (group, offering) => group.SemesterId ?? offering.SemesterId)
                 .Any(id => id == semesterId.Value));
         }
 
@@ -117,6 +129,36 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
     {
+        var group = await db.TeachingGroups.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == teachingGroupId && x.IsActive, cancellationToken);
+        if (group is null) return false;
+
+        if (group.CurriculumId.HasValue)
+        {
+            if (group.CurriculumId.Value != curriculumId ||
+                group.YearOfStudy != yearOfStudy ||
+                !group.SemesterId.HasValue ||
+                !group.ProgrammeId.HasValue)
+                return false;
+
+            return await (
+                from curriculum in db.Curricula.AsNoTracking()
+                join programme in db.Programmes.AsNoTracking() on curriculum.ProgrammeId equals programme.Id
+                join semester in db.Semesters.AsNoTracking() on group.SemesterId.Value equals semester.Id
+                join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
+                join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
+                where curriculum.Id == curriculumId &&
+                    curriculum.ProgrammeId == group.ProgrammeId.Value &&
+                    curriculum.IsActive && !curriculum.IsDeleted &&
+                    programme.IsActive && !programme.IsReferenceOnly &&
+                    semester.IsActive && semester.Sequence == curriculumSemesterNumber &&
+                    mapping.YearOfStudy == yearOfStudy &&
+                    mapping.SemesterNumber == curriculumSemesterNumber &&
+                    mapping.CourseId == courseId && !mapping.IsDeleted &&
+                    course.IsActive && !course.IsDeleted
+                select mapping.Id).AnyAsync(cancellationToken);
+        }
+
         return await (from teachingGroup in db.TeachingGroups.AsNoTracking()
             join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
             join programme in db.Programmes.AsNoTracking() on offering.ProgrammeId equals programme.Id
