@@ -116,7 +116,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     const status = item.isActive ? 'active' : 'inactive'
     const searchText = [item.title, item.version, programme?.code, programme?.name].filter(Boolean).join(' ').toLowerCase()
     return (!curriculumFilters.status.length || curriculumFilters.status.includes(status)) &&
-      (!curriculumFilters.programmeType.length || curriculumFilters.programmeType.includes(String(programme?.type ?? ''))) &&
+      (!curriculumFilters.programmeType.length || curriculumFilters.programmeType.includes(String(normalizeProgrammeType(programme?.type)))) &&
       item.minimumCredits >= curriculumFilters.creditRange.min &&
       item.minimumCredits <= curriculumFilters.creditRange.max &&
       (!curriculumFilters.searchTerm.trim() || searchText.includes(curriculumFilters.searchTerm.trim().toLowerCase()))
