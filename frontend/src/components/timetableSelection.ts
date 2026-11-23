@@ -107,7 +107,7 @@ export function deriveTimetableSelection(
       item.semesterId === academicPeriodId &&
       item.curriculumId === selectedCurriculum?.id &&
       item.yearOfStudy === (yearOfStudy ? Number(yearOfStudy) : undefined) &&
-      (!selectedCurriculumSemester || item.semesterId === academicPeriodId)
+      (!selectedCurriculumSemester || item.semesterNumber === selectedCurriculumSemester.semesterNumber)
   )
   const allTeachingGroups = matchingCohortGroups.length
     ? matchingCohortGroups
