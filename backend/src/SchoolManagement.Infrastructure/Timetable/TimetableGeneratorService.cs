@@ -327,7 +327,6 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
         var occupied = existingEntries
             .Where(entry => !selectedGroupIds.Contains(entry.TeachingGroupId))
             .ToList();
-        var replacements = new List<TimetableEntry>();
         var successfulGroupIds = new HashSet<Guid>();
         var days = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
         var periods = new[]
@@ -343,12 +342,16 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
         {
             var groupCandidates = new List<TimetableEntry>();
             var groupFailed = false;
-            var mappings = await db.CurriculumCourses.AsNoTracking()
-                .Where(mapping => mapping.CurriculumId == group.CurriculumId &&
+            var mappings = await (
+                from mapping in db.CurriculumCourses.AsNoTracking()
+                join curriculum in db.Curricula.AsNoTracking() on mapping.CurriculumId equals curriculum.Id
+                join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
+                where mapping.CurriculumId == group.CurriculumId &&
                     mapping.YearOfStudy == group.YearOfStudy &&
                     mapping.SemesterNumber == semester.Sequence &&
-                    !mapping.IsDeleted)
-                .Select(mapping => mapping.CourseId)
+                    !mapping.IsDeleted && curriculum.IsActive && !curriculum.IsDeleted &&
+                    course.IsActive && !course.IsDeleted
+                select mapping.CourseId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
             var offerings = await db.CourseOfferings.AsNoTracking()
@@ -357,9 +360,17 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                     offering.SemesterId == semester.Id &&
                     mappings.Contains(offering.CourseId))
                 .ToListAsync(cancellationToken);
+            var offeredCourseIds = offerings.Select(offering => offering.CourseId).ToHashSet();
+            var missingOfferingCount = mappings.Count(courseId => !offeredCourseIds.Contains(courseId));
+            if (missingOfferingCount > 0)
+            {
+                warnings.Add($"{group.Name ?? group.GroupCode} was not replaced because {missingOfferingCount} mapped course unit(s) have no active offering in this academic semester.");
+                unscheduled.Add($"{group.Name ?? group.GroupCode}: create the missing course offerings before generating its timetable.");
+                occupied.AddRange(existingEntries.Where(entry => entry.IsActive && entry.TeachingGroupId == group.Id));
+                continue;
+            }
             var courses = await db.Courses.AsNoTracking()
-                .Where(course => course.IsActive && !course.IsDeleted &&
-                    offerings.Select(offering => offering.CourseId).Contains(course.Id))
+                .Where(course => course.IsActive && !course.IsDeleted && offeredCourseIds.Contains(course.Id))
                 .ToListAsync(cancellationToken);
             var allocations = await db.TeachingAllocations.AsNoTracking()
                 .Where(allocation => allocation.IsActive &&
@@ -375,6 +386,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             {
                 warnings.Add($"{group.Name ?? group.GroupCode}: no active course units are mapped to this curriculum year and semester.");
                 unscheduled.Add($"{group.Name ?? group.GroupCode} was not generated because it has no eligible course units.");
+                occupied.AddRange(existingEntries.Where(entry => entry.IsActive && entry.TeachingGroupId == group.Id));
                 continue;
             }
 
@@ -444,11 +456,10 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             if (groupFailed)
             {
                 warnings.Add($"{group.Name ?? group.GroupCode} was not replaced because every mapped course unit could not be scheduled.");
+                occupied.AddRange(existingEntries.Where(entry => entry.IsActive && entry.TeachingGroupId == group.Id));
                 continue;
             }
 
-            var oldEntries = existingEntries.Where(entry => entry.IsActive && entry.TeachingGroupId == group.Id).ToList();
-            replacements.AddRange(oldEntries);
             successfulGroupIds.Add(group.Id);
             generatedEntries.AddRange(groupCandidates);
             occupied.AddRange(groupCandidates);
