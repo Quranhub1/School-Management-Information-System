@@ -711,49 +711,77 @@ justify-content:space-around;
 @media(max-width:700px){.timetable-saved-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.timetable-saved-hero,.timetable-saved-heading{align-items:stretch;flex-direction:column}.timetable-saved-hero .timetable-actions{width:100%}.timetable-saved-hero .timetable-actions .timetable-action{flex:1}.timetable-saved-filters{grid-template-columns:1fr}.timetable-saved-card-footer .timetable-action{width:100%}}
 
-
-/* Saved timetable access is paired with the page title for a clear, stable header. */
+/* Saved timetable action: solid, full-surface button aligned with the page heading. */
 .timetable-screen:not(.is-read-only) .timetable-hero-heading {
   display: flex;
   flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-width: 0;
+  gap: 20px;
 }
 .timetable-screen:not(.is-read-only) .timetable-hero-heading h2 {
   min-width: 0;
+  margin: 0;
 }
-.timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry {
+.timetable-screen:not(.is-read-only) .timetable-hero-heading > .timetable-saved-entry {
+  appearance: none;
+  box-sizing: border-box;
   display: inline-flex !important;
   flex: 0 0 auto;
+  width: auto;
+  min-width: 190px;
+  min-height: 46px;
+  margin: 0 0 0 auto;
+  padding: 0 22px;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  min-height: 44px;
-  padding: 11px 20px;
-  border: 1px solid #176b45;
-  border-radius: 4px;
-  background: #176b45;
+  border: 1px solid #176b45 !important;
+  border-radius: 4px !important;
+  background: #176b45 !important;
+  background-color: #176b45 !important;
+  background-image: none !important;
   color: #fff !important;
-  font: 700 .84rem/1.25 Inter, Arial, sans-serif;
+  font: 750 .84rem/1.2 Inter, Arial, sans-serif !important;
+  text-align: center;
   white-space: nowrap;
+  box-shadow: inset 0 0 0 999px #176b45, 0 1px 2px rgba(15, 23, 42, .14) !important;
   cursor: pointer;
 }
-.timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry:hover {
-  background: #105538;
-  border-color: #105538;
+.timetable-screen:not(.is-read-only) .timetable-hero-heading > .timetable-saved-entry svg {
+  display: block;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  color: #fff !important;
+  stroke: currentColor;
 }
-.timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry:focus-visible {
+.timetable-screen:not(.is-read-only) .timetable-hero-heading > .timetable-saved-entry:hover {
+  border-color: #105538 !important;
+  background: #105538 !important;
+  background-color: #105538 !important;
+  background-image: none !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 0 999px #105538, 0 2px 5px rgba(15, 23, 42, .18) !important;
+}
+.timetable-screen:not(.is-read-only) .timetable-hero-heading > .timetable-saved-entry:focus-visible {
   outline: 3px solid rgba(37, 99, 235, .35);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
-@media (max-width: 560px) {
+.timetable-screen:not(.is-read-only) .timetable-hero-heading > .timetable-saved-entry:active {
+  transform: translateY(1px);
+}
+@media (max-width: 640px) {
   .timetable-screen:not(.is-read-only) .timetable-hero-heading {
     align-items: stretch;
     flex-direction: column;
+    gap: 12px;
   }
-  .timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry {
+  .timetable-screen:not(.is-read-only) .timetable-hero-heading > .timetable-saved-entry {
     width: 100%;
+    min-width: 0;
+    margin-left: 0;
   }
 }
