@@ -388,7 +388,12 @@ const sidebarGroups:SidebarGroup[]=[
   {label:'Academic',items:[
     {label:'Students',module:'students'},
     {label:'Registration',module:'students',subsection:'registration',child:true},
+    {label:'Admissions & Screening',module:'students',subsection:'admissions',child:true},
     {label:'Registry',module:'students',subsection:'records',child:true},
+    {label:'National Indexing',module:'students',subsection:'indexing',child:true},
+    {label:'Enrollment & Status',module:'students',subsection:'status',child:true},
+    {label:'ID Card Generator',module:'students',subsection:'cards',child:true},
+    {label:'National Results',module:'students',subsection:'national-results',child:true},
     {label:'Archives',module:'students',subsection:'archives',child:true},
     {label:'Academic Management',module:'academics'},
     {label:'Curriculum & Courses',module:'curriculum'},
@@ -418,6 +423,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if (!moduleAllowed(item.module)) return false;
   // Class setup is a management screen; do not expose a destination that renders blank for read-only roles.
   if (item.module === 'academics' && item.subsection === 'classes' && !ac) return false;
+  if (item.module === 'students' && item.subsection && ['indexing','cards','national-results'].includes(item.subsection) && !(st || ad)) return false;
   if (item.module === 'staff' && item.subsection === 'payroll') return effectivePermissions===null?canReadPayroll(r)&&!isAdminSecretary:Boolean(hasPermission('hr.read-payroll','hr.manage-payroll'));
   if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
   if (item.module === 'system-administration') return moduleAllowed('system-administration');
