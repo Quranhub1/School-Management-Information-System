@@ -1235,26 +1235,47 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                       <button type="button" className="secondary-button" onClick={() => setSemesterEdit(null)}>Cancel</button>
                     </div>
                   )}
-                  <div className="table-wrap">
-                    <table>
-                      <thead><tr><th>Course unit</th><th>Credit units</th><th>Core / Elective</th><th>Actions</th></tr></thead>
-                      <tbody>
-                        {group.mappings.map(mapping => {
-                          const course = courses.find(item => item.id === mapping.courseId)
-                          return (
-                            <tr key={mapping.id}>
-                              <td>{course?.code ?? '—'} — {course?.name ?? 'Unknown course'}</td>
-                              <td>{course?.creditUnits ?? '—'}</td>
-                              <td>{mapping.isCore ? 'Core' : 'Elective'}</td>
-                              <td>
-                                <button type="button" onClick={() => editMapping(mapping)}>Edit</button>
-                                <button type="button" className="danger-button" onClick={() => void removeCourseUnit(mapping)}>Remove</button>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="table-wrap curriculum-course-status-groups">
+                    {([
+                      { key: 'active', label: 'Active courses', items: group.mappings.filter(mapping => courses.find(course => course.id === mapping.courseId)?.isActive === true) },
+                      { key: 'inactive', label: 'Inactive courses', items: group.mappings.filter(mapping => courses.find(course => course.id === mapping.courseId)?.isActive !== true) },
+                    ]).map(statusGroup => (
+                      <section className={`curriculum-course-status-section is-${statusGroup.key}`} key={statusGroup.key}>
+                        <div className="curriculum-course-status-heading">
+                          <h4>{statusGroup.label}</h4>
+                          <span>{statusGroup.items.length}</span>
+                        </div>
+                        <table>
+                          <thead><tr><th>Course code</th><th>Course unit</th><th>Credit units</th><th>Core / Elective</th><th>Status</th><th>Actions</th></tr></thead>
+                          <tbody>
+                            {statusGroup.items
+                              .slice()
+                              .sort((left, right) => {
+                                const leftCourse = courses.find(course => course.id === left.courseId)
+                                const rightCourse = courses.find(course => course.id === right.courseId)
+                                return (leftCourse?.code ?? '').localeCompare(rightCourse?.code ?? '')
+                              })
+                              .map(mapping => {
+                                const course = courses.find(item => item.id === mapping.courseId)
+                                return (
+                                  <tr key={mapping.id}>
+                                    <td>{course?.code ?? '—'}</td>
+                                    <td>{course?.name ?? 'Course record unavailable'}</td>
+                                    <td>{course?.creditUnits ?? '—'}</td>
+                                    <td>{mapping.isCore ? 'Core' : 'Elective'}</td>
+                                    <td><span className={`course-status-label ${course?.isActive ? 'is-active' : 'is-inactive'}`}>{course ? (course.isActive ? 'Active' : 'Inactive') : 'Unavailable'}</span></td>
+                                    <td>
+                                      <button type="button" onClick={() => editMapping(mapping)}>Edit</button>
+                                      <button type="button" className="danger-button" onClick={() => void removeCourseUnit(mapping)}>Remove</button>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            {statusGroup.items.length === 0 && <tr><td colSpan={6} className="empty">No {statusGroup.key} course units in this semester.</td></tr>}
+                          </tbody>
+                        </table>
+                      </section>
+                    ))}
                   </div>
                 </section>
               ))}
@@ -1392,26 +1413,47 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                       <button type="button" className="secondary-button" onClick={() => setSemesterEdit(null)}>Cancel</button>
                     </div>
                   )}
-                  <div className="table-wrap">
-                    <table>
-                      <thead><tr><th>Course unit</th><th>Credit units</th><th>Core / Elective</th><th>Actions</th></tr></thead>
-                      <tbody>
-                        {group.mappings.map(mapping => {
-                          const course = courses.find(item => item.id === mapping.courseId)
-                          return (
-                            <tr key={mapping.id}>
-                              <td>{course?.code ?? '—'} — {course?.name ?? 'Unknown course'}</td>
-                              <td>{course?.creditUnits ?? '—'}</td>
-                              <td>{mapping.isCore ? 'Core' : 'Elective'}</td>
-                              <td>
-                                <button type="button" onClick={() => editMapping(mapping)}>Edit</button>
-                                <button type="button" className="danger-button" onClick={() => void removeCourseUnit(mapping)}>Remove</button>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="table-wrap curriculum-course-status-groups">
+                    {([
+                      { key: 'active', label: 'Active courses', items: group.mappings.filter(mapping => courses.find(course => course.id === mapping.courseId)?.isActive === true) },
+                      { key: 'inactive', label: 'Inactive courses', items: group.mappings.filter(mapping => courses.find(course => course.id === mapping.courseId)?.isActive !== true) },
+                    ]).map(statusGroup => (
+                      <section className={`curriculum-course-status-section is-${statusGroup.key}`} key={statusGroup.key}>
+                        <div className="curriculum-course-status-heading">
+                          <h4>{statusGroup.label}</h4>
+                          <span>{statusGroup.items.length}</span>
+                        </div>
+                        <table>
+                          <thead><tr><th>Course code</th><th>Course unit</th><th>Credit units</th><th>Core / Elective</th><th>Status</th><th>Actions</th></tr></thead>
+                          <tbody>
+                            {statusGroup.items
+                              .slice()
+                              .sort((left, right) => {
+                                const leftCourse = courses.find(course => course.id === left.courseId)
+                                const rightCourse = courses.find(course => course.id === right.courseId)
+                                return (leftCourse?.code ?? '').localeCompare(rightCourse?.code ?? '')
+                              })
+                              .map(mapping => {
+                                const course = courses.find(item => item.id === mapping.courseId)
+                                return (
+                                  <tr key={mapping.id}>
+                                    <td>{course?.code ?? '—'}</td>
+                                    <td>{course?.name ?? 'Course record unavailable'}</td>
+                                    <td>{course?.creditUnits ?? '—'}</td>
+                                    <td>{mapping.isCore ? 'Core' : 'Elective'}</td>
+                                    <td><span className={`course-status-label ${course?.isActive ? 'is-active' : 'is-inactive'}`}>{course ? (course.isActive ? 'Active' : 'Inactive') : 'Unavailable'}</span></td>
+                                    <td>
+                                      <button type="button" onClick={() => editMapping(mapping)}>Edit</button>
+                                      <button type="button" className="danger-button" onClick={() => void removeCourseUnit(mapping)}>Remove</button>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            {statusGroup.items.length === 0 && <tr><td colSpan={6} className="empty">No {statusGroup.key} course units in this semester.</td></tr>}
+                          </tbody>
+                        </table>
+                      </section>
+                    ))}
                   </div>
                 </section>
               ))}
