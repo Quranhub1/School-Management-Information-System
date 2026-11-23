@@ -6017,3 +6017,19 @@ table { font-variant-numeric: tabular-nums; }
   .library-summary:has(> .library-stat:nth-child(2):last-child) > .library-stat .library-icon { flex-basis: 32px; height: 32px; }
   .library-summary:has(> .library-stat:nth-child(2):last-child) > .library-stat strong { font-size: 1rem; }
 }
+
+
+/* Keep the course-code register full-width instead of confining it to one grid column. */
+.curriculum-management .summary-grid > .curriculum-course-catalogue-table {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+.curriculum-management .curriculum-course-catalogue-table {
+  width: 100%;
+  min-width: 0;
+}
+.curriculum-management .curriculum-course-catalogue-table table {
+  width: 100%;
+  min-width: 100%;
+}
