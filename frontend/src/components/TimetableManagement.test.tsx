@@ -165,13 +165,10 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Registrar name')).toBeTruthy()
     expect(screen.getByLabelText('Registrar title')).toBeTruthy()
     expect(screen.getByLabelText('Footer text')).toBeTruthy()
-    expect(screen.getByRole('button', { name: /edit monday 08:00 period/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /edit saturday 08:00 period/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /edit sunday 08:00 period/i })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
-    expect(screen.getByRole('dialog', { name: /edit timetable period/i })).toBeTruthy()
-    expect(screen.getByLabelText('Merge down (days)')).toBeTruthy()
-    expect(screen.getByLabelText('Merge across periods')).toBeTruthy()
+    expect(screen.getAllByLabelText('Course unit').length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('Lecturer').length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('Merge days').length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('Merge periods').length).toBeGreaterThan(0)
     expect(screen.queryByText('REPUBLIC OF UGANDA')).toBeNull()
   })
 
@@ -189,12 +186,10 @@ describe('TimetableManagement', () => {
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
     fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
-    fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
-    fireEvent.change(screen.getByLabelText('Course unit'), { target: { value: 'course-1' } })
-    fireEvent.change(screen.getByLabelText('Lecturer / teacher'), { target: { value: 'teacher-1' } })
-    fireEvent.change(screen.getByLabelText('Merge down (days)'), { target: { value: '2' } })
-    fireEvent.change(screen.getByLabelText('Merge across periods'), { target: { value: '2' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    fireEvent.change(screen.getAllByLabelText('Course unit')[0], { target: { value: 'course-1' } })
+    fireEvent.change(screen.getAllByLabelText('Lecturer')[0], { target: { value: 'teacher-1' } })
+    fireEvent.change(screen.getAllByLabelText('Merge days')[0], { target: { value: '2' } })
+    fireEvent.change(screen.getAllByLabelText('Merge periods')[0], { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
     await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
     expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', expect.arrayContaining([
@@ -244,8 +239,7 @@ describe('TimetableManagement', () => {
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2'])
     fireEvent.change(years, { target: { value: '1' } })
 
-    fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
-    const courseSelect = await screen.findByLabelText('Course unit') as HTMLSelectElement
+    const courseSelect = screen.getAllByLabelText('Course unit')[0] as HTMLSelectElement
     expect(Array.from(courseSelect.options).map(option => option.value)).toEqual(['', 'course-1'])
     expect(Array.from(courseSelect.options).some(option => option.value === 'course-2')).toBe(false)
   })
@@ -263,8 +257,8 @@ describe('TimetableManagement', () => {
 
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
-    fireEvent.change(semesters, { target: { value: 'DPH31' } })
-    fireEvent.change(years, { target: { value: '1' } })
+    fireEvent.change(years, { target: { value: '2' } })
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual([''])
     expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
   })
 
@@ -296,7 +290,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Curriculum')).toBeTruthy()
     expect(screen.getByLabelText('Year of study')).toBeTruthy()
     expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
-    expect(screen.getByText(/CPH 101 — Pharmacy Practice/)).toBeTruthy()
+    expect(screen.getAllByRole('option', { name: /CPH 101 — Pharmacy Practice/ }).length).toBeGreaterThan(0)
   })
  
   it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
