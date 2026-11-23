@@ -199,14 +199,23 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       const preferredMapping =
         preferredMappings.find(item =>
           loadedOptions.teachingGroups.some(group =>
+            group.isProgrammeYearClass &&
             group.programmeId === preferredCurriculum?.programmeId &&
+            group.curriculumId === preferredCurriculum?.id &&
             group.semesterId === preferredPeriodId &&
-            group.courseId === item.courseId
+            group.yearOfStudy === item.yearOfStudy &&
+            group.semesterNumber === item.semesterNumber &&
+            item.yearOfStudy === group.yearOfStudy &&
+            item.semesterNumber === group.semesterNumber
           )
         ) ?? preferredMappings[0]
       const preferredGroup = loadedOptions.teachingGroups.find(
-        item => item.programmeId === preferredCurriculum?.programmeId &&
-          item.semesterId === preferredPeriodId && item.courseId === preferredMapping?.courseId
+        item => item.isProgrammeYearClass &&
+          item.programmeId === preferredCurriculum?.programmeId &&
+          item.curriculumId === preferredCurriculum?.id &&
+          item.semesterId === preferredPeriodId &&
+          item.yearOfStudy === preferredMapping?.yearOfStudy &&
+          item.semesterNumber === preferredMapping?.semesterNumber
       )
       setProgrammeId(current => current || preferredProgramme?.id || '')
       setCurriculumId(current => current || preferredCurriculum?.id || '')
@@ -1129,9 +1138,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               {semesterTemplates.map(item => {
                 const matchingGroups = options.teachingGroups.filter(
                   group =>
+                    group.isProgrammeYearClass &&
                     group.programmeId === selectedCurriculum?.programmeId &&
-                    group.semesterId === semesterId &&
-                    item.courseIds.has(group.courseId)
+                    group.curriculumId === selectedCurriculum?.id &&
+                    group.yearOfStudy === item.year &&
+                    group.semesterNumber === item.semester &&
+                    group.semesterId === semesterId
                 )
                 const matchingCurriculumSemester = selection.curriculumSemesters.find(
                   option => option.year === item.year && option.semesterNumber === item.semester
