@@ -108,7 +108,20 @@ public sealed class AddProgrammeYearClassesToTeachingGroups : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        // Cohort rows may already be referenced by timetable entries and templates.
-        // Keep the data and columns on rollback rather than orphaning academic records.
+        // Keep the TeachingGroups rows and all timetable entries; removing only the
+        // optional cohort metadata safely restores their legacy course-offering shape.
+        migrationBuilder.DropForeignKey(
+            name: "FK_TeachingGroups_Programmes_ProgrammeId", table: "TeachingGroups");
+        migrationBuilder.DropForeignKey(
+            name: "FK_TeachingGroups_Curricula_CurriculumId", table: "TeachingGroups");
+        migrationBuilder.DropForeignKey(
+            name: "FK_TeachingGroups_Semesters_SemesterId", table: "TeachingGroups");
+        migrationBuilder.DropIndex(
+            name: "IX_TeachingGroups_ProgrammeId_CurriculumId_YearOfStudy_SemesterId_GroupCode",
+            table: "TeachingGroups");
+        migrationBuilder.DropColumn(name: "ProgrammeId", table: "TeachingGroups");
+        migrationBuilder.DropColumn(name: "CurriculumId", table: "TeachingGroups");
+        migrationBuilder.DropColumn(name: "YearOfStudy", table: "TeachingGroups");
+        migrationBuilder.DropColumn(name: "SemesterId", table: "TeachingGroups");
     }
 }
