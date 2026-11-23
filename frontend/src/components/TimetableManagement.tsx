@@ -38,6 +38,20 @@ const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
   programme.code?.trim().toLocaleUpperCase() ||
   programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 
+const compactCurriculumLabel = (label: string, programmeLabel?: string, fallbackIndex = 0) => {
+  const programmeName = programmeLabel?.replace(/\s*\([^)]*\)\s*$/, '').trim()
+  let compact = label.trim()
+  if (programmeName) {
+    compact = compact.replace(new RegExp(programmeName.replace(/[.*+?^${}()|[\]\\]/g, '\\const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
+  programme.code?.trim().toLocaleUpperCase() ||
+  programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+'), 'i'), '')
+  }
+  compact = compact.replace(/^\\s*[-–—:|]+\\s*/, '').replace(/\\s+/g, ' ').trim()
+  if (!compact || compact.toLocaleLowerCase() === 'curriculum') return `Curriculum ${fallbackIndex + 1}`
+  return compact.length > 36 ? `${compact.slice(0, 33).trimEnd()}…` : compact
+}
+
 const deduplicateProgrammeOptions = (
   programmes: TimetableOptions['programmes'],
   curricula: TimetableOptions['curricula'],
@@ -1234,9 +1248,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 }}
               >
                 <option value="">Select curriculum</option>
-                {programmeCurricula.map(item => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
+                {programmeCurricula.map((item, index) => (
+                  <option key={item.id} value={item.id} title={item.label}>
+                    {compactCurriculumLabel(item.label, selectedProgramme?.label, index)}
                   </option>
                 ))}
               </select>
