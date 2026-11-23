@@ -1,7 +1,7 @@
 namespace SchoolManagement.Domain.Academic;
 
 /// <summary>
-/// Delivery group/stream for students taking a course offering.
+/// Timetable delivery group. Cohort-backed groups represent a programme, curriculum year and semester; legacy groups remain linked to one course offering.
 /// </summary>
 public sealed class TeachingGroup
 {
