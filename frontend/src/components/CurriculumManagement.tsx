@@ -96,6 +96,25 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const authorityCourses = useMemo(() => courses.filter(course =>
     !course.authorityCode || resolveAcademicAuthority(course.authorityCode) === selectedAuthority
   ), [courses, selectedAuthority])
+  // Keep the authority catalogue readable: course codes are programme-prefixed
+  // (for example DPH 1101). Group by the longest matching programme code so
+  // short codes do not accidentally capture another programme's units.
+  const groupedAuthorityCourses = useMemo(() => {
+    const orderedProgrammes = [...authorityProgrammes].sort((a, b) => b.code.length - a.code.length)
+    const groups = new Map<string, { programme: Programme | null; courses: Course[] }>()
+    for (const course of authorityCourses) {
+      const programme = orderedProgrammes.find(item =>
+        course.code.trim().toUpperCase().startsWith(item.code.trim().toUpperCase())
+      ) ?? null
+      const key = programme?.id ?? '__unassigned__'
+      const group = groups.get(key) ?? { programme, courses: [] }
+      group.courses.push(course)
+      groups.set(key, group)
+    }
+    return [...groups.values()]
+      .map(group => ({ ...group, courses: group.courses.sort((a, b) => a.code.localeCompare(b.code)) }))
+      .sort((a, b) => (a.programme?.name ?? 'Other / unassigned').localeCompare(b.programme?.name ?? 'Other / unassigned'))
+  }, [authorityCourses, authorityProgrammes])
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -1279,7 +1298,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              {groupedAuthorityCourses.map(group => <>
+                <tr key={`group-${group.programme?.id ?? 'other'}`} className="course-catalogue-group"><th colSpan={6}>{group.programme ? `${group.programme.code} — ${group.programme.name}` : 'Other / unassigned courses'} <span>({group.courses.length})</span></th></tr>
+                {group.courses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              </>)}
               {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
             </tbody></table></div>
           </section>
