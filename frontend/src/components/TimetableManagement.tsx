@@ -1159,7 +1159,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <button className="timetable-action primary timetable-back-main-button" type="button" onClick={() => { setShowSavedTemplates(false); setOpenedSavedTemplate(false) }}>
               <ArrowLeft /> Back to main
             </button>
-            <div>
+            <div style={{ flex: 1, textAlign: 'center' }}>
               <h2>Saved timetables</h2>
             </div>
           </div>
