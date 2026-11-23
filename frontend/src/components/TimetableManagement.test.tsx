@@ -93,8 +93,9 @@ describe('TimetableManagement', () => {
   it('shows the saved timetable library entry in the management header', async () => {
     await renderTimetable()
     const savedButton = screen.getByRole('button', { name: /saved timetables/i })
-    expect(savedButton.closest('.timetable-hero')).toBeTruthy()
+    expect(savedButton.closest('.timetable-hero-heading')).toBeTruthy()
     expect(savedButton.className).toContain('timetable-saved-entry')
+    expect(savedButton.className).toContain('primary')
   })
 
   it('opens the saved timetable library, supports back navigation, and opens a saved class template', async () => {
