@@ -863,6 +863,18 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<int?>("Capacity")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ProgrammeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CurriculumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("YearOfStudy")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SemesterId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CourseOfferingId")
                         .HasColumnType("uuid");
 
@@ -877,6 +889,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProgrammeId", "CurriculumId", "YearOfStudy", "SemesterId", "GroupCode")
+                        .IsUnique()
+                        .HasFilter("\"ProgrammeId\" IS NOT NULL AND \"CurriculumId\" IS NOT NULL AND \"YearOfStudy\" IS NOT NULL AND \"SemesterId\" IS NOT NULL");
 
                     b.ToTable("TeachingGroups");
                 });
@@ -1011,6 +1027,24 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasForeignKey("TeachingGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.TeachingGroup", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Programme", null)
+                        .WithMany()
+                        .HasForeignKey("ProgrammeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Academic.Semester", null)
+                        .WithMany()
+                        .HasForeignKey("SemesterId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
