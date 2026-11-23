@@ -153,6 +153,24 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }, [canManage])
 
   useEffect(() => {
+    const navigateToCourseCatalogue = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return
+      const detail = event.detail as { module?: string; subsection?: string } | undefined
+      if (detail?.module !== 'curriculum' || detail.subsection !== 'courses') return
+      // The full-programme and short-course catalogues share this destination ID;
+      // only one is mounted at a time, according to the selected curriculum tab.
+      window.requestAnimationFrame(() => {
+        const catalogue = document.getElementById('curriculum-course-catalogue')
+        catalogue?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const firstField = catalogue?.querySelector<HTMLInputElement>('input')
+        firstField?.focus({ preventScroll: true })
+      })
+    }
+    window.addEventListener('smis:navigate-subsection', navigateToCourseCatalogue)
+    return () => window.removeEventListener('smis:navigate-subsection', navigateToCourseCatalogue)
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
     const eligibleCurricula = curricula.filter(item => {
       const programme = programmes.find(row => row.id === item.programmeId)
@@ -1105,7 +1123,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving}>{editingCurriculumId ? 'Save curriculum' : 'Add curriculum'}</button>{editingCurriculumId && <button type="button" className="secondary-button" onClick={() => { setEditingCurriculumId(null); setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' }) }}>Cancel edit</button>}
             </form>
 
-            <form className="student-form" onSubmit={saveCourse}>
+            <form id="curriculum-course-catalogue" className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
@@ -1305,7 +1323,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </form>
           </div>
           <section className="catalogue-board" aria-label="Short-course course catalogue">
-            <form className="student-form" onSubmit={saveCourse}>
+            <form id="curriculum-course-catalogue" className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
