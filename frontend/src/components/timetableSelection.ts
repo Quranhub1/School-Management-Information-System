@@ -71,11 +71,10 @@ export function deriveTimetableSelection(
     .replace(/^(?:UHPAB|UVTAB|KSHS|SB)[-_]/i, '')
     .replace(/[^a-zA-Z0-9]/g, '')
     .toUpperCase()
-  const curriculumSemesterMappings = mappings.filter(
-    item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy)
-  )
+  // Show every semester mapped to this curriculum, across all study years.
+  // Selecting a semester synchronizes the year selector in the UI.
   const curriculumSemesters = [
-    ...new Map(curriculumSemesterMappings.map(item => {
+    ...new Map(mappings.map(item => {
       const value = `${item.yearOfStudy}-${item.semesterNumber}`
       return [value, {
         value,
