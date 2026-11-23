@@ -282,7 +282,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   )
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = selection.courseUnits
-  const availableGroups = selection.teachingGroups
+  const availableGroups = selection.allTeachingGroups
   const allAvailableGroups = selection.allTeachingGroups
   const availableTutors = selection.tutors
   const scheduleTutors = filterTutorsForCourse(options.teachers, courseId)
