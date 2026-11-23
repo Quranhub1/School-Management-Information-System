@@ -1264,8 +1264,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   return (
     <section className={readOnly ? 'timetable-screen is-read-only' : 'timetable-screen'}>
       <header className="timetable-hero">
-        <div>
+        <div className="timetable-hero-heading">
           <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
+          {!readOnly && (
+            <button className="timetable-action primary timetable-saved-entry" type="button" onClick={() => void openSavedTemplates()}>
+              <BookOpen /> Saved timetables
+            </button>
+          )}
         </div>
         <div className="timetable-actions">
           {!readOnly && (
@@ -1299,11 +1304,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             </button>
           )}
         </div>
-        {!readOnly && (
-          <button className="timetable-action timetable-saved-entry" type="button" onClick={() => void openSavedTemplates()}>
-            <BookOpen /> Saved timetables
-          </button>
-        )}
       </header>
 
       {error && (
