@@ -131,26 +131,26 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
     {
-        var group = await db.TeachingGroups.AsNoTracking()
+        var teachingGroup = await db.TeachingGroups.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == teachingGroupId && x.IsActive, cancellationToken);
-        if (group is null) return false;
+        if (teachingGroup is null) return false;
 
-        if (group.CurriculumId.HasValue)
+        if (teachingGroup.CurriculumId.HasValue)
         {
-            if (group.CurriculumId.Value != curriculumId ||
-                group.YearOfStudy != yearOfStudy ||
-                !group.SemesterId.HasValue ||
-                !group.ProgrammeId.HasValue)
+            if (teachingGroup.CurriculumId.Value != curriculumId ||
+                teachingGroup.YearOfStudy != yearOfStudy ||
+                !teachingGroup.SemesterId.HasValue ||
+                !teachingGroup.ProgrammeId.HasValue)
                 return false;
 
             return await (
                 from curriculum in db.Curricula.AsNoTracking()
                 join programme in db.Programmes.AsNoTracking() on curriculum.ProgrammeId equals programme.Id
-                join semester in db.Semesters.AsNoTracking() on group.SemesterId.Value equals semester.Id
+                join semester in db.Semesters.AsNoTracking() on teachingGroup.SemesterId.Value equals semester.Id
                 join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
                 join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
                 where curriculum.Id == curriculumId &&
-                    curriculum.ProgrammeId == group.ProgrammeId.Value &&
+                    curriculum.ProgrammeId == teachingGroup.ProgrammeId.Value &&
                     curriculum.IsActive && !curriculum.IsDeleted &&
                     programme.IsActive && !programme.IsReferenceOnly &&
                     semester.IsActive && semester.Sequence == curriculumSemesterNumber &&
