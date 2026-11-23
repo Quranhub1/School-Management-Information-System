@@ -158,6 +158,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showSavedTemplates, setShowSavedTemplates] = useState(false)
   const [openedSavedTemplate, setOpenedSavedTemplate] = useState(false)
   const [savedTemplates, setSavedTemplates] = useState<SavedTimetableTemplate[]>([])
+  const [savedTemplatePreviews, setSavedTemplatePreviews] = useState<Record<string, { slots: Array<{ startTime: string; endTime: string }>; cells: Record<string, TemplateCell> }>>({})
   const [savedTemplatesLoading, setSavedTemplatesLoading] = useState(false)
   const [savedTemplatesError, setSavedTemplatesError] = useState('')
   const [savedTemplateSearch, setSavedTemplateSearch] = useState('')
@@ -1070,7 +1071,25 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setSavedTemplatesLoading(true)
     setSavedTemplatesError('')
     try {
-      setSavedTemplates(await listSavedTimetableTemplates())
+      const templates = await listSavedTimetableTemplates()
+      setSavedTemplates(templates)
+      const previews = await Promise.all(templates.map(async template => {
+        try {
+          const saved = await getTimetableTemplate(template.teachingGroupId)
+          if (!saved.layoutJson) return [template.teachingGroupId, null] as const
+          const layout = JSON.parse(saved.layoutJson) as {
+            slots?: Array<{ startTime: string; endTime: string }>
+            cells?: Record<string, TemplateCell>
+          }
+          if (!Array.isArray(layout.slots) || !layout.cells || typeof layout.cells !== 'object') {
+            return [template.teachingGroupId, null] as const
+          }
+          return [template.teachingGroupId, { slots: layout.slots, cells: layout.cells }] as const
+        } catch {
+          return [template.teachingGroupId, null] as const
+        }
+      }))
+      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, { slots: Array<{ startTime: string; endTime: string }>; cells: Record<string, TemplateCell> }] => item[1] !== null)))
     } catch (e) {
       setSavedTemplatesError(e instanceof Error ? e.message : 'Unable to load saved timetable templates.')
     } finally {
@@ -1243,6 +1262,29 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                       {template.sessionCount > 0 ? 'Schedule saved' : 'Layout only'}
                     </span>
                   </div>
+                  {(() => {
+                    const preview = savedTemplatePreviews[template.teachingGroupId]
+                    const previewDays = [1, 2, 3, 4, 5]
+                    return (
+                      <div className="timetable-saved-thumbnail" aria-label={preview ? 'Timetable layout thumbnail' : 'Timetable thumbnail unavailable'}>
+                        {preview ? (
+                          <>
+                            <div className="timetable-saved-thumbnail-days"><span>TIME</span>{previewDays.map(day => <span key={day}>{days[day].slice(0, 3).toUpperCase()}</span>)}</div>
+                            {preview.slots.slice(0, 5).map((slot, slotIndex) => (
+                              <div className="timetable-saved-thumbnail-row" key={slotIndex}>
+                                <span className="timetable-saved-thumbnail-time">{timeLabel(slot.startTime)}</span>
+                                {previewDays.map(day => {
+                                  const cell = preview.cells[day + '-' + slotIndex]
+                                  const course = cell ? options.courses.find(item => item.id === cell.courseId) : undefined
+                                  return <span className={cell ? 'is-filled' : ''} key={day} title={course?.label ?? cell?.sessionType ?? ''}>{cell ? (course?.code || course?.label || cell.sessionType).slice(0, 10) : ''}</span>
+                                })}
+                              </div>
+                            ))}
+                          </>
+                        ) : <span className="timetable-saved-thumbnail-empty">Preview unavailable</span>}
+                      </div>
+                    )
+                  })()}
                   <h3>{template.groupLabel}</h3>
                   <p className="timetable-saved-programme">{template.programmeCode ? template.programmeCode + ' · ' : ''}{template.programmeLabel}</p>
                   <div className="timetable-saved-meta">
