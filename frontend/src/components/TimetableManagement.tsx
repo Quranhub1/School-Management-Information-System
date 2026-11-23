@@ -1271,7 +1271,23 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     <section className={readOnly ? 'timetable-screen is-read-only' : 'timetable-screen'}>
       <header className="timetable-hero">
         <div className="timetable-hero-heading">
-          <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
+          <h2>{readOnly ? 'Timetable' : openedSavedTemplate ? 'Saved timetable' : 'Timetable management'}</h2>
+          {openedSavedTemplate && (
+            <button
+              className="timetable-action primary timetable-back-main-button"
+              type="button"
+              onClick={() => {
+                setOpenedSavedTemplate(false)
+                setTemplateLoadedGroupId('')
+                setTemplateGroupId('')
+                setTeachingGroupId('')
+                setTemplateCells({})
+                setTemplateSlots(defaultTemplateSlots)
+              }}
+            >
+              <ArrowLeft /> Back to main
+            </button>
+          )}
           {!readOnly && !openedSavedTemplate && (
             <button className="timetable-action primary timetable-saved-entry" type="button" onClick={() => void openSavedTemplates()}>
               <BookOpen /> Saved timetables
@@ -1337,7 +1353,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </div>
       </div>
 
-      {!readOnly && selectedCurriculum && (
+      {!readOnly && !openedSavedTemplate && selectedCurriculum && (
         <section
           className="timetable-semester-templates"
           aria-label="Curriculum semester timetable templates"
@@ -1425,7 +1441,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </section>
       )}
 
-      {!readOnly && showTemplateEditor && (
+      {!readOnly && !openedSavedTemplate && showTemplateEditor && (
         <section
           className="timetable-form-panel timetable-curriculum-guide"
           aria-label="Programme curriculum selection"
@@ -1732,22 +1748,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
           <div className="timetable-template-editor-heading">
             <div className="timetable-template-controls">
-              {openedSavedTemplate && (
-                <button
-                  className="timetable-action primary timetable-back-main-button"
-                  type="button"
-                  onClick={() => {
-                    setOpenedSavedTemplate(false)
-                    setTemplateLoadedGroupId('')
-                    setTemplateGroupId('')
-                    setTeachingGroupId('')
-                    setTemplateCells({})
-                    setTemplateSlots(defaultTemplateSlots)
-                  }}
-                >
-                  <ArrowLeft /> Back to main editor
-                </button>
-              )}
               <label>
                 Class / teaching group
                 <select
