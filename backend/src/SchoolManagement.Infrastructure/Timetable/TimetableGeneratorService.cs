@@ -25,9 +25,13 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             return new GeneratedTimetableResult([], [], ["Semester not found."], 0, [], false);
         }
 
-        var requestedGroupIds = request.TeachingGroupIds is { Count: > 0 }
-            ? request.TeachingGroupIds.Distinct().ToArray()
-            : request.TeachingGroupId.HasValue ? [request.TeachingGroupId.Value] : [];
+        Guid[] requestedGroupIds;
+        if (request.TeachingGroupIds is { Count: > 0 })
+            requestedGroupIds = request.TeachingGroupIds.Distinct().ToArray();
+        else if (request.TeachingGroupId.HasValue)
+            requestedGroupIds = new[] { request.TeachingGroupId.Value };
+        else
+            requestedGroupIds = Array.Empty<Guid>();
         var cohortQuery = db.TeachingGroups.AsNoTracking()
             .Where(group => group.IsActive &&
                 group.CurriculumId.HasValue &&
