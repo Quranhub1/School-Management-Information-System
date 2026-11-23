@@ -6,8 +6,10 @@ import {
   type Curriculum, type LogbookEligibility, type LogbookRequirement, type StudentLogbookCompetency, type UhpabFeeReference,
 } from '../api/curriculumManagement'
 
-export function CurriculumLogbookManagement({ curricula }: { curricula: Curriculum[] }) {
-  const [curriculumId, setCurriculumId] = useState('')
+export function CurriculumLogbookManagement({ curricula, selectedCurriculumId, onSelectCurriculum }: { curricula: Curriculum[]; selectedCurriculumId?: string; onSelectCurriculum?: (id: string) => void }) {
+  const [internalCurriculumId, setInternalCurriculumId] = useState('')
+  const curriculumId = selectedCurriculumId ?? internalCurriculumId
+  const setCurriculumId = onSelectCurriculum ?? setInternalCurriculumId
   const [requirements, setRequirements] = useState<LogbookRequirement[]>([])
   const [fees, setFees] = useState<UhpabFeeReference[]>([])
   const [studentId, setStudentId] = useState('')
@@ -32,8 +34,9 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
   useEffect(() => { void loadFees() }, [])
   useEffect(() => { void loadRequirements(curriculumId) }, [curriculumId])
   useEffect(() => {
+    if (selectedCurriculumId !== undefined) return
     if (curricula.length && !curricula.some(x => x.id === curriculumId)) setCurriculumId(curricula[0].id)
-  }, [curricula, curriculumId])
+  }, [curricula, curriculumId, selectedCurriculumId])
 
   async function saveRequirement(event: React.FormEvent) {
     event.preventDefault()
