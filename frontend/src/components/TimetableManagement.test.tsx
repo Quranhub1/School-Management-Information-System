@@ -266,6 +266,9 @@ describe('TimetableManagement', () => {
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2'])
     fireEvent.change(semesters, { target: { value: 'CPH21' } })
     expect(years.value).toBe('2')
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'CPH21', 'CPH22'])
+    fireEvent.change(years, { target: { value: '1' } })
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'CPH11', 'CPH12'])
     fireEvent.change(semesters, { target: { value: 'CPH11' } })
     expect(years.value).toBe('1')
 
