@@ -1,5 +1,5 @@
 import { formatPersonName } from '../utils/personName'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
 import { ArchivedStudentsManagement } from './ArchivedStudentsManagement'
@@ -41,7 +41,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
   // Prop synchronization also handles navigation into Students from another module,
   // where the sidebar event can fire before this component has mounted.
-  const selectSidebarSection = (subsection?: string | null) => {
+  const selectSidebarSection = useCallback((subsection?: string | null) => {
     const sectionBySubsection: Record<string, Section> = {
       registration: 'biodata',
       records: 'biodata',
@@ -53,13 +53,13 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
       archives: 'archives',
     }
     if (subsection && sectionBySubsection[subsection]) setSection(sectionBySubsection[subsection])
-  }
+  }, [])
 
   // Keep the selected lifecycle tab synchronized with sidebar navigation,
   // including navigation that arrives immediately after this workspace mounts.
   useEffect(() => {
     selectSidebarSection(activeSubsection)
-  }, [activeSubsection])
+  }, [activeSubsection, selectSidebarSection])
 
   useEffect(() => {
     const handleSubsectionNavigation = (event: Event) => {
@@ -70,7 +70,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
     }
     window.addEventListener('smis:navigate-subsection', handleSubsectionNavigation)
     return () => window.removeEventListener('smis:navigate-subsection', handleSubsectionNavigation)
-  }, [])
+  }, [selectSidebarSection])
 
   useEffect(() => {
     if (section !== 'admissions') return
