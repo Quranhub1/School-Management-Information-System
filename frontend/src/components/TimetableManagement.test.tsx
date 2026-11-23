@@ -4,6 +4,7 @@ import React from 'react'
 
 vi.mock('../api/timetable', () => ({
   listTimetable: vi.fn().mockResolvedValue([]),
+  listSavedTimetableTemplates: vi.fn().mockResolvedValue([{ teachingGroupId: 'group-1', teachingGroupLabel: 'CPH-Y1-S1', programmeId: 'programme-1', curriculumId: 'curriculum-1', yearOfStudy: 1, semesterId: 'period-1', semesterLabel: 'Semester 1', updatedAtUtc: '2026-11-23T10:00:00Z', sessionCount: 3 }]),
   generateTimetable: vi.fn().mockResolvedValue({
     entries: [{ id: 'entry-1', teachingGroupId: 'group-1', courseId: 'course-1', teacherId: 'teacher-1', dayOfWeek: 1, startTime: '08:00:00', endTime: '09:00:00', room: 'Room 1', sessionType: 'Lecture', isActive: true }],
     optimizationScore: 95,
@@ -88,6 +89,25 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
+
+  it('opens the saved timetable library, supports back navigation, and opens a saved class template', async () => {
+    await renderTimetable()
+    fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
+    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /back to timetable/i })).toBeTruthy()
+    expect(screen.getByText('CPH-Y1-S1')).toBeTruthy()
+    expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /open timetable/i }))
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Saved timetables' })).toBeNull())
+    expect(screen.getByLabelText('Programme')).toBeTruthy()
+    expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
+    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /back to timetable/i }))
+    expect(screen.getByRole('heading', { name: 'Timetable management' })).toBeTruthy()
+  }, 15000)
 
   it('shows the editable official timetable designer as the primary management view', async () => {
     await renderTimetable()
