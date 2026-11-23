@@ -1274,7 +1274,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 value={curriculumSemester}
                 disabled={!selectedCurriculum || curriculumSemesters.length === 0}
                 onChange={event => {
+                  const selectedSemesterOption = selection.curriculumSemesters.find(
+                    item => item.code === event.target.value
+                  )
                   setCurriculumSemester(event.target.value)
+                  if (selectedSemesterOption) {
+                    setYearOfStudy(String(selectedSemesterOption.year))
+                  }
                   setSelectedCourseUnitId('')
                   setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
@@ -1287,7 +1293,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 <option value="">Select curriculum semester</option>
                 {curriculumSemesters.map(item => (
                   <option key={item.value} value={item.code}>
-                    {item.code}
+                    Year {item.year} – Semester {item.semesterNumber} ({item.code})
                   </option>
                 ))}
               </select>
