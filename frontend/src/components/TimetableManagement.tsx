@@ -158,7 +158,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showSavedTemplates, setShowSavedTemplates] = useState(false)
   const [openedSavedTemplate, setOpenedSavedTemplate] = useState(false)
   const [savedTemplates, setSavedTemplates] = useState<SavedTimetableTemplate[]>([])
-  const [savedTemplatePreviews, setSavedTemplatePreviews] = useState<Record<string, { slots: Array<{ startTime: string; endTime: string }>; cells: Record<string, TemplateCell> }>>({})
+  const [savedTemplatePreviews, setSavedTemplatePreviews] = useState<Record<string, { slots: Array<{ startTime: string; endTime: string }>; cells: Record<string, TemplateCell>; title?: string; dayLabel?: string; showWeekends?: boolean; breakAfter?: number | null; breakLabel?: string; dayOrder?: number[] }>>({})
   const [savedTemplatesLoading, setSavedTemplatesLoading] = useState(false)
   const [savedTemplatesError, setSavedTemplatesError] = useState('')
   const [savedTemplateSearch, setSavedTemplateSearch] = useState('')
@@ -1080,16 +1080,22 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           const layout = JSON.parse(saved.layoutJson) as {
             slots?: Array<{ startTime: string; endTime: string }>
             cells?: Record<string, TemplateCell>
+            title?: string
+            dayLabel?: string
+            showWeekends?: boolean
+            breakAfter?: number | null
+            breakLabel?: string
+            dayOrder?: number[]
           }
           if (!Array.isArray(layout.slots) || !layout.cells || typeof layout.cells !== 'object') {
             return [template.teachingGroupId, null] as const
           }
-          return [template.teachingGroupId, { slots: layout.slots, cells: layout.cells }] as const
+          return [template.teachingGroupId, { slots: layout.slots, cells: layout.cells, title: layout.title, dayLabel: layout.dayLabel, showWeekends: layout.showWeekends, breakAfter: layout.breakAfter, breakLabel: layout.breakLabel, dayOrder: layout.dayOrder }] as const
         } catch {
           return [template.teachingGroupId, null] as const
         }
       }))
-      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, { slots: Array<{ startTime: string; endTime: string }>; cells: Record<string, TemplateCell> }] => item[1] !== null)))
+      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, NonNullable<typeof item[1]>] => item[1] !== null)))
     } catch (e) {
       setSavedTemplatesError(e instanceof Error ? e.message : 'Unable to load saved timetable templates.')
     } finally {
@@ -1264,23 +1270,54 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   </div>
                   {(() => {
                     const preview = savedTemplatePreviews[template.teachingGroupId]
-                    const previewDays = [1, 2, 3, 4, 5]
+                    const previewDays = (preview?.dayOrder?.length ? preview.dayOrder : [1, 2, 3, 4, 5, 6, 0])
+                      .filter(day => preview?.showWeekends !== false || day >= 1 && day <= 5)
+                    const covered = (day: number, slotIndex: number) => preview ? previewDays.some((priorDay, dayIndex) => {
+                      const priorCell = preview.cells[priorDay + '-' + slotIndex]
+                      if (!priorCell || dayIndex >= previewDays.indexOf(day)) return false
+                      return dayIndex + Math.max(1, Number(priorCell.rowSpan) || 1) > previewDays.indexOf(day)
+                    }) || preview.slots.some((_, priorSlot) => {
+                      if (priorSlot >= slotIndex) return false
+                      const priorCell = preview.cells[day + '-' + priorSlot]
+                      return !!priorCell && priorSlot + Math.max(1, Number(priorCell.colSpan) || 1) > slotIndex
+                    }) : false
                     return (
-                      <div className="timetable-saved-thumbnail" aria-label={preview ? 'Timetable layout thumbnail' : 'Timetable thumbnail unavailable'}>
+                      <div className="timetable-saved-thumbnail" aria-label={preview ? 'Saved timetable design preview' : 'Timetable thumbnail unavailable'}>
                         {preview ? (
-                          <>
-                            <div className="timetable-saved-thumbnail-days"><span>TIME</span>{previewDays.map(day => <span key={day}>{days[day].slice(0, 3).toUpperCase()}</span>)}</div>
-                            {preview.slots.slice(0, 5).map((slot, slotIndex) => (
-                              <div className="timetable-saved-thumbnail-row" key={slotIndex}>
-                                <span className="timetable-saved-thumbnail-time">{timeLabel(slot.startTime)}</span>
-                                {previewDays.map(day => {
-                                  const cell = preview.cells[day + '-' + slotIndex]
-                                  const course = cell ? options.courses.find(item => item.id === cell.courseId) : undefined
-                                  return <span className={cell ? 'is-filled' : ''} key={day} title={course?.label ?? cell?.sessionType ?? ''}>{cell ? (course?.label || cell.sessionType).slice(0, 10) : ''}</span>
-                                })}
-                              </div>
-                            ))}
-                          </>
+                          <div className="timetable-saved-thumbnail-paper">
+                            <div className="timetable-saved-thumbnail-title">{preview.title || 'CLASS TEACHING TIMETABLE'}</div>
+                            <table>
+                              <thead><tr>
+                                <th>{preview.dayLabel || 'DAY'}</th>
+                                {preview.slots.map((slot, index) => (
+                                  <React.Fragment key={index}>
+                                    <th><b>PERIOD {index + 1}</b><span>{timeLabel(slot.startTime)}–{timeLabel(slot.endTime)}</span></th>
+                                    {preview.breakAfter === index && <th className="timetable-saved-thumbnail-break">{preview.breakLabel || 'BREAK'}</th>}
+                                  </React.Fragment>
+                                ))}
+                              </tr></thead>
+                              <tbody>{previewDays.map(day => (
+                                <tr key={day}>
+                                  <th>{days[day].toUpperCase()}</th>
+                                  {preview.slots.map((slot, slotIndex) => {
+                                    if (covered(day, slotIndex)) return null
+                                    const cell = preview.cells[day + '-' + slotIndex]
+                                    const rowSpan = Math.max(1, Math.min(previewDays.length - previewDays.indexOf(day), Number(cell?.rowSpan) || 1))
+                                    const colSpan = Math.max(1, Math.min(preview.slots.length - slotIndex, Number(cell?.colSpan) || 1))
+                                    const course = cell ? options.courses.find(item => item.id === cell.courseId) : undefined
+                                    const teacher = cell ? options.teachers.find(item => item.id === cell.teacherId) : undefined
+                                    return <React.Fragment key={slotIndex}>
+                                      <td rowSpan={rowSpan} colSpan={colSpan} className={cell?.courseId ? 'is-filled' : ''}>
+                                        {cell?.courseId && <><strong>{course?.label || 'Course'}</strong><span>{teacher?.label || ''}</span>{cell.room && <small>{cell.room}</small>}</>}
+                                      </td>
+                                      {preview.breakAfter === slotIndex && <td className="timetable-saved-thumbnail-break-cell" rowSpan={rowSpan}>{(preview.breakLabel || 'BREAK').split('').join(' ')}</td>}
+                                    </React.Fragment>
+                                  })}
+                                </tr>
+                              ))}</tbody>
+                            </table>
+                            {preview.title && <div className="timetable-saved-thumbnail-footer">{template.semesterLabel}</div>}
+                          </div>
                         ) : <span className="timetable-saved-thumbnail-empty">Preview unavailable</span>}
                       </div>
                     )
