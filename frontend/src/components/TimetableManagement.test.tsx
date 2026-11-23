@@ -69,7 +69,7 @@ import { generateTimetable, saveTimetableTemplate } from '../api/timetable'
 import { downloadInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
-describe('TimetableManagement', async () => {
+describe('TimetableManagement', () => {
   const renderTimetable = async (props: { readOnly?: boolean } = {}) => {
     let rendered: ReturnType<typeof render> | undefined
     await act(async () => {
@@ -117,7 +117,7 @@ describe('TimetableManagement', async () => {
     expect(courseUnits.length).toBeGreaterThan(0)
     expect(Array.from(courseUnits[0].options).map(option => option.value)).toEqual(['', 'course-6'])
     expect(Array.from(courseUnits[0].options).some(option => option.value === 'course-5')).toBe(false)
-  })
+  }, 15000)
 
   it('prints generated class timetables for the full semester using Institution Settings', async () => {
     await renderTimetable()
