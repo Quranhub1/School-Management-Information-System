@@ -453,14 +453,14 @@ width: 100%;
 @media(max-width:560px){.timetable-screen .timetable-cell-modal-fields{grid-template-columns:1fr;padding:14px}.timetable-screen .timetable-cell-modal-fields label{grid-column:1/-1}}
 @media print{.timetable-screen .timetable-template-cell-edit{display:none!important}.timetable-screen .timetable-template-cell-trigger{min-height:0;padding:3px;border:0;cursor:default}}
 
-.timetable-screen .timetable-template-controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;min-width:min(100%,420px)}
+.timetable-screen .timetable-template-controls{display:flex!important;align-items:flex-end;gap:10px;flex-wrap:wrap;min-width:min(100%,420px)}
 .timetable-screen .timetable-template-controls>label{display:flex;flex:1 1 260px;min-width:220px;flex-direction:column;gap:6px;color:#253247;font-size:.78rem;font-weight:750}
 .timetable-screen .timetable-template-controls>label select{width:100%;min-height:42px;padding:9px 34px 9px 11px;border:1px solid #8b98a9;border-radius:4px;background:#fff;color:#172033;font:600 .84rem Inter,Arial,sans-serif}
 .timetable-screen .timetable-template-controls>label select:focus-visible{outline:3px solid rgba(37,99,235,.3);outline-offset:2px;border-color:#2563eb}
 .timetable-screen .timetable-template-controls>.timetable-action{min-height:42px;min-width:148px;padding:10px 18px;background:#176b45!important;border:1px solid #176b45!important;border-radius:4px!important;color:#fff!important;font-size:.84rem;font-weight:800;box-shadow:0 1px 2px rgba(15,23,42,.12)}
 .timetable-screen .timetable-template-controls>.timetable-action:hover:not(:disabled){background:#105538!important;border-color:#105538!important}
 .timetable-screen .timetable-template-controls>.timetable-action:disabled{opacity:.5;cursor:not-allowed}
-.timetable-screen .timetable-class-empty-hint{display:block;margin-top:5px;color:#9a3412;font-size:.72rem;font-weight:600;line-height:1.4}
+.timetable-screen .timetable-class-empty-hint{display:block;flex:1 0 100%;margin-top:5px;color:#9a3412;font-size:.72rem;font-weight:600;line-height:1.4}
 @media(max-width:560px){.timetable-screen .timetable-template-controls{min-width:0;width:100%;align-items:stretch}.timetable-screen .timetable-template-controls>label{min-width:0}.timetable-screen .timetable-template-controls>.timetable-action{width:100%}}
 
 .timetable-screen .timetable-template-divider-header,
