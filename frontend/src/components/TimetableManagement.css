@@ -712,35 +712,48 @@ justify-content:space-around;
 @media(max-width:560px){.timetable-saved-hero,.timetable-saved-heading{align-items:stretch;flex-direction:column}.timetable-saved-hero .timetable-actions{width:100%}.timetable-saved-hero .timetable-actions .timetable-action{flex:1}.timetable-saved-filters{grid-template-columns:1fr}.timetable-saved-card-footer .timetable-action{width:100%}}
 
 
-/* Keep the saved-library entry visible in the official designer view.
-   The legacy hero action group remains hidden, but this dedicated entry is not. */
-.timetable-screen:not(.is-read-only) > .timetable-hero > .timetable-saved-entry {
+/* Saved timetable access is paired with the page title for a clear, stable header. */
+.timetable-screen:not(.is-read-only) .timetable-hero-heading {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+.timetable-screen:not(.is-read-only) .timetable-hero-heading h2 {
+  min-width: 0;
+}
+.timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry {
   display: inline-flex !important;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 9px 14px;
+  gap: 9px;
+  min-height: 44px;
+  padding: 11px 20px;
   border: 1px solid #176b45;
   border-radius: 4px;
   background: #176b45;
-  color: #fff;
-  font: 800 .82rem/1.2 Inter, Arial, sans-serif;
+  color: #fff !important;
+  font: 700 .84rem/1.25 Inter, Arial, sans-serif;
   white-space: nowrap;
   cursor: pointer;
 }
-.timetable-screen:not(.is-read-only) > .timetable-hero > .timetable-saved-entry:hover {
+.timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry:hover {
   background: #105538;
   border-color: #105538;
 }
-.timetable-screen:not(.is-read-only) > .timetable-hero > .timetable-saved-entry:focus-visible {
+.timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry:focus-visible {
   outline: 3px solid rgba(37, 99, 235, .35);
   outline-offset: 2px;
 }
 @media (max-width: 560px) {
-  .timetable-screen:not(.is-read-only) > .timetable-hero > .timetable-saved-entry {
+  .timetable-screen:not(.is-read-only) .timetable-hero-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .timetable-screen:not(.is-read-only) .timetable-hero-heading .timetable-saved-entry {
     width: 100%;
   }
 }
-
