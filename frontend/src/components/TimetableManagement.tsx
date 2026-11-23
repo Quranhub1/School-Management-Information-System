@@ -1289,11 +1289,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             </button>
           )}
           {!readOnly && (
-            <button className="timetable-action" type="button" onClick={() => void openSavedTemplates()}>
-              <BookOpen /> Saved timetables
-            </button>
-          )}
-          {!readOnly && (
             <button
               className="timetable-action primary"
               type="button"
@@ -1304,6 +1299,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             </button>
           )}
         </div>
+        {!readOnly && (
+          <button className="timetable-action timetable-saved-entry" type="button" onClick={() => void openSavedTemplates()}>
+            <BookOpen /> Saved timetables
+          </button>
+        )}
       </header>
 
       {error && (
