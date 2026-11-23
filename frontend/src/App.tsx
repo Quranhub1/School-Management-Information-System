@@ -394,7 +394,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Curriculum & Courses',module:'curriculum'},
     {label:'Timetables',module:'timetable'},
     {label:'Classes',module:'academics',subsection:'classes',child:true},
-    {label:'Courses',module:'curriculum',child:true},
+    {label:'Courses',module:'curriculum',subsection:'courses',child:true},
     {label:'Health & Clinical',module:'health'},
     {label:'Medical Records',module:'health',subsection:'medical-records',child:true},
     {label:'Clinic',module:'health',subsection:'clinic',child:true},
