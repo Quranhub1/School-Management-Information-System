@@ -74,10 +74,10 @@ describe('TimetableManagement', () => {
     let rendered: ReturnType<typeof render> | undefined
     await act(async () => {
       rendered = render(<TimetableManagement {...props} />)
-      if (!props.readOnly) {
-        await waitFor(() => expect(getTimetableTemplate).toHaveBeenCalled())
-      }
     })
+    if (!props.readOnly) {
+      await waitFor(() => expect(getTimetableTemplate).toHaveBeenCalled())
+    }
     return rendered!
   }
 
