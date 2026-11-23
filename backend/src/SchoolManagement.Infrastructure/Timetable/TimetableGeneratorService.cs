@@ -25,6 +25,25 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             return new GeneratedTimetableResult([], [], ["Semester not found."], 0, [], false);
         }
 
+        var requestedGroupIds = request.TeachingGroupIds is { Count: > 0 }
+            ? request.TeachingGroupIds.Distinct().ToArray()
+            : request.TeachingGroupId.HasValue ? [request.TeachingGroupId.Value] : [];
+        var cohortQuery = db.TeachingGroups.AsNoTracking()
+            .Where(group => group.IsActive &&
+                group.CurriculumId.HasValue &&
+                group.SemesterId == semesterId);
+        if (requestedGroupIds.Length > 0)
+            cohortQuery = cohortQuery.Where(group => requestedGroupIds.Contains(group.Id));
+        if (request.CurriculumId.HasValue)
+            cohortQuery = cohortQuery.Where(group => group.CurriculumId == request.CurriculumId.Value);
+        if (request.YearOfStudy.HasValue)
+            cohortQuery = cohortQuery.Where(group => group.YearOfStudy == request.YearOfStudy.Value);
+        if (request.ProgrammeId.HasValue)
+            cohortQuery = cohortQuery.Where(group => group.ProgrammeId == request.ProgrammeId.Value);
+        var cohortGroups = await cohortQuery.OrderBy(group => group.Name).ToListAsync(cancellationToken);
+        if (cohortGroups.Count > 0)
+            return await GenerateForProgrammeYearClassesAsync(request, semester, cohortGroups, cancellationToken);
+
         var curriculumOfferingIds = await (
             from offering in db.CourseOfferings.AsNoTracking()
             join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
@@ -289,6 +308,171 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             optimizationScore,
             unscheduled,
             conflicts.Count == 0);
+    }
+
+    private async Task<GeneratedTimetableResult> GenerateForProgrammeYearClassesAsync(
+        GenerateTimetableRequest request,
+        Semester semester,
+        IReadOnlyList<TeachingGroup> teachingGroups,
+        CancellationToken cancellationToken)
+    {
+        var conflicts = new List<string>();
+        var warnings = new List<string>();
+        var unscheduled = new List<string>();
+        var generatedEntries = new List<TimetableEntry>();
+        var selectedGroupIds = teachingGroups.Select(group => group.Id).ToHashSet();
+        var existingEntries = await db.TimetableEntries.AsNoTracking()
+            .Where(entry => entry.IsActive)
+            .ToListAsync(cancellationToken);
+        var occupied = existingEntries
+            .Where(entry => !selectedGroupIds.Contains(entry.TeachingGroupId))
+            .ToList();
+        var replacements = new List<TimetableEntry>();
+        var successfulGroupIds = new HashSet<Guid>();
+        var days = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
+        var periods = new[]
+        {
+            new TimeOnly(7, 0), new TimeOnly(8, 0), new TimeOnly(9, 0), new TimeOnly(10, 0),
+            new TimeOnly(11, 0), new TimeOnly(12, 0), new TimeOnly(13, 0), new TimeOnly(14, 0),
+            new TimeOnly(15, 0), new TimeOnly(16, 0), new TimeOnly(17, 0)
+        };
+        var rooms = new[] { "Room 101", "Room 102", "Room 103", "Hall A", "Hall B" };
+        var roomCounter = 0;
+
+        foreach (var group in teachingGroups)
+        {
+            var groupCandidates = new List<TimetableEntry>();
+            var groupFailed = false;
+            var mappings = await db.CurriculumCourses.AsNoTracking()
+                .Where(mapping => mapping.CurriculumId == group.CurriculumId &&
+                    mapping.YearOfStudy == group.YearOfStudy &&
+                    mapping.SemesterNumber == semester.Sequence &&
+                    !mapping.IsDeleted)
+                .Select(mapping => mapping.CourseId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+            var offerings = await db.CourseOfferings.AsNoTracking()
+                .Where(offering => offering.IsActive &&
+                    offering.ProgrammeId == group.ProgrammeId &&
+                    offering.SemesterId == semester.Id &&
+                    mappings.Contains(offering.CourseId))
+                .ToListAsync(cancellationToken);
+            var courses = await db.Courses.AsNoTracking()
+                .Where(course => course.IsActive && !course.IsDeleted &&
+                    offerings.Select(offering => offering.CourseId).Contains(course.Id))
+                .ToListAsync(cancellationToken);
+            var allocations = await db.TeachingAllocations.AsNoTracking()
+                .Where(allocation => allocation.IsActive &&
+                    courses.Select(course => course.Id).Contains(allocation.CourseId))
+                .ToListAsync(cancellationToken);
+            var teacherIds = allocations.Select(allocation => allocation.StaffMemberId).Distinct().ToArray();
+            var teachers = await db.StaffMembers.AsNoTracking()
+                .Where(teacher => teacherIds.Contains(teacher.Id) &&
+                    teacher.IsActive && teacher.EmploymentStatus == "Active")
+                .ToDictionaryAsync(teacher => teacher.Id, cancellationToken);
+
+            if (courses.Count == 0)
+            {
+                warnings.Add($"{group.Name ?? group.GroupCode}: no active course units are mapped to this curriculum year and semester.");
+                unscheduled.Add($"{group.Name ?? group.GroupCode} was not generated because it has no eligible course units.");
+                continue;
+            }
+
+            foreach (var course in courses.OrderBy(course => course.Code))
+            {
+                var allocation = allocations.FirstOrDefault(item => item.CourseId == course.Id && teachers.ContainsKey(item.StaffMemberId));
+                if (allocation is null || !teachers.TryGetValue(allocation.StaffMemberId, out var teacher))
+                {
+                    groupFailed = true;
+                    unscheduled.Add($"{group.Name ?? group.GroupCode}: {course.Code} has no active teacher allocation.");
+                    break;
+                }
+
+                var sessionsNeeded = Math.Max(1, course.CreditUnits);
+                var sessionsScheduled = 0;
+                foreach (var day in days)
+                {
+                    if (sessionsScheduled >= sessionsNeeded) break;
+                    for (var index = 0; index < periods.Length - 1 && sessionsScheduled < sessionsNeeded; index++)
+                    {
+                        var start = periods[index];
+                        var end = start.AddHours(2);
+                        var room = rooms[roomCounter++ % rooms.Length];
+                        bool Overlaps(TimetableEntry other) =>
+                            other.DayOfWeek == day && other.StartTime < end && start < other.EndTime;
+                        if (occupied.Any(other => Overlaps(other) &&
+                                (other.TeacherId == teacher.Id ||
+                                 other.TeachingGroupId == group.Id ||
+                                 (!string.IsNullOrWhiteSpace(other.Room) &&
+                                  string.Equals(other.Room.Trim(), room, StringComparison.OrdinalIgnoreCase)))) ||
+                            groupCandidates.Any(other => Overlaps(other) &&
+                                (other.TeacherId == teacher.Id ||
+                                 other.TeachingGroupId == group.Id ||
+                                 (!string.IsNullOrWhiteSpace(other.Room) &&
+                                  string.Equals(other.Room.Trim(), room, StringComparison.OrdinalIgnoreCase)))))
+                        {
+                            conflicts.Add($"{group.Name ?? group.GroupCode}: {course.Code} could not use {day} {start:HH:mm}-{end:HH:mm} in {room} because of a class, teacher or room conflict.");
+                            continue;
+                        }
+
+                        groupCandidates.Add(new TimetableEntry
+                        {
+                            TeachingGroupId = group.Id,
+                            CourseId = course.Id,
+                            TeacherId = teacher.Id,
+                            StaffMemberId = teacher.Id,
+                            DayOfWeek = day,
+                            StartTime = start,
+                            EndTime = end,
+                            Room = room,
+                            SessionType = "Lecture",
+                            GeneratedAt = DateTimeOffset.UtcNow,
+                            GenerationSource = request.GenerationSource ?? "Manual"
+                        });
+                        sessionsScheduled++;
+                    }
+                }
+
+                if (sessionsScheduled < sessionsNeeded)
+                {
+                    groupFailed = true;
+                    unscheduled.Add($"{group.Name ?? group.GroupCode}: only {sessionsScheduled} of {sessionsNeeded} sessions could be scheduled for {course.Code}; its existing timetable was retained.");
+                    break;
+                }
+            }
+
+            if (groupFailed)
+            {
+                warnings.Add($"{group.Name ?? group.GroupCode} was not replaced because every mapped course unit could not be scheduled.");
+                continue;
+            }
+
+            var oldEntries = existingEntries.Where(entry => entry.IsActive && entry.TeachingGroupId == group.Id).ToList();
+            replacements.AddRange(oldEntries);
+            successfulGroupIds.Add(group.Id);
+            generatedEntries.AddRange(groupCandidates);
+            occupied.AddRange(groupCandidates);
+        }
+
+        if (successfulGroupIds.Count > 0)
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            var oldEntries = await db.TimetableEntries
+                .Where(entry => entry.IsActive && successfulGroupIds.Contains(entry.TeachingGroupId))
+                .ToListAsync(cancellationToken);
+            foreach (var old in oldEntries) old.IsActive = false;
+            db.TimetableEntries.AddRange(generatedEntries);
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        var score = generatedEntries.Count == 0 ? 0 : Math.Max(0, 100 - warnings.Count * 5);
+        return new GeneratedTimetableResult(
+            generatedEntries.Select(entry => new TimetableEntryDto(
+                entry.Id, entry.TeachingGroupId, entry.CourseId, entry.TeacherId,
+                entry.DayOfWeek, entry.StartTime, entry.EndTime, entry.Room,
+                entry.SessionType, entry.IsActive, entry.GeneratedAt, entry.GenerationSource)).ToList(),
+            conflicts, warnings, score, unscheduled, conflicts.Count == 0);
     }
 
     private static bool HasConflict(Guid entityId, Dictionary<Guid, List<(DayOfWeek, TimeOnly, TimeOnly)>> schedules, DayOfWeek day, TimeOnly start, TimeOnly end, out string reason)
