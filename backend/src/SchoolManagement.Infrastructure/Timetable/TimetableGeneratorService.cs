@@ -70,8 +70,8 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
         // those are separate records and the mismatch silently generated empty timetables.
         if (request.TeachingGroupIds is { Count: > 0 } selectedGroupIds)
         {
-            var requestedGroupIds = selectedGroupIds.Distinct().ToArray();
-            teachingGroupsQuery = teachingGroupsQuery.Where(x => requestedGroupIds.Contains(x.Id));
+            var selectedTeachingGroupIds = selectedGroupIds.Distinct().ToArray();
+            teachingGroupsQuery = teachingGroupsQuery.Where(x => selectedTeachingGroupIds.Contains(x.Id));
         }
         else if (request.TeachingGroupId.HasValue)
         {
