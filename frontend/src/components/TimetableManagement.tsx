@@ -2776,7 +2776,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               <small>
                 {options.courses
                   .slice(0, 5)
-                  .map(item => item.label)
+                  .map(item => item.label.toUpperCase())
                   .join(' · ') || 'No course units returned'}
               </small>
             </article>
