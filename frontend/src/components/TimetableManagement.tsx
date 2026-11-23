@@ -1537,7 +1537,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     setTemplateSlots(defaultTemplateSlots)
                   }}
                 >
-                  <option value="">Select class</option>
+                  <option value="" disabled>
+                    {availableGroups.length ? 'Select class / teaching group' : 'No teaching groups available'}
+                  </option>
                   {availableGroups.map(item => (
                     <option key={item.id} value={item.id}>
                       {item.label}
@@ -1549,10 +1551,16 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 className="timetable-action"
                 type="button"
                 onClick={() => void loadTemplate()}
-                disabled={!templateGroupId}
+                disabled={!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)}
               >
                 <Pencil size={15} /> Load class
               </button>
+              {availableGroups.length === 0 && (
+                <small className="timetable-class-empty-hint" role="status">
+                  No active teaching groups are configured for this programme and academic period.
+                  Course offerings and teaching groups must be created before a class timetable can be loaded.
+                </small>
+              )}
             </div>
           </div>
 
