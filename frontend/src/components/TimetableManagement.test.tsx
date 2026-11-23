@@ -254,8 +254,9 @@ describe('TimetableManagement', () => {
 
     const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
     await waitFor(() => expect(curriculum.value).toBe('curriculum-1'))
-    expect(Array.from(curriculum.options).find(option => option.value === 'curriculum-1')?.textContent?.trim()).toBe('2026')
+    expect(Array.from(curriculum.options).find(option => option.value === 'curriculum-1')?.textContent?.trim()).toBe('2026 Curriculum')
     expect(Array.from(curriculum.options).every(option => (option.textContent?.trim().length ?? 0) <= 36)).toBe(true)
+    expect(Array.from(curriculum.options).find(option => option.value === 'curriculum-duplicate')?.textContent?.trim()).toBe('Alternate curriculum')
     expect(Array.from(curriculum.options).map(option => option.value)).toContain('curriculum-duplicate')
 
     const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
