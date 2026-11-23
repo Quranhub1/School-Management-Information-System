@@ -226,12 +226,12 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
             </div>
             {cardQueueError && <div className="error" role="alert">{cardQueueError}</div>}
             {cardQueueNotice && <div className="info-banner" role="status">{cardQueueNotice}</div>}
-            <div className="form-actions no-print" style={{ marginBottom: 12 }}>
-              <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds(cardStudents.map(student => student.id))} disabled={cardQueueLoading || cardStudents.length === 0}>Select all</button>
-              <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
-              <button type="button" className="secondary-button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
-              <button type="button" onClick={downloadSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PDF</button>
-              <button type="button" className="secondary-button" onClick={() => {
+            <div className="form-actions id-card-actions no-print">
+              <button type="button" className="id-card-action-button" onClick={() => setSelectedCardStudentIds(cardStudents.map(student => student.id))} disabled={cardQueueLoading || cardStudents.length === 0}>Select all</button>
+              <button type="button" className="id-card-action-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
+              <button type="button" className="id-card-action-button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
+              <button type="button" className="id-card-action-button" onClick={downloadSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PDF</button>
+              <button type="button" className="id-card-action-button" onClick={() => {
                 const element = document.getElementById('print-queue-section')
                 if (element) void downloadElementAsPng(element, { filename: `student-${cardType}-id-cards.png` }).catch(error => setCardQueueError(error instanceof Error ? error.message : 'Unable to capture ID cards.'))
               }} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PNG</button>
@@ -279,14 +279,14 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         )}
 
         {section === 'national-results' && (
-          <div className="feature-grid">
+          <div className="feature-grid national-results-actions">
             <article className="feature-card">
               <strong>UHPAB Results</strong>
-              <button className="secondary-button" type="button" disabled>UHPAB Results Integration — Coming Soon</button>
+              <button className="national-results-action-button" type="button" disabled>UHPAB Results Integration — Coming Soon</button>
             </article>
             <article className="feature-card">
               <strong>UVTAB Results</strong>
-              <button className="secondary-button" type="button" disabled>UVTAB Results Integration — Coming Soon</button>
+              <button className="national-results-action-button" type="button" disabled>UVTAB Results Integration — Coming Soon</button>
             </article>
           </div>
         )}
