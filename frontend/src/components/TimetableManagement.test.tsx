@@ -204,7 +204,11 @@ describe('TimetableManagement', () => {
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
     await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    const loadClassButton = await screen.findByRole('button', { name: /load class/i })
+    await act(async () => {
+      fireEvent.click(loadClassButton)
+      await vi.mocked(getTimetableTemplate).mock.results.slice(-1)[0]?.value
+    })
     fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
     fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
     fireEvent.change(screen.getAllByLabelText('Course unit')[0], { target: { value: 'course-1' } })
