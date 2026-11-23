@@ -4,6 +4,7 @@ import React from 'react'
 
 vi.mock('../api/timetable', () => ({
   listTimetable: vi.fn().mockResolvedValue([]),
+  listSavedTimetableTemplates: vi.fn().mockResolvedValue([{ teachingGroupId: 'group-1', teachingGroupLabel: 'CPH-Y1-S1', programmeId: 'programme-1', curriculumId: 'curriculum-1', yearOfStudy: 1, semesterId: 'period-1', semesterLabel: 'Semester 1', updatedAtUtc: '2026-11-23T10:00:00Z', sessionCount: 3 }]),
   generateTimetable: vi.fn().mockResolvedValue({
     entries: [{ id: 'entry-1', teachingGroupId: 'group-1', courseId: 'course-1', teacherId: 'teacher-1', dayOfWeek: 1, startTime: '08:00:00', endTime: '09:00:00', room: 'Room 1', sessionType: 'Lecture', isActive: true }],
     optimizationScore: 95,
@@ -16,7 +17,7 @@ vi.mock('../api/timetable', () => ({
   saveTimetableTemplate: vi.fn().mockResolvedValue([]),
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [
-      { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' },
+      { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1', curriculumId: 'curriculum-1', yearOfStudy: 1, semesterNumber: 1, isProgrammeYearClass: true },
       { id: 'group-2', label: 'CPH-Y1-S1-B', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-not-in-selected-curriculum' },
     ],
     courses: [
@@ -66,7 +67,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
 }))
 
 import { generateTimetable, getTimetableTemplate, saveTimetableTemplate } from '../api/timetable'
-import { downloadInstitutionalPdf } from '../lib/pdfmake'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
 describe('TimetableManagement', () => {
@@ -88,6 +89,26 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
+
+  it('opens the saved timetable library, supports back navigation, and opens a saved class template', async () => {
+    await renderTimetable()
+    fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
+    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
+    expect(screen.getByRole('button', { name: /back to timetable/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
+    expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /open timetable/i }))
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Saved timetables' })).toBeNull())
+    expect(screen.getByLabelText('Programme')).toBeTruthy()
+    expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
+    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /back to timetable/i }))
+    expect(screen.getByRole('heading', { name: 'Timetable management' })).toBeTruthy()
+  }, 15000)
 
   it('shows the editable official timetable designer as the primary management view', async () => {
     await renderTimetable()
@@ -215,7 +236,7 @@ describe('TimetableManagement', () => {
     fireEvent.change(screen.getAllByLabelText('Lecturer')[0], { target: { value: 'teacher-1' } })
     fireEvent.change(screen.getAllByLabelText('Merge days')[0], { target: { value: '2' } })
     fireEvent.change(screen.getAllByLabelText('Merge periods')[0], { target: { value: '2' } })
-    fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save timetable' }))
     await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
     expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', expect.arrayContaining([
       expect.objectContaining({ dayOfWeek: 1, startTime: '08:00:00', endTime: '10:00:00', courseId: 'course-1', teacherId: 'teacher-1' }),
@@ -225,8 +246,13 @@ describe('TimetableManagement', () => {
       registrarName: 'JANE DOE',
       cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2', colSpan: '2' }) }),
     }))
-    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }))
     expect(downloadInstitutionalPdf).toHaveBeenCalledWith(expect.objectContaining({
+      orientation: 'landscape',
+      title: 'OFFICIAL CLASS TIMETABLE',
+    }))
+    fireEvent.click(screen.getByRole('button', { name: 'Print' }))
+    expect(printInstitutionalPdf).toHaveBeenCalledWith(expect.objectContaining({
       orientation: 'landscape',
       title: 'OFFICIAL CLASS TIMETABLE',
     }))
