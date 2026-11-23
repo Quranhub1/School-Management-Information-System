@@ -84,20 +84,20 @@ describe('TimetableManagement', async () => {
     vi.clearAllMocks()
   })
 
-  it('renders the timetable management shell', () => {
+  it('renders the timetable management shell', async () => {
     await renderTimetable()
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
-  it('shows the editable official timetable designer as the primary management view', () => {
-    render(<TimetableManagement />)
+  it('shows the editable official timetable designer as the primary management view', async () => {
+    await renderTimetable()
     expect(screen.getByRole('region', { name: 'Editable timetable template' })).toBeTruthy()
     expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
   })
 
 
   it('keeps course-unit selection inside the template and limits it to the selected semester', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     expect(screen.queryByLabelText('Course unit selection')).toBeNull()
 
     fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-2' } })
@@ -120,7 +120,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('prints generated class timetables for the full semester using Institution Settings', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
     fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
@@ -136,7 +136,7 @@ describe('TimetableManagement', async () => {
   }, 15000)
 
   it('sends all explicitly selected teaching groups in one generation request', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
     fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
@@ -152,7 +152,7 @@ describe('TimetableManagement', async () => {
   }, 15000)
 
   it('shows live system data from the central timetable options API', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: 'System Data & Sync' }))
     expect(await screen.findByText('System Data & SMIS Bridge')).toBeTruthy()
     expect(screen.getByText('Programmes')).toBeTruthy()
@@ -161,8 +161,8 @@ describe('TimetableManagement', async () => {
     expect(screen.getByText(/central database remains the source of truth/i)).toBeTruthy()
   })
 
-  it('supports weekend visibility control', () => {
-    render(<TimetableManagement />)
+  it('supports weekend visibility control', async () => {
+    await renderTimetable()
     const toggle = screen.getByRole('checkbox', { name: /show weekend days/i })
     expect(toggle).toBeTruthy()
     fireEvent.click(toggle)
@@ -170,7 +170,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('renders the official document designer with editable heading, signature and merge controls', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     expect(await screen.findByLabelText('Timetable document title')).toBeTruthy()
@@ -186,7 +186,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('renders a full-height vertical break divider in the timetable design', async () => {
-    const { container } = render(<TimetableManagement />)
+    const { container } = await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
@@ -194,7 +194,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
@@ -228,13 +228,13 @@ describe('TimetableManagement', async () => {
     })
   }, 15000)
 
-  it('supports readOnly mode', () => {
+  it('supports readOnly mode', async () => {
     await renderTimetable({ readOnly: true })
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
   it('loads the full programme → curriculum → semester → year → academic period → course-unit cascade', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
 
     const programme = await screen.findByLabelText('Programme') as HTMLSelectElement
@@ -257,7 +257,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('uses programme duration for year options but does not invent unmapped semesters or course units', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     const programme = await screen.findByLabelText('Programme') as HTMLSelectElement
     fireEvent.change(programme, { target: { value: 'programme-2' } })
@@ -275,7 +275,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('shows each programme code only once while retaining curricula attached to duplicate records', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     const programmeSelect = await screen.findByLabelText('Programme') as HTMLSelectElement
     const programmeOptions = Array.from(programmeSelect.options).map(option => option.textContent)
@@ -288,7 +288,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('lists all active teaching groups for the selected programme and academic period in Load class', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     const classSelect = await screen.findByLabelText('Class / teaching group') as HTMLSelectElement
     expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1')
@@ -296,7 +296,7 @@ describe('TimetableManagement', async () => {
   })
 
   it('shows programme curriculum selectors when a timetable workflow is opened', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     expect(await screen.findByLabelText('Programme')).toBeTruthy()
     expect(screen.getByLabelText('Curriculum')).toBeTruthy()
@@ -306,7 +306,7 @@ describe('TimetableManagement', async () => {
   })
  
   it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     expect(await screen.findByRole('heading', { name: /semester templates/i })).toBeTruthy()
     expect(screen.getByText(/4 separate templates/)).toBeTruthy()
     expect(screen.getAllByRole('heading', { name: 'Semester 1' })).toHaveLength(2)
