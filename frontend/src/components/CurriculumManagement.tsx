@@ -1060,7 +1060,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           onFilterChange={setCurriculumFilters}
           onClearFilters={() => setCurriculumFilters({ status: [], programmeType: [], creditRange: { min: 0, max: 10000 }, searchTerm: '' })}
         />
-        <div className="curriculum-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginTop: 14 }}>
+        <div className="curriculum-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', alignItems: 'stretch', gap: 16, marginTop: 14, minWidth: 0 }}>
           {filteredCurricula.map(item => {
             const programme = programmes.find(row => row.id === item.programmeId)
             const summary = curriculumSummaries[item.id] ?? { courseCount: 0, totalCredits: 0 }
