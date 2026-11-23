@@ -99,7 +99,7 @@ export function deriveTimetableSelection(
     : ''
   const allTeachingGroups = options.teachingGroups.filter(
     item =>
-      item.programmeId === selectedCurriculum?.programmeId &&
+      programmeIdSet.has(item.programmeId) &&
       item.semesterId === academicPeriodId
   )
   const teachingGroups = selectedCourseId
