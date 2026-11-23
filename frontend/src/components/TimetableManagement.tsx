@@ -47,9 +47,11 @@ const compactCurriculumLabel = (label: string, programmeLabel?: string, fallback
       compact = compact.slice(0, programmeIndex) + compact.slice(programmeIndex + programmeName.length)
     }
   }
-  compact = compact.trim()
-  while (compact && ['-', '–', '—', ':', '|'].includes(compact[0])) compact = compact.slice(1).trim()
+  compact = compact.trim().replace(/^[-–—:|]+\\s*/, '').replace(/\\s+/g, ' ')
   if (!compact || compact.toLocaleLowerCase() === 'curriculum') return `Curriculum ${fallbackIndex + 1}`
+  if (/^\\d{4}$/.test(compact)) compact = `${compact} Curriculum`
+  else if (/^alternate record$/i.test(compact)) compact = 'Alternate curriculum'
+  else if (/^curriculum\\b/i.test(compact)) compact = compact.replace(/^curriculum\\s*/i, 'Curriculum ')
   return compact.length > 36 ? `${compact.slice(0, 33).trimEnd()}…` : compact
 }
 
