@@ -1103,7 +1103,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 const matchingGroups = options.teachingGroups.filter(
                   group =>
                     group.programmeId === selectedCurriculum?.programmeId &&
-                    group.semesterId === semesterId
+                    group.semesterId === semesterId &&
+                    item.courseIds.has(group.courseId)
+                )
+                const matchingCurriculumSemester = selection.curriculumSemesters.find(
+                  option => option.year === item.year && option.semesterNumber === item.semester
                 )
                 const sessionCount = activeEntries.filter(entry =>
                   matchingGroups.some(group => group.id === entry.teachingGroupId)
@@ -1136,7 +1140,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                       type="button"
                       onClick={() => {
                         setYearOfStudy(String(item.year))
-                        setCurriculumSemester(String(item.semester))
+                        setCurriculumSemester(matchingCurriculumSemester?.code ?? '')
                         setTeachingGroupId(matchingGroups[0]?.id ?? '')
                         setTemplateGroupId(matchingGroups[0]?.id ?? '')
                         setTemplateLoadedGroupId('')
