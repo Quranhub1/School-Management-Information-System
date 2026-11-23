@@ -1039,12 +1039,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     <section className={readOnly ? 'timetable-screen is-read-only' : 'timetable-screen'}>
       <header className="timetable-hero">
         <div>
-          <p className="timetable-eyebrow">Academic planning</p>
           <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
-          <p>
-            Load and edit the official class timetable, assign lecturers and venues, then save or
-            print it.
-          </p>
         </div>
         <div className="timetable-actions">
           {!readOnly && (
@@ -1195,7 +1190,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           className="timetable-form-panel timetable-curriculum-guide"
           aria-label="Programme curriculum selection"
         >
-          <h3>Programme curriculum guide</h3>
           <div className="timetable-form-grid">
             <label>
               Programme
@@ -1338,20 +1332,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               </select>
             </label>
           </div>
-          <p className="timetable-generator-help">Choose course units directly in the timetable grid. Each cell is restricted to the selected curriculum year and semester.</p>
-          <p className="timetable-generator-help">
-            {eligibleMappings.length} curriculum course unit(s) match this selection.{' '}
-            {availableGroups.length} operational teaching group(s) are available for the selected
-            academic period.
-          </p>
-          <p className="timetable-generator-help">
-            {availableTutors.length} active teaching tutor(s) are available for the selected course unit.
-          </p>
-          {eligibleMappings.length > 0 && (
-            <p className="timetable-generator-help">
-              Course units: {eligibleMappings.map(item => item.courseLabel).join(' · ')}
-            </p>
-          )}
           {eligibleMappings.length === 0 && (
             <p className="timetable-day-empty">
               No course units are mapped to this programme, year and semester. Add them under
@@ -1511,14 +1491,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           </div>
 
           <div className="timetable-template-editor-heading">
-            <div>
-              <p className="timetable-eyebrow">Fillable timetable template</p>
-              <h3>Edit the timetable grid</h3>
-              <p>
-                All teaching days are shown together. Click any period to assign or update its
-                course, lecturer and venue.
-              </p>
-            </div>
             <div className="timetable-template-controls">
               <label>
                 Class / teaching group
