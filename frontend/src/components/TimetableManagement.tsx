@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Clock3, FileText, LayoutGrid, List, Plus, RefreshCw, Search, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
 import LoadingSpinner from './LoadingSpinner'
 import {
   createTimetableEntry,
@@ -8,12 +8,14 @@ import {
   getTimetableOptions,
   getTimetableTemplate,
   listTimetable,
+  listSavedTimetableTemplates,
   saveTimetableTemplate,
   updateTimetableEntry,
   type CreateTimetableEntry,
   type GenerateTimetableResult,
   type TimetableEntry,
   type TimetableOptions,
+  type SavedTimetableTemplate,
 } from '../api/timetable'
 import './TimetableManagement.css'
 import { deriveTimetableSelection, filterTutorsForCourse } from './timetableSelection'
@@ -150,6 +152,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showWeekends, setShowWeekends] = useState(true)
   const [showSystemData, setShowSystemData] = useState(false)
   const [showTemplateEditor, setShowTemplateEditor] = useState(true)
+  const [showSavedTemplates, setShowSavedTemplates] = useState(false)
+  const [savedTemplates, setSavedTemplates] = useState<SavedTimetableTemplate[]>([])
+  const [savedTemplatesLoading, setSavedTemplatesLoading] = useState(false)
+  const [savedTemplatesError, setSavedTemplatesError] = useState('')
+  const [savedTemplateSearch, setSavedTemplateSearch] = useState('')
+  const [savedTemplateProgrammeFilter, setSavedTemplateProgrammeFilter] = useState('')
+  const [savedTemplateSemesterFilter, setSavedTemplateSemesterFilter] = useState('')
   const [templateGroupId, setTemplateGroupId] = useState('')
   const [templateLoadedGroupId, setTemplateLoadedGroupId] = useState('')
   const [templateSlots, setTemplateSlots] = useState(defaultTemplateSlots)
@@ -314,6 +323,32 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const scheduleTutors = filterTutorsForCourse(options.teachers, courseId)
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
+
+  const savedTemplateCards = useMemo(() => {
+    const search = savedTemplateSearch.trim().toLocaleLowerCase()
+    return savedTemplates.map(template => {
+      const group = options.teachingGroups.find(item => item.id === template.teachingGroupId)
+      const programme = programmeOptions.find(item => item.sourceIds.includes(template.programmeId))
+      const curriculum = options.curricula.find(item => item.id === template.curriculumId)
+      const semester = options.semesters.find(item => item.id === template.semesterId)
+      return {
+        ...template,
+        groupLabel: group?.label ?? template.teachingGroupLabel,
+        programmeLabel: programme?.label ?? 'Programme not available',
+        programmeCode: programme?.code ?? '',
+        curriculumLabel: curriculum?.label ?? 'Curriculum not available',
+        semesterLabel: semester?.label ?? template.semesterLabel,
+      }
+    }).filter(template => {
+      const matchesSearch = !search || [
+        template.groupLabel, template.programmeLabel, template.curriculumLabel,
+        template.semesterLabel, template.programmeCode,
+      ].some(value => value.toLocaleLowerCase().includes(search))
+      const matchesProgramme = !savedTemplateProgrammeFilter || template.programmeId === savedTemplateProgrammeFilter
+      const matchesSemester = !savedTemplateSemesterFilter || template.semesterId === savedTemplateSemesterFilter
+      return matchesSearch && matchesProgramme && matchesSemester
+    })
+  }, [savedTemplates, options.teachingGroups, options.curricula, options.semesters, programmeOptions, savedTemplateSearch, savedTemplateProgrammeFilter, savedTemplateSemesterFilter])
   // Course-unit choices belong only inside the timetable template. Keep every
   // cell restricted to mappings for the exact selected curriculum, year and semester.
   const templateCourseOptions =
@@ -1027,6 +1062,59 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     reorderTemplateSlots(order)
   }
 
+  async function refreshSavedTemplates() {
+    setSavedTemplatesLoading(true)
+    setSavedTemplatesError('')
+    try {
+      setSavedTemplates(await listSavedTimetableTemplates())
+    } catch (e) {
+      setSavedTemplatesError(e instanceof Error ? e.message : 'Unable to load saved timetable templates.')
+    } finally {
+      setSavedTemplatesLoading(false)
+    }
+  }
+
+  async function openSavedTemplates() {
+    setShowSavedTemplates(true)
+    setSavedTemplateSearch('')
+    setSavedTemplateProgrammeFilter('')
+    setSavedTemplateSemesterFilter('')
+    await refreshSavedTemplates()
+  }
+
+  function openSavedTemplate(template: SavedTimetableTemplate) {
+    const group = options.teachingGroups.find(item => item.id === template.teachingGroupId)
+    if (!group || !group.curriculumId || !group.yearOfStudy || !group.semesterNumber) {
+      setSavedTemplatesError('This saved timetable is no longer linked to an active programme-year class.')
+      return
+    }
+    const programme = programmeOptions.find(item => item.sourceIds.includes(template.programmeId))
+    const mapping = options.curriculumCourses.find(item =>
+      item.curriculumId === group.curriculumId &&
+      item.yearOfStudy === group.yearOfStudy &&
+      item.semesterNumber === group.semesterNumber
+    )
+    const prefix = (programme?.code ?? '').replace(/^(?:UHPAB|UVTAB|KSHS|SB)[-_]/i, '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    const semesterCode = prefix
+      ? `${prefix}${group.yearOfStudy}${group.semesterNumber}`
+      : `Y${group.yearOfStudy}S${group.semesterNumber}`
+
+    setSemesterId(template.semesterId)
+    setProgrammeId(template.programmeId)
+    setCurriculumId(group.curriculumId)
+    setYearOfStudy(String(group.yearOfStudy))
+    setCurriculumSemester(semesterCode)
+    setSelectedCourseUnitId(mapping?.courseId ?? '')
+    setTeachingGroupId(group.id)
+    setTemplateGroupId(group.id)
+    setTemplateLoadedGroupId('')
+    setTemplateCells({})
+    setShowTemplateEditor(true)
+    setShowGenerator(false)
+    setShowScheduleForm(false)
+    setShowSavedTemplates(false)
+  }
+
   async function remove(id: string) {
     if (!window.confirm('Remove this timetable session?')) return
     setError('')
@@ -1045,6 +1133,110 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }, [readOnly, templateGroupId, selectedCurriculum?.id, yearOfStudy, curriculumSemester, templateLoadedGroupId])
 
   const visibleTemplateDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+
+  if (showSavedTemplates) {
+    return (
+      <section className="timetable-screen timetable-saved-screen" aria-label="Saved timetables">
+        <header className="timetable-hero timetable-saved-hero">
+          <div className="timetable-saved-heading">
+            <button className="timetable-action" type="button" onClick={() => setShowSavedTemplates(false)}>
+              <ArrowLeft /> Back to timetable
+            </button>
+            <div>
+              <p className="timetable-eyebrow">Timetable workspace</p>
+              <h2>Saved timetables</h2>
+              <p>Open a previously saved class timetable and continue editing its official layout.</p>
+            </div>
+          </div>
+          <div className="timetable-actions">
+            <button className="timetable-action" type="button" onClick={() => void refreshSavedTemplates()} disabled={savedTemplatesLoading}>
+              <RefreshCw className={savedTemplatesLoading ? 'is-spinning' : ''} /> Refresh
+            </button>
+            <button className="timetable-action primary" type="button" onClick={() => {
+              setShowSavedTemplates(false)
+              setShowTemplateEditor(true)
+              setTemplateLoadedGroupId('')
+            }}>
+              <Plus /> Create timetable
+            </button>
+          </div>
+        </header>
+
+        {savedTemplatesError && <div className="timetable-notice" role="alert">{savedTemplatesError}</div>}
+
+        <div className="timetable-saved-summary" aria-label="Saved timetable summary">
+          <div className="timetable-saved-summary-icon"><FileText /></div>
+          <div><span>Saved class timetables</span><strong>{savedTemplates.length}</strong></div>
+          <div className="timetable-saved-summary-divider" />
+          <div><span>Matching results</span><strong>{savedTemplateCards.length}</strong></div>
+        </div>
+
+        <section className="timetable-saved-library" aria-label="Saved timetable library">
+          <div className="timetable-saved-filters">
+            <label className="timetable-saved-search">
+              <span>Search saved timetables</span>
+              <span className="timetable-saved-search-input"><Search /><input value={savedTemplateSearch} onChange={event => setSavedTemplateSearch(event.target.value)} placeholder="Search class, programme or curriculum" /></span>
+            </label>
+            <label>
+              <span>Programme</span>
+              <select value={savedTemplateProgrammeFilter} onChange={event => setSavedTemplateProgrammeFilter(event.target.value)}>
+                <option value="">All programmes</option>
+                {programmeOptions.map(programme => <option key={programme.id} value={programme.id}>{programme.code ? programme.code + ' — ' : ''}{programme.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>Academic period</span>
+              <select value={savedTemplateSemesterFilter} onChange={event => setSavedTemplateSemesterFilter(event.target.value)}>
+                <option value="">All academic periods</option>
+                {options.semesters.map(semester => <option key={semester.id} value={semester.id}>{semester.label} · {semester.academicYearLabel}</option>)}
+              </select>
+            </label>
+          </div>
+
+          {savedTemplatesLoading ? (
+            <div className="timetable-empty"><LoadingSpinner /><strong>Loading saved timetables…</strong><span>Retrieving templates from the school database.</span></div>
+          ) : savedTemplates.length === 0 ? (
+            <div className="timetable-empty">
+              <BookOpen size={28} />
+              <strong>No saved timetables yet</strong>
+              <span>Save a class timetable from the timetable designer. It will appear here for future access.</span>
+              <button className="timetable-action primary" type="button" onClick={() => {
+                setShowSavedTemplates(false)
+                setShowTemplateEditor(true)
+              }}><Plus /> Create the first timetable</button>
+            </div>
+          ) : savedTemplateCards.length === 0 ? (
+            <div className="timetable-empty"><Search size={26} /><strong>No matching timetables</strong><span>Try another search term or clear the programme and academic-period filters.</span><button className="timetable-action" type="button" onClick={() => { setSavedTemplateSearch(''); setSavedTemplateProgrammeFilter(''); setSavedTemplateSemesterFilter('') }}>Clear filters</button></div>
+          ) : (
+            <div className="timetable-saved-grid">
+              {savedTemplateCards.map(template => (
+                <article className="timetable-saved-card" key={template.teachingGroupId}>
+                  <div className="timetable-saved-card-top">
+                    <span className="timetable-saved-card-icon"><CalendarDays /></span>
+                    <span className="timetable-saved-card-badge">SAVED</span>
+                  </div>
+                  <h3>{template.groupLabel}</h3>
+                  <p className="timetable-saved-programme">{template.programmeCode ? template.programmeCode + ' · ' : ''}{template.programmeLabel}</p>
+                  <div className="timetable-saved-meta">
+                    <span><BookOpen /> {template.curriculumLabel}</span>
+                    <span><CalendarDays /> Year {template.yearOfStudy ?? '—'} · {template.semesterLabel}</span>
+                    <span><FileText /> {template.sessionCount} scheduled session{template.sessionCount === 1 ? '' : 's'}</span>
+                    <span><Clock3 /> Updated {new Date(template.updatedAtUtc).toLocaleString()}</span>
+                  </div>
+                  <div className="timetable-saved-card-footer">
+                    <span>{template.sessionCount > 0 ? 'Schedule available' : 'Layout saved · no sessions yet'}</span>
+                    <button className="timetable-action primary" type="button" onClick={() => openSavedTemplate(template)}>
+                      <Pencil /> Open timetable
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </section>
+    )
+  }
 
   return (
     <section className={readOnly ? 'timetable-screen is-read-only' : 'timetable-screen'}>
@@ -1071,6 +1263,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               aria-expanded={showTemplateEditor}
             >
               <Pencil /> {showTemplateEditor ? 'Hide timetable designer' : 'Open timetable designer'}
+            </button>
+          )}
+          {!readOnly && (
+            <button className="timetable-action" type="button" onClick={() => void openSavedTemplates()}>
+              <BookOpen /> Saved timetables
             </button>
           )}
           {!readOnly && (
