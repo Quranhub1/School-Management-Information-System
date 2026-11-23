@@ -39,6 +39,7 @@ import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityAc
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
 
 type Tab = 'full' | 'short'
+type WorkspaceView = 'courses' | 'curricula'
 
 // ASP.NET serializes enums as strings in API responses. Accept both the current
 // string contract and legacy numeric payloads so filtering never hides curricula.
@@ -53,6 +54,9 @@ function normalizeProgrammeType(value: number | string | null | undefined): numb
 
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('courses')
+  const [courseSearch, setCourseSearch] = useState('')
+  const [courseStatusFilter, setCourseStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
@@ -905,10 +909,52 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <button type="button" className="curriculum-refresh-button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh data'}</button>
         </div>
       </div>
+      <div className="curriculum-workspace-nav" role="tablist" aria-label="Academic workspaces">
+        <button type="button" role="tab" aria-selected={workspaceView === 'courses'} className={workspaceView === 'courses' ? 'active' : ''} onClick={() => setWorkspaceView('courses')}>Course Catalogue <span>{authorityCourses.length}</span></button>
+        <button type="button" role="tab" aria-selected={workspaceView === 'curricula'} className={workspaceView === 'curricula' ? 'active' : ''} onClick={() => setWorkspaceView('curricula')}>Programmes &amp; Curricula</button>
+      </div>
       {loading && <p role="status">Loading curriculum data…</p>}
       {error && <div className="error" role="alert">{error}</div>}
       {message && <p role="status">{message}</p>}
 
+      {workspaceView === 'courses' && (
+        <section className="course-catalogue-workspace" aria-label="Course catalogue">
+          <div className="course-catalogue-toolbar">
+            <div><h3>Course Catalogue</h3><p>Browse and maintain course units for the selected academic authority.</p></div>
+            <form className="course-catalogue-create" onSubmit={saveCourse}>
+              <input required aria-label="Course code" placeholder="Course code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
+              <input required aria-label="Course name" placeholder="Course name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
+              <input required aria-label="Credit units" type="number" min="0" placeholder="Credits" value={uf.creditUnits} onChange={e => setUf({ ...uf, creditUnits: e.target.value })} />
+              <select aria-label="Course type" required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="">Course type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
+              <input aria-label="Course description" placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
+              <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>
+              {editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel</button>}
+            </form>
+          </div>
+          <div className="course-catalogue-filters">
+            <input type="search" aria-label="Search courses" placeholder="Search by course code or name…" value={courseSearch} onChange={e => setCourseSearch(e.target.value)} />
+            <select aria-label="Filter course status" value={courseStatusFilter} onChange={e => setCourseStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+            <span>{authorityCourses.filter(course => (courseStatusFilter === 'all' || (courseStatusFilter === 'active' ? course.isActive : !course.isActive)) && (!courseSearch.trim() || `${course.code} ${course.name}`.toLowerCase().includes(courseSearch.trim().toLowerCase()))).length} courses</span>
+          </div>
+          <div className="table-wrap course-catalogue-table"><table>
+            <thead><tr><th>Course code</th><th>Course name</th><th>Credits</th><th>Type</th><th>Programme</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              {groupedAuthorityCourses.map(group => {
+                const visibleCourses = group.courses.filter(course => (courseStatusFilter === 'all' || (courseStatusFilter === 'active' ? course.isActive : !course.isActive)) && (!courseSearch.trim() || `${course.code} ${course.name}`.toLowerCase().includes(courseSearch.trim().toLowerCase())))
+                if (!visibleCourses.length) return null
+                return <Fragment key={`catalogue-${group.programme?.id ?? 'other'}`}>
+                  <tr className="course-catalogue-group"><th colSpan={7}>{group.programme ? `${group.programme.code} — ${group.programme.name}` : 'Other / unassigned courses'} <span>({visibleCourses.length})</span></th></tr>
+                  {visibleCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{group.programme?.name ?? 'Unassigned'}</td><td><span className={course.isActive ? 'course-catalogue-status active' : 'course-catalogue-status inactive'}>{!course.authorityCode ? 'Legacy / unassigned' : course.isActive ? 'Active' : 'Inactive'}</span></td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+                </Fragment>
+              })}
+              {authorityCourses.length === 0 && <tr><td colSpan={7} className="empty">{authority ? 'No courses are registered under this authority.' : 'Select an academic authority to load its course catalogue.'}</td></tr>}
+              {authorityCourses.length > 0 && !groupedAuthorityCourses.some(group => group.courses.some(course => (courseStatusFilter === 'all' || (courseStatusFilter === 'active' ? course.isActive : !course.isActive)) && (!courseSearch.trim() || `${course.code} ${course.name}`.toLowerCase().includes(courseSearch.trim().toLowerCase())))) && <tr><td colSpan={7} className="empty">No courses match these filters.</td></tr>}
+            </tbody>
+          </table></div>
+        </section>
+      )}
+      {workspaceView === 'curricula' && (
+        <>
       <section className="curriculum-authority-picker-card catalogue-board" aria-label="Curriculum authority picker">
         <h3>Curriculum authority</h3>
         <p className="eyebrow">Select the academic authority that owns the programmes and curricula you want to manage.</p>
@@ -1479,6 +1525,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </div>
           )}
         </div>
+      )}
+
+        </>
       )}
       <CurriculumLogbookManagement curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} />
       <CurriculumGovernancePanel curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} canManage={canManage} onChanged={() => void load()} />
