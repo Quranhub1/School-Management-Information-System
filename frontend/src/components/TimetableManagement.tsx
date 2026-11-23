@@ -39,7 +39,7 @@ const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
   programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 
 const compactCurriculumLabel = (label: string, programmeLabel?: string, fallbackIndex = 0) => {
-  const programmeName = programmeLabel?.replace(/\\s*\\([^)]*\\)\\s*$/, '').trim()
+  const programmeName = programmeLabel?.split(' (')[0].trim()
   let compact = label.trim()
   if (programmeName) {
     const programmeIndex = compact.toLocaleLowerCase().indexOf(programmeName.toLocaleLowerCase())
@@ -47,7 +47,8 @@ const compactCurriculumLabel = (label: string, programmeLabel?: string, fallback
       compact = compact.slice(0, programmeIndex) + compact.slice(programmeIndex + programmeName.length)
     }
   }
-  compact = compact.replace(/^\\s*[-–—:|]+\\s*/, '').replace(/\\s+/g, ' ').trim()
+  compact = compact.trim()
+  while (compact && ['-', '–', '—', ':', '|'].includes(compact[0])) compact = compact.slice(1).trim()
   if (!compact || compact.toLocaleLowerCase() === 'curriculum') return `Curriculum ${fallbackIndex + 1}`
   return compact.length > 36 ? `${compact.slice(0, 33).trimEnd()}…` : compact
 }
