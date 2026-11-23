@@ -2021,7 +2021,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                 <div className="timetable-inline-cell-editor" aria-label={days[day] + ' period ' + (slotIndex + 1)}>
                                   <select aria-label="Course unit" value={cell.courseId} disabled={!templateCourseOptions.length} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}>
                                     <option value="">+ Select course</option>
-                                    {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{[item.code, item.label].filter(Boolean).join(' — ').toUpperCase()}</option>)}
+                                    {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{(item.id === cell.courseId ? item.label : [item.code, item.label].filter(Boolean).join(' — ')).toUpperCase()}</option>)}
                                   </select>
                                   <select aria-label="Lecturer" value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}>
                                     <option value="">Select lecturer</option>
@@ -2131,7 +2131,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                           <option value="">— Select course —</option>
                           {templateCourseOptions.map(item => (
                             <option key={item.id} value={item.id}>
-                              {[item.code, item.label].filter(Boolean).join(' — ').toUpperCase()}
+                              {(item.id === cell.courseId ? item.label : [item.code, item.label].filter(Boolean).join(' — ')).toUpperCase()}
                             </option>
                           ))}
                         </select>
