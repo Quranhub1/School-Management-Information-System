@@ -425,8 +425,8 @@ function canSeeSidebarItem(item:SidebarItem){
   if (item.module === 'academics' && item.subsection === 'classes' && !ac) return false;
   if (item.module === 'students' && item.subsection && !(st || ad)) {
     if (['indexing','cards','national-results'].includes(item.subsection)) return false;
-    if (item.subsection === 'admissions' && accessProfile === 'department') return false;
-    if (item.subsection === 'status' && ['receptionist','department'].includes(accessProfile)) return false;
+    if (item.subsection === 'admissions' && r.includes('HeadOfDepartment')) return false;
+    if (item.subsection === 'status' && (r.includes('Receptionist') || r.includes('HeadOfDepartment'))) return false;
   }
   if (item.module === 'staff' && item.subsection === 'payroll') return effectivePermissions===null?canReadPayroll(r)&&!isAdminSecretary:Boolean(hasPermission('hr.read-payroll','hr.manage-payroll'));
   if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
