@@ -288,10 +288,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const scheduleTutors = filterTutorsForCourse(options.teachers, courseId)
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
-  const templateCourseId = selectedTemplateGroup?.courseId || selectedCourseUnitId
-  const templateCourseOptions = templateCourseId
-    ? options.courses.filter(item => item.id === templateCourseId && eligibleCourseIds.has(item.id))
-    : availableCourses
+  // Every timetable cell offers the complete course list mapped to the selected
+  // curriculum, year and semester. The class selector must not narrow it to one course.
+  const templateCourseOptions = availableCourses
   const selectedGroupCourses = selectedGroup
     ? options.courses.filter(
         item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)
@@ -837,20 +836,24 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function changeTemplateCell(key: string, field: keyof TemplateCell, value: string) {
-    setTemplateCells(current => ({
-      ...current,
-      [key]: {
-        ...(current[key] ?? {
-          courseId: '',
-          teacherId: '',
-          room: '',
-          sessionType: 'Lecture',
-          rowSpan: 1,
-          colSpan: 1,
-        }),
-        [field]: value,
-      },
-    }))
+    setTemplateCells(current => {
+      const existing = current[key] ?? {
+        courseId: '',
+        teacherId: '',
+        room: '',
+        sessionType: 'Lecture',
+        rowSpan: 1,
+        colSpan: 1,
+      }
+      return {
+        ...current,
+        [key]: {
+          ...existing,
+          [field]: value,
+          ...(field === 'courseId' ? { teacherId: '' } : {}),
+        },
+      }
+    })
   }
 
   async function saveTemplate() {
@@ -1302,31 +1305,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               </select>
             </label>
           </div>
-          <label className="timetable-course-unit-filter">
-            Course unit
-            <select
-              aria-label="Course unit selection"
-              value={selectedCourseUnitId}
-              disabled={!selectedCurriculum || !yearOfStudy || !curriculumSemester || availableCourses.length === 0}
-              onChange={event => {
-                const nextCourseId = event.target.value
-                const nextGroup = options.teachingGroups.find(item =>
-                  item.programmeId === selectedCurriculum?.programmeId &&
-                  item.semesterId === semesterId && item.courseId === nextCourseId
-                )
-                setSelectedCourseUnitId(nextCourseId)
-                setSelectedTeachingGroupIds([])
-                setTeacherId('')
-                setTeachingGroupId(nextGroup?.id ?? '')
-                setTemplateGroupId(nextGroup?.id ?? '')
-                setTemplateLoadedGroupId('')
-                setTemplateCells({})
-              }}
-            >
-              <option value="">Select course unit</option>
-              {availableCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
-            </select>
-          </label>
+          <p className="timetable-generator-help">Choose course units directly in the timetable grid. Each cell is restricted to the selected curriculum year and semester.</p>
           <p className="timetable-generator-help">
             {eligibleMappings.length} curriculum course unit(s) match this selection.{' '}
             {availableGroups.length} operational teaching group(s) are available for the selected
@@ -1687,7 +1666,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                   </select>
                                   <select aria-label="Lecturer" value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}>
                                     <option value="">Select lecturer</option>
-                                    {availableTutors.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                                    {filterTutorsForCourse(options.teachers, cell.courseId).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                                   </select>
                                   <input aria-label="Room or venue" value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Room / lab" />
                                   <select aria-label="Session type" value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}>
@@ -1812,7 +1791,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                           }
                         >
                           <option value="">— Select lecturer —</option>
-                          {availableTutors.map(item => (
+                          {filterTutorsForCourse(options.teachers, cell.courseId).map(item => (
                             <option key={item.id} value={item.id}>
                               {item.label}
                             </option>
