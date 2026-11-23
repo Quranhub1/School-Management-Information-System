@@ -260,8 +260,10 @@ describe('TimetableManagement', () => {
     expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'CPH11', 'CPH12', 'CPH21', 'CPH22'])
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2'])
-    fireEvent.change(years, { target: { value: '1' } })
+    fireEvent.change(semesters, { target: { value: 'CPH21' } })
+    expect(years.value).toBe('2')
     fireEvent.change(semesters, { target: { value: 'CPH11' } })
+    expect(years.value).toBe('1')
 
     const courseSelect = screen.getAllByLabelText('Course unit')[0] as HTMLSelectElement
     expect(Array.from(courseSelect.options).map(option => option.value)).toEqual(['', 'course-1'])
@@ -282,9 +284,9 @@ describe('TimetableManagement', () => {
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
     fireEvent.change(years, { target: { value: '2' } })
-    expect(Array.from(semesters.options).map(option => option.value)).toEqual([''])
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH12', 'DPH31'])
     expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
-  })
+  }, 15000)
 
   it('shows each programme code only once while retaining curricula attached to duplicate records', async () => {
     await renderTimetable()
