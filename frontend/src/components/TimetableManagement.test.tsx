@@ -17,7 +17,7 @@ vi.mock('../api/timetable', () => ({
   saveTimetableTemplate: vi.fn().mockResolvedValue([]),
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [
-      { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' },
+      { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1', curriculumId: 'curriculum-1', yearOfStudy: 1, semesterNumber: 1, isProgrammeYearClass: true },
       { id: 'group-2', label: 'CPH-Y1-S1-B', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-not-in-selected-curriculum' },
     ],
     courses: [
