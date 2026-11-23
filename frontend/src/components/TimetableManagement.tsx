@@ -1160,7 +1160,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               <ArrowLeft /> Back to main
             </button>
             <div>
-              <p className="timetable-eyebrow">Timetable workspace</p>
               <h2>Saved timetables</h2>
             </div>
           </div>
