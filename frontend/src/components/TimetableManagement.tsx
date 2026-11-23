@@ -107,6 +107,17 @@ type TemplateCell = {
   colSpan?: number | string
 }
 
+type SavedTimetablePreview = {
+  slots: Array<{ startTime: string; endTime: string }>
+  cells: Record<string, TemplateCell>
+  title?: string
+  dayLabel?: string
+  showWeekends?: boolean
+  breakAfter?: number | null
+  breakLabel?: string
+  dayOrder?: number[]
+}
+
 const timeLabel = (value: string) => value.slice(0, 5)
 
 const formatSemesterDate = (value?: string) => {
@@ -158,7 +169,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showSavedTemplates, setShowSavedTemplates] = useState(false)
   const [openedSavedTemplate, setOpenedSavedTemplate] = useState(false)
   const [savedTemplates, setSavedTemplates] = useState<SavedTimetableTemplate[]>([])
-  const [savedTemplatePreviews, setSavedTemplatePreviews] = useState<Record<string, { slots: Array<{ startTime: string; endTime: string }>; cells: Record<string, TemplateCell>; title?: string; dayLabel?: string; showWeekends?: boolean; breakAfter?: number | null; breakLabel?: string; dayOrder?: number[] }>>({})
+  const [savedTemplatePreviews, setSavedTemplatePreviews] = useState<Record<string, SavedTimetablePreview>>({})
   const [savedTemplatesLoading, setSavedTemplatesLoading] = useState(false)
   const [savedTemplatesError, setSavedTemplatesError] = useState('')
   const [savedTemplateSearch, setSavedTemplateSearch] = useState('')
@@ -1095,7 +1106,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           return [template.teachingGroupId, null] as const
         }
       }))
-      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, NonNullable<typeof item[1]>] => item[1] !== null)))
+      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, SavedTimetablePreview] => item[1] !== null)))
     } catch (e) {
       setSavedTemplatesError(e instanceof Error ? e.message : 'Unable to load saved timetable templates.')
     } finally {
