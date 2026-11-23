@@ -258,6 +258,7 @@ describe('TimetableManagement', () => {
 
     const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
     expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'CPH11', 'CPH12', 'CPH21', 'CPH22'])
+    expect(Array.from(semesters.options).slice(1).map(option => option.textContent?.trim())).toEqual(['CPH11', 'CPH12', 'CPH21', 'CPH22'])
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2'])
     fireEvent.change(semesters, { target: { value: 'CPH21' } })
