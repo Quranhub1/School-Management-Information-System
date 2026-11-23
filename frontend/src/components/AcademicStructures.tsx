@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './AcademicStructures.css'
 import { createAcademicClass, getClassesByProgramme, setAcademicClassStatus, updateAcademicClass, type AcademicClass } from '../api/academicClasses'
 import { getProgrammes, type Programme } from '../api/programmes'
@@ -34,6 +34,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const programmeDataRequest = useRef(0)
 
   const [classForm, setClassForm] = useState({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' })
   const [streamForm, setStreamForm] = useState({ code: '', name: '' })
@@ -107,25 +108,35 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   }
 
   async function loadProgrammeData(programmeId: string) {
+    const requestId = ++programmeDataRequest.current
     setLoading(true)
+    setError('')
+    setCourses([])
+    setSubjects([])
     try {
-      setError('')
       const programme = programmes.find(item => item.id === programmeId)
       if (!programme?.regulator?.trim()) {
         throw new Error('The selected programme has no academic authority. Assign an authority before loading its courses.')
       }
-      const [cls, crs] = await Promise.all([
+      const [cls, crs, programmeSubjects] = await Promise.all([
         getClassesByProgramme(programmeId),
         getCourses(programme.regulator),
+        getSubjectsByProgramme(programmeId),
       ])
+      if (programmeDataRequest.current !== requestId) return
       setClasses(cls)
       setSelectedClass(current => cls.some(item => item.id === current) ? current : (cls[0]?.id ?? ''))
       setCourses(crs)
-      setSubjects(await getSubjectsByProgramme(programmeId))
+      setSubjects(programmeSubjects)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load programme data.')
+      if (programmeDataRequest.current === requestId) {
+        setClasses([])
+        setCourses([])
+        setSubjects([])
+        setError(e instanceof Error ? e.message : 'Unable to load programme data.')
+      }
     } finally {
-      setLoading(false)
+      if (programmeDataRequest.current === requestId) setLoading(false)
     }
   }
 
