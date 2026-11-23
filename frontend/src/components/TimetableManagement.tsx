@@ -344,7 +344,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         template.groupLabel, template.programmeLabel, template.curriculumLabel,
         template.semesterLabel, template.programmeCode,
       ].some(value => value.toLocaleLowerCase().includes(search))
-      const matchesProgramme = !savedTemplateProgrammeFilter || template.programmeId === savedTemplateProgrammeFilter
+      const matchesProgramme = !savedTemplateProgrammeFilter || (programmeOptions.find(item => item.id === savedTemplateProgrammeFilter)?.sourceIds.includes(template.programmeId) ?? false)
       const matchesSemester = !savedTemplateSemesterFilter || template.semesterId === savedTemplateSemesterFilter
       return matchesSearch && matchesProgramme && matchesSemester
     })
@@ -1084,25 +1084,37 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
   function openSavedTemplate(template: SavedTimetableTemplate) {
     const group = options.teachingGroups.find(item => item.id === template.teachingGroupId)
-    if (!group || !group.curriculumId || !group.yearOfStudy || !group.semesterNumber) {
-      setSavedTemplatesError('This saved timetable is no longer linked to an active programme-year class.')
+    if (!group) {
+      setSavedTemplatesError('This saved timetable is no longer linked to an available teaching group.')
       return
     }
     const programme = programmeOptions.find(item => item.sourceIds.includes(template.programmeId))
-    const mapping = options.curriculumCourses.find(item =>
-      item.curriculumId === group.curriculumId &&
-      item.yearOfStudy === group.yearOfStudy &&
+    const mappedCourse = options.curriculumCourses.find(item =>
+      item.programmeId === template.programmeId &&
+      item.courseId === group.courseId &&
       item.semesterNumber === group.semesterNumber
+    )
+    const curriculumId = group.curriculumId ?? mappedCourse?.curriculumId ?? ''
+    const year = group.yearOfStudy ?? mappedCourse?.yearOfStudy
+    const semesterNumber = group.semesterNumber ?? mappedCourse?.semesterNumber
+    if (!curriculumId || !year || !semesterNumber) {
+      setSavedTemplatesError('This saved timetable is missing its curriculum-year mapping and cannot be opened safely.')
+      return
+    }
+    const mapping = options.curriculumCourses.find(item =>
+      item.curriculumId === curriculumId &&
+      item.yearOfStudy === year &&
+      item.semesterNumber === semesterNumber
     )
     const prefix = (programme?.code ?? '').replace(/^(?:UHPAB|UVTAB|KSHS|SB)[-_]/i, '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
     const semesterCode = prefix
-      ? `${prefix}${group.yearOfStudy}${group.semesterNumber}`
-      : `Y${group.yearOfStudy}S${group.semesterNumber}`
+      ? `${prefix}${year}${semesterNumber}`
+      : `Y${year}S${semesterNumber}`
 
     setSemesterId(template.semesterId)
     setProgrammeId(template.programmeId)
-    setCurriculumId(group.curriculumId)
-    setYearOfStudy(String(group.yearOfStudy))
+    setCurriculumId(curriculumId)
+    setYearOfStudy(String(year))
     setCurriculumSemester(semesterCode)
     setSelectedCourseUnitId(mapping?.courseId ?? '')
     setTeachingGroupId(group.id)
