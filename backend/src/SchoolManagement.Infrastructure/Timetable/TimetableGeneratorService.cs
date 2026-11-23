@@ -41,7 +41,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
         if (request.ProgrammeId.HasValue)
             cohortQuery = cohortQuery.Where(group => group.ProgrammeId == request.ProgrammeId.Value);
         var cohortGroups = await cohortQuery.OrderBy(group => group.Name).ToListAsync(cancellationToken);
-        if (cohortGroups.Count > 0)
+        if (requestedGroupIds.Length > 0 && cohortGroups.Count > 0)
             return await GenerateForProgrammeYearClassesAsync(request, semester, cohortGroups, cancellationToken);
 
         var curriculumOfferingIds = await (
