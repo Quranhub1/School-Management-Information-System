@@ -247,6 +247,16 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.IsActive).HasDefaultValue(true);
         });
         m.Entity<CurriculumApprovalHistory>(e => { e.HasKey(x => x.Id); e.Property(x => x.ToStatus).IsRequired(); e.Property(x => x.Notes).HasMaxLength(2000); e.Property(x => x.Actor).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.CurriculumId, x.ChangedAtUtc }); e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade); });
+        m.Entity<TeachingGroup>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.ProgrammeId, x.CurriculumId, x.YearOfStudy, x.SemesterId, x.GroupCode })
+                .IsUnique()
+                .HasFilter("\"ProgrammeId\" IS NOT NULL AND \"CurriculumId\" IS NOT NULL AND \"YearOfStudy\" IS NOT NULL AND \"SemesterId\" IS NOT NULL");
+            e.HasOne<Programme>().WithMany().HasForeignKey(x => x.ProgrammeId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Semester>().WithMany().HasForeignKey(x => x.SemesterId).OnDelete(DeleteBehavior.Restrict);
+        });
         m.Entity<TimetableTemplate>(e => { e.HasKey(x => x.TeachingGroupId); e.Property(x => x.LayoutJson).HasColumnType("jsonb").IsRequired().HasDefaultValue("{}"); e.Property(x => x.UpdatedAtUtc).IsRequired(); e.HasOne<TeachingGroup>().WithMany().HasForeignKey(x => x.TeachingGroupId).OnDelete(DeleteBehavior.Cascade); });
         // Archived students are excluded from ordinary operational queries. Historical record endpoints opt in with IgnoreQueryFilters().
         m.Entity<SchoolManagement.Domain.Students.Student>().HasQueryFilter(student => !student.IsArchived);
