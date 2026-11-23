@@ -1,5 +1,15 @@
 import { useState } from 'react'
 import type { Curriculum } from '../api/curriculumManagement'
+import type { Programme } from '../api/programmes'
+
+function normalizeProgrammeType(value: number | string | null | undefined): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/[ _-]/g, '')
+  if (normalized === 'fullprogramme' || normalized === 'fullprogram' || normalized === '0') return 0
+  if (normalized === 'shortcourse' || normalized === '1') return 1
+  const numeric = Number(normalized)
+  return Number.isFinite(numeric) ? numeric : -1
+}
 
 export interface CurriculumFilters {
   status: string[]
