@@ -39,13 +39,13 @@ const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
   programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 
 const compactCurriculumLabel = (label: string, programmeLabel?: string, fallbackIndex = 0) => {
-  const programmeName = programmeLabel?.replace(/\s*\([^)]*\)\s*$/, '').trim()
+  const programmeName = programmeLabel?.replace(/\\s*\\([^)]*\\)\\s*$/, '').trim()
   let compact = label.trim()
   if (programmeName) {
-    compact = compact.replace(new RegExp(programmeName.replace(/[.*+?^${}()|[\]\\]/g, '\\const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
-  programme.code?.trim().toLocaleUpperCase() ||
-  programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
-'), 'i'), '')
+    const programmeIndex = compact.toLocaleLowerCase().indexOf(programmeName.toLocaleLowerCase())
+    if (programmeIndex >= 0) {
+      compact = compact.slice(0, programmeIndex) + compact.slice(programmeIndex + programmeName.length)
+    }
   }
   compact = compact.replace(/^\\s*[-–—:|]+\\s*/, '').replace(/\\s+/g, ' ').trim()
   if (!compact || compact.toLocaleLowerCase() === 'curriculum') return `Curriculum ${fallbackIndex + 1}`
