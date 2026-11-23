@@ -1293,7 +1293,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 <option value="">Select curriculum semester</option>
                 {curriculumSemesters.map(item => (
                   <option key={item.value} value={item.code}>
-                    Year {item.year} – Semester {item.semesterNumber} ({item.code})
+                    {item.code}
                   </option>
                 ))}
               </select>
