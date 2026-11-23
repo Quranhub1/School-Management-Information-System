@@ -24,7 +24,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
             join semester in db.Semesters.AsNoTracking() on (teachingGroup.SemesterId ?? offering.SemesterId) equals semester.Id
             where teachingGroup.IsActive && (teachingGroup.CurriculumId != null || offering.IsActive)
-            orderby teachingGroup.GroupCode
+            orderby teachingGroup.Name, semester.StartDate descending, teachingGroup.GroupCode
             select new
             {
                 teachingGroup.Id,
