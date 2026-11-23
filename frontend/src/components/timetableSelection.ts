@@ -73,7 +73,7 @@ export function deriveTimetableSelection(
     .toUpperCase()
   // Show every semester mapped to this curriculum, across all study years.
   // Selecting a semester synchronizes the year selector in the UI.
-  const curriculumSemesters = [
+  const allCurriculumSemesters = [
     ...new Map(mappings.map(item => {
       const value = `${item.yearOfStudy}-${item.semesterNumber}`
       return [value, {
@@ -84,7 +84,11 @@ export function deriveTimetableSelection(
       }] as const
     })).values(),
   ].sort((a, b) => a.year - b.year || a.semesterNumber - b.semesterNumber)
-  const selectedCurriculumSemester = curriculumSemesters.find(item => item.code === curriculumSemester)
+  // Once a study year is selected, show only semesters mapped to that year.
+  const curriculumSemesters = yearOfStudy
+    ? allCurriculumSemesters.filter(item => item.year === Number(yearOfStudy))
+    : allCurriculumSemesters
+  const selectedCurriculumSemester = allCurriculumSemesters.find(item => item.code === curriculumSemester)
 
   const eligibleMappings = mappings.filter(
     item =>
