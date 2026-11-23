@@ -1397,8 +1397,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           )}
         </div>
       )}
-      <CurriculumLogbookManagement curricula={authorityCurricula} />
-      <CurriculumGovernancePanel curricula={authorityCurricula} canManage={canManage} onChanged={() => void load()} />
+      <CurriculumLogbookManagement curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} />
+      <CurriculumGovernancePanel curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} canManage={canManage} onChanged={() => void load()} />
     </section>
   )
 }
