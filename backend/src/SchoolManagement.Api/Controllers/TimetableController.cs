@@ -239,6 +239,36 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     }
 
 
+    [HttpGet("templates")]
+    [Authorize(Policy = TimetablePolicies.Read)]
+    public async Task<IActionResult> ListTemplates(CancellationToken cancellationToken)
+    {
+        var templates = await (
+            from template in db.TimetableTemplates.AsNoTracking()
+            join teachingGroup in db.TeachingGroups.AsNoTracking() on template.TeachingGroupId equals teachingGroup.Id
+            join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
+            join semester in db.Semesters.AsNoTracking() on (teachingGroup.SemesterId ?? offering.SemesterId) equals semester.Id
+            where teachingGroup.IsActive
+            orderby template.UpdatedAtUtc descending
+            select new
+            {
+                template.TeachingGroupId,
+                TeachingGroupLabel = teachingGroup.Name == null || teachingGroup.Name == ""
+                    ? teachingGroup.GroupCode
+                    : teachingGroup.Name,
+                ProgrammeId = teachingGroup.ProgrammeId ?? offering.ProgrammeId,
+                CurriculumId = teachingGroup.CurriculumId,
+                YearOfStudy = teachingGroup.YearOfStudy,
+                SemesterId = teachingGroup.SemesterId ?? offering.SemesterId,
+                SemesterLabel = semester.Name,
+                template.UpdatedAtUtc,
+                SessionCount = db.TimetableEntries.Count(entry =>
+                    entry.TeachingGroupId == teachingGroup.Id && entry.IsActive)
+            }).ToListAsync(cancellationToken);
+
+        return Ok(templates);
+    }
+
     [HttpGet("template/{teachingGroupId:guid}")]
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> GetTemplate(Guid teachingGroupId, CancellationToken cancellationToken)
