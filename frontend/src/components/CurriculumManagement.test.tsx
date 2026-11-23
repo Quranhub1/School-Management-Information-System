@@ -128,6 +128,18 @@ describe('CurriculumManagement selectors', () => {
     expect(within(screen.getByLabelText('Select curriculum')).queryByRole('option', { name: /Inactive short curriculum/ })).not.toBeInTheDocument()
   })
 
+  it('renders returned authority courses in the course-unit catalogue', async () => {
+    render(<CurriculumManagement canManage />)
+
+    const authoritySelect = await screen.findByLabelText('Authority')
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+    fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
+
+    expect(await screen.findByText('Introduction to Pharmacy')).toBeInTheDocument()
+    expect(screen.getByText('CPH1101')).toBeInTheDocument()
+    expect(screen.getByText('CPH1201')).toBeInTheDocument()
+  })
+
   it('groups course units under the programme-specific year and semester code', async () => {
     vi.mocked(getCurriculumCourses).mockResolvedValue([
       { id: 'mapping-pharm-1', curriculumId: 'curriculum-pharmacy', courseId: 'course-pharm-1', yearOfStudy: 1, semesterNumber: 1, isCore: true, isDeleted: false },
