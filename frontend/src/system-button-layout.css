@@ -115,3 +115,82 @@
     max-width: 100%;
   }
 }
+
+
+/* Timetable saved-library controls: override the shared button reset with a
+   true solid fill. Keep this rule in the global action layer so it wins even
+   when component CSS is loaded before/after the shared workspace styles. */
+.app-shell .content .timetable-screen button.timetable-back-main-button,
+.app-shell .content .timetable-screen button.timetable-open-saved-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  min-width: 170px !important;
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  border: 1px solid #176b45 !important;
+  border-radius: 4px !important;
+  background-color: #176b45 !important;
+  background-image: linear-gradient(0deg, #176b45, #176b45) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  color: #ffffff !important;
+  font-family: inherit !important;
+  font-size: .82rem !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  box-shadow: inset 0 0 0 1px #176b45 !important;
+  cursor: pointer !important;
+}
+.app-shell .content .timetable-screen button.timetable-back-main-button > *,
+.app-shell .content .timetable-screen button.timetable-open-saved-button > * {
+  color: #ffffff !important;
+}
+.app-shell .content .timetable-screen button.timetable-back-main-button > svg,
+.app-shell .content .timetable-screen button.timetable-open-saved-button > svg {
+  display: block !important;
+  flex: 0 0 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+.app-shell .content .timetable-screen button.timetable-back-main-button:hover:not(:disabled),
+.app-shell .content .timetable-screen button.timetable-open-saved-button:hover:not(:disabled) {
+  border-color: #105538 !important;
+  background-color: #105538 !important;
+  background-image: linear-gradient(0deg, #105538, #105538) !important;
+  box-shadow: inset 0 0 0 1px #105538 !important;
+  color: #ffffff !important;
+}
+.app-shell .content .timetable-screen button.timetable-back-main-button:disabled,
+.app-shell .content .timetable-screen button.timetable-open-saved-button:disabled {
+  border-color: #176b45 !important;
+  background-color: #176b45 !important;
+  background-image: linear-gradient(0deg, #176b45, #176b45) !important;
+  color: #ffffff !important;
+  opacity: .65 !important;
+}
+.app-shell .content .timetable-screen button.timetable-back-main-button:focus-visible,
+.app-shell .content .timetable-screen button.timetable-open-saved-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .4) !important;
+  outline-offset: 3px !important;
+}
+@media (max-width: 560px) {
+  .app-shell .content .timetable-screen button.timetable-back-main-button,
+  .app-shell .content .timetable-screen button.timetable-open-saved-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+    white-space: normal !important;
+  }
+}
