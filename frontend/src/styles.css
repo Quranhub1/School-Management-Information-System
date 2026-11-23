@@ -6033,3 +6033,96 @@ table { font-variant-numeric: tabular-nums; }
   width: 100%;
   min-width: 100%;
 }
+
+/* Registration navigation controls: solid fills must occupy the complete
+   button box, not just the text/content area. Keep navigation actions uniform. */
+.app-shell .sidebar-group-items > .sidebar-item,
+.app-shell .sidebar-group-items > .sidebar-parent-item,
+.app-shell .sidebar-group-items > .sidebar-child-item {
+  display: flex !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  align-items: center !important;
+  min-height: 42px;
+  padding: 9px 13px !important;
+  border-radius: 8px !important;
+  background-clip: border-box !important;
+  line-height: 1.25 !important;
+}
+.app-shell .sidebar-group-items > .sidebar-child-item {
+  width: calc(100% - 23px) !important;
+  max-width: calc(100% - 23px) !important;
+  min-height: 38px;
+  margin-left: 23px;
+  padding: 8px 11px !important;
+}
+.app-shell .sidebar-group-items > .sidebar-parent-item.active,
+.app-shell .sidebar-group-items > .sidebar-child-item.active {
+  background: #176b43 !important;
+  background-image: none !important;
+  border-color: #176b43 !important;
+  color: #fff !important;
+  box-shadow: inset 3px 0 0 #b9e5c7 !important;
+}
+.app-shell .sidebar-group-items > .sidebar-parent-item.active *,
+.app-shell .sidebar-group-items > .sidebar-child-item.active * {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  opacity: 1 !important;
+}
+.app-shell .student-lifecycle-tabs {
+  box-sizing: border-box;
+  align-items: stretch;
+  gap: 7px;
+}
+.app-shell .student-lifecycle-tabs > button {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  flex: 0 0 auto;
+  min-height: 40px;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 9px 15px !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  background-image: none !important;
+  color: #475569 !important;
+  line-height: 1.25 !important;
+  white-space: nowrap;
+}
+.app-shell .student-lifecycle-tabs > button.active {
+  background: #176b43 !important;
+  background-image: none !important;
+  border-color: #176b43 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 2px 5px rgba(23, 107, 67, .2) !important;
+}
+.app-shell .student-lifecycle-tabs > button.active *,
+.app-shell .student-lifecycle-tabs > button.active svg {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  opacity: 1 !important;
+}
+.app-shell .student-lifecycle-tabs > button:focus-visible,
+.app-shell .sidebar-group-items > .sidebar-item:focus-visible {
+  outline: 2px solid #65a982 !important;
+  outline-offset: 2px !important;
+}
+.app-shell .student-lifecycle-tabs > button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+@media (max-width: 640px) {
+  .app-shell .student-lifecycle-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .app-shell .student-lifecycle-tabs > button {
+    flex: 0 0 auto;
+  }
+}
