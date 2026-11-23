@@ -70,6 +70,15 @@ describe('timetable programme-to-template selection flow', () => {
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-a2'])
   })
 
+  it('loads the selected year cohort without narrowing it to its anchor course offering', () => {
+    const result = deriveTimetableSelection(
+      options, ['programme-a'], 'curriculum-a', '2', 'A21', 'period-2', 'course-a3'
+    )
+    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a3'])
+    expect(result.courseUnits.map(item => item.id)).toEqual(['course-a3'])
+    expect(result.allTeachingGroups[0].isProgrammeYearClass).toBe(true)
+  })
+
   it('loads the whole programme-year class for the selected curriculum year and academic semester', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
     expect(result.teachingGroups.map(item => item.id)).toEqual(['group-a1'])
