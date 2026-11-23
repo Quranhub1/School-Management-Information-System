@@ -41,21 +41,32 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
   // Prop synchronization also handles navigation into Students from another module,
   // where the sidebar event can fire before this component has mounted.
+  const selectSidebarSection = (subsection?: string | null) => {
+    const sectionBySubsection: Record<string, Section> = {
+      registration: 'biodata',
+      records: 'biodata',
+      admissions: 'admissions',
+      indexing: 'indexing',
+      status: 'status',
+      cards: 'cards',
+      'national-results': 'national-results',
+      archives: 'archives',
+    }
+    if (subsection && sectionBySubsection[subsection]) setSection(sectionBySubsection[subsection])
+  }
+
+  // Keep the selected lifecycle tab synchronized with sidebar navigation,
+  // including navigation that arrives immediately after this workspace mounts.
   useEffect(() => {
-    if (activeSubsection === 'records') setSection('biodata')
-    else if (activeSubsection === 'registration') setSection('admissions')
-    else if (activeSubsection === 'archives') setSection('archives')
+    selectSidebarSection(activeSubsection)
   }, [activeSubsection])
 
-  // Keep the sidebar's Students > Records destination synchronized with this workspace.
   useEffect(() => {
     const handleSubsectionNavigation = (event: Event) => {
       if (!(event instanceof CustomEvent)) return
       const detail = event.detail as { module?: string; subsection?: string } | undefined
       if (detail?.module !== 'students' || !detail.subsection) return
-      if (detail.subsection === 'records') setSection('biodata')
-      else if (detail.subsection === 'registration') setSection('admissions')
-      else if (detail.subsection === 'archives') setSection('archives')
+      selectSidebarSection(detail.subsection)
     }
     window.addEventListener('smis:navigate-subsection', handleSubsectionNavigation)
     return () => window.removeEventListener('smis:navigate-subsection', handleSubsectionNavigation)
