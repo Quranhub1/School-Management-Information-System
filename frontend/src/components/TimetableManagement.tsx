@@ -1160,7 +1160,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               <ArrowLeft /> Back to main
             </button>
             <div style={{ flex: 1, textAlign: 'center' }}>
-              <h2>Saved timetables</h2>
+              <h2>SAVED TIMETABLES</h2>
             </div>
           </div>
           <div className="timetable-actions">
