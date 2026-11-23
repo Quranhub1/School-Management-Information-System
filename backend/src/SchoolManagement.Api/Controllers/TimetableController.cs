@@ -161,13 +161,13 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
                 select mapping.Id).AnyAsync(cancellationToken);
         }
 
-        return await (from teachingGroup in db.TeachingGroups.AsNoTracking()
-            join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
+        return await (from legacyTeachingGroup in db.TeachingGroups.AsNoTracking()
+            join offering in db.CourseOfferings.AsNoTracking() on legacyTeachingGroup.CourseOfferingId equals offering.Id
             join programme in db.Programmes.AsNoTracking() on offering.ProgrammeId equals programme.Id
             join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
             join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
             join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
-            where teachingGroup.Id == teachingGroupId && teachingGroup.IsActive && offering.IsActive &&
+            where legacyTeachingGroup.Id == legacyTeachingGroupId && legacyTeachingGroup.IsActive && offering.IsActive &&
                 programme.IsActive && !programme.IsReferenceOnly && course.IsActive &&
                 offering.CourseId == courseId && mapping.CourseId == courseId && curriculum.IsActive &&
                 curriculum.Id == curriculumId && mapping.YearOfStudy == yearOfStudy && mapping.SemesterNumber == curriculumSemesterNumber
