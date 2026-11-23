@@ -6126,3 +6126,113 @@ table { font-variant-numeric: tabular-nums; }
     flex: 0 0 auto;
   }
 }
+
+/* Dedicated, full-surface action buttons for ID Card Generator and National Results. */
+.app-shell .student-lifecycle-workspace .id-card-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+}
+.app-shell .student-lifecycle-workspace .id-card-actions > .id-card-action-button {
+  appearance: none !important;
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  flex: 0 1 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 132px !important;
+  min-height: 42px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 10px 16px !important;
+  border: 1px solid #176b43 !important;
+  border-radius: 7px !important;
+  background: #176b43 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+.app-shell .student-lifecycle-workspace .id-card-actions > .id-card-action-button:hover:not(:disabled) {
+  background: #125638 !important;
+  border-color: #125638 !important;
+}
+.app-shell .student-lifecycle-workspace .id-card-actions > .id-card-action-button:disabled {
+  background: #176b43 !important;
+  border-color: #176b43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: .48 !important;
+  cursor: not-allowed !important;
+}
+.app-shell .student-lifecycle-workspace .id-card-actions > .id-card-action-button *,
+.app-shell .student-lifecycle-workspace .id-card-actions > .id-card-action-button svg {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.app-shell .student-lifecycle-workspace .national-results-actions {
+  align-items: stretch !important;
+  gap: 14px !important;
+}
+.app-shell .student-lifecycle-workspace .national-results-actions > .feature-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  min-width: 0 !important;
+  gap: 16px !important;
+}
+.app-shell .student-lifecycle-workspace .national-results-actions .national-results-action-button {
+  appearance: none !important;
+  display: flex !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 11px 14px !important;
+  border: 1px solid #176b43 !important;
+  border-radius: 7px !important;
+  background: #176b43 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  box-shadow: none !important;
+  opacity: .52 !important;
+  cursor: not-allowed !important;
+}
+.app-shell .student-lifecycle-workspace .national-results-actions .national-results-action-button:disabled,
+.app-shell .student-lifecycle-workspace .national-results-actions .national-results-action-button:disabled * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+@media (max-width: 640px) {
+  .app-shell .student-lifecycle-workspace .id-card-actions > .id-card-action-button {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+  .app-shell .student-lifecycle-workspace .national-results-actions > .feature-card {
+    width: 100% !important;
+  }
+}
