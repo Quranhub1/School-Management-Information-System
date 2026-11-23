@@ -110,9 +110,13 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
     setLoading(true)
     try {
       setError('')
+      const programme = programmes.find(item => item.id === programmeId)
+      if (!programme?.regulator?.trim()) {
+        throw new Error('The selected programme has no academic authority. Assign an authority before loading its courses.')
+      }
       const [cls, crs] = await Promise.all([
         getClassesByProgramme(programmeId),
-        getCourses(),
+        getCourses(programme.regulator),
       ])
       setClasses(cls)
       setSelectedClass(current => cls.some(item => item.id === current) ? current : (cls[0]?.id ?? ''))
