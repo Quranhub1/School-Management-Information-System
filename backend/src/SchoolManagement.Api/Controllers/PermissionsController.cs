@@ -41,16 +41,33 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     }
 
     [HttpGet("catalog")]
+    [HttpGet("catalogue")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
     {
-        // The catalogue contains metadata only. The assignment endpoint and
-        // staff-creation flow enforce which permissions the current manager may delegate.
-        var catalog = await db.Permissions.AsNoTracking()
+        // Return the grouped shape consumed by the role-permission editor.
+        // Permission codes are the stable identifiers sent back by the editor.
+        var permissions = await db.Permissions.AsNoTracking()
             .OrderBy(x => x.GroupKey).ThenBy(x => x.Name)
-            .Select(x => new { x.Id, x.Code, x.Name, x.GroupKey, x.Description })
+            .Select(x => new { x.Code, x.Name, x.GroupKey, x.Description })
             .ToListAsync(cancellationToken);
-        return Ok(catalog);
+
+        var catalogue = permissions
+            .GroupBy(x => x.GroupKey)
+            .Select(group => new
+            {
+                id = group.Key,
+                label = group.Key.Replace("-", " ").Replace("_", " "),
+                permissions = group.Select(permission => new
+                {
+                    id = permission.Code,
+                    label = permission.Name,
+                    description = permission.Description
+                }).ToArray()
+            })
+            .ToArray();
+
+        return Ok(catalogue);
     }
 
     [HttpGet("roles")]
@@ -59,13 +76,68 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
         => Ok(await db.Roles.AsNoTracking().OrderBy(x => x.Name)
             .Select(x => new
             {
-                x.Id,
+                id = x.Id,
                 x.Name,
                 x.Description,
-                PermissionCodes = db.RolePermissions.Where(assignment => assignment.RoleId == x.Id)
-                    .Join(db.Permissions, assignment => assignment.PermissionId, permission => permission.Id, (_, permission) => permission.Code)
-                    .ToList()
+                x.IsSystemRole
             }).ToListAsync(cancellationToken));
+
+    [HttpGet("roles/{roleId:guid}")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> GetRolePermissionCodes(Guid roleId, CancellationToken cancellationToken)
+    {
+        if (!await db.Roles.AnyAsync(role => role.Id == roleId, cancellationToken))
+            return NotFound();
+
+        var permissionCodes = await db.RolePermissions
+            .Where(assignment => assignment.RoleId == roleId)
+            .Join(db.Permissions, assignment => assignment.PermissionId, permission => permission.Id,
+                (_, permission) => permission.Code)
+            .OrderBy(code => code)
+            .ToListAsync(cancellationToken);
+
+        return Ok(new { roleId, permissionCodes });
+    }
+
+    [HttpPut("roles/{roleId:guid}")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> SetRolePermissionCodes(
+        Guid roleId,
+        [FromBody] SetRolePermissionCodesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var role = await db.Roles.SingleOrDefaultAsync(item => item.Id == roleId, cancellationToken);
+        if (role is null) return NotFound();
+        if (string.Equals(role.Name, "SystemAdministrator", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "The System Administrator role is protected and cannot be edited." });
+
+        var codes = (request.PermissionCodes ?? Array.Empty<string>())
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Select(code => code.Trim())
+            .ToArray();
+        if (codes.Distinct(StringComparer.OrdinalIgnoreCase).Count() != codes.Length)
+            return BadRequest(new { message = "Each permission may only be selected once." });
+
+        var permissions = await db.Permissions
+            .Where(permission => codes.Contains(permission.Code))
+            .ToListAsync(cancellationToken);
+        if (permissions.Count != codes.Length)
+            return BadRequest(new { message = "One or more permission codes are invalid. Refresh the permission catalogue." });
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var existing = await db.RolePermissions
+            .Where(assignment => assignment.RoleId == roleId)
+            .ToListAsync(cancellationToken);
+        db.RolePermissions.RemoveRange(existing);
+
+        foreach (var permission in permissions)
+            db.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionId = permission.Id });
+
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return Ok(new { roleId, assignedCount = permissions.Count });
+    }
 
     [HttpGet("users/{userId:guid}")]
     [Authorize(Policy = AuthorizationPolicies.Administration)]
@@ -132,4 +204,5 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
 }
 
 public sealed record SetUserPermissionsRequest(PermissionOverrideRequest[]? Overrides);
+public sealed record SetRolePermissionCodesRequest(string[]? PermissionCodes);
 public sealed record PermissionOverrideRequest(string Code, bool IsGranted);
