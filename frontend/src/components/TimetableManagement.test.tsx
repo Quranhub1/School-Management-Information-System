@@ -65,7 +65,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
   })),
 }))
 
-import { generateTimetable, saveTimetableTemplate } from '../api/timetable'
+import { generateTimetable, getTimetableTemplate, saveTimetableTemplate } from '../api/timetable'
 import { downloadInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
@@ -74,8 +74,9 @@ describe('TimetableManagement', () => {
     let rendered: ReturnType<typeof render> | undefined
     await act(async () => {
       rendered = render(<TimetableManagement {...props} />)
-      await Promise.resolve()
-      await Promise.resolve()
+      if (!props.readOnly) {
+        await waitFor(() => expect(getTimetableTemplate).toHaveBeenCalled())
+      }
     })
     return rendered!
   }
