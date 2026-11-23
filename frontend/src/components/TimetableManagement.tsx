@@ -1162,7 +1162,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <div>
               <p className="timetable-eyebrow">Timetable workspace</p>
               <h2>Saved timetables</h2>
-              <p>Only timetables you save from the designer appear here. Generated schedules stay out of this library until you save them.</p>
             </div>
           </div>
           <div className="timetable-actions">
