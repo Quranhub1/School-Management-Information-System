@@ -13,7 +13,7 @@ export interface Programme {
   durationUnit: string
   studyMode: string
   deliveryType: string
-  type: number
+  type: number | string
   regulator?: string | null
   approvalReference?: string | null
   approvalDate?: string | null
