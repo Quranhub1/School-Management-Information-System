@@ -785,3 +785,66 @@ justify-content:space-around;
     margin-left: 0;
   }
 }
+
+
+/* Consistent full-surface styling for saved-library navigation and actions. */
+.timetable-screen .timetable-back-main-button,
+.timetable-screen .timetable-open-saved-button {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 19px;
+  border: 1px solid #176b45 !important;
+  border-radius: 4px !important;
+  background: #176b45 !important;
+  background-color: #176b45 !important;
+  background-image: none !important;
+  color: #fff !important;
+  font: 750 .83rem/1.2 Inter, Arial, sans-serif !important;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 999px #176b45, 0 1px 2px rgba(15,23,42,.14) !important;
+  cursor: pointer;
+}
+.timetable-screen .timetable-back-main-button svg,
+.timetable-screen .timetable-open-saved-button svg {
+  display: block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  color: #fff !important;
+}
+.timetable-screen .timetable-back-main-button:hover:not(:disabled),
+.timetable-screen .timetable-open-saved-button:hover:not(:disabled) {
+  border-color: #105538 !important;
+  background: #105538 !important;
+  background-color: #105538 !important;
+  background-image: none !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 0 999px #105538, 0 2px 5px rgba(15,23,42,.18) !important;
+}
+.timetable-screen .timetable-back-main-button:focus-visible,
+.timetable-screen .timetable-open-saved-button:focus-visible {
+  outline: 3px solid rgba(37,99,235,.35);
+  outline-offset: 3px;
+}
+.timetable-screen .timetable-saved-card-footer .timetable-open-saved-button {
+  min-width: 170px;
+}
+.timetable-screen .timetable-saved-heading .timetable-back-main-button {
+  flex: 0 0 auto;
+}
+.timetable-screen .timetable-template-controls .timetable-back-main-button {
+  min-width: 190px;
+}
+@media(max-width:560px) {
+  .timetable-screen .timetable-saved-heading .timetable-back-main-button,
+  .timetable-screen .timetable-saved-card-footer .timetable-open-saved-button,
+  .timetable-screen .timetable-template-controls .timetable-back-main-button {
+    width: 100%;
+  }
+}
