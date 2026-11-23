@@ -9,17 +9,17 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
     { id: 'authority-uvtab', code: 'UVTAB', name: 'UVTAB', isActive: true, sortOrder: 3 },
   ],
   mockProgrammes: [
-    { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
-    { id: 'programme-pharmacy', code: 'KSHS-CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
-    { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', award: 'Certificate', durationYears: 1, durationUnit: 'Days', studyMode: 'Full-time', deliveryType: 'ShortCourse', approvalStatus: 'Approved', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
-    { id: 'programme-uvtab', code: 'UVTAB-DBA', name: 'Diploma in Business Administration', award: 'Diploma', durationYears: 0, durationUnit: 'Not published', studyMode: 'Full-time', deliveryType: 'CompetencyBased', approvalStatus: 'NeedsVerification', type: 0, regulator: 'UVTAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 'FullProgramme', regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
+    { id: 'programme-pharmacy', code: 'KSHS-CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 'FullProgramme', regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', award: 'Certificate', durationYears: 1, durationUnit: 'Days', studyMode: 'Full-time', deliveryType: 'ShortCourse', approvalStatus: 'Approved', type: 'ShortCourse', regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-uvtab', code: 'UVTAB-DBA', name: 'Diploma in Business Administration', award: 'Diploma', durationYears: 0, durationUnit: 'Not published', studyMode: 'Full-time', deliveryType: 'CompetencyBased', approvalStatus: 'NeedsVerification', type: 'FullProgramme', regulator: 'UVTAB', isActive: true, isReferenceOnly: false },
   ],
   mockCurricula: [
     // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
-    { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 1 },
-    { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, isDeleted: false, programmeType: 1 },
-    { id: 'curriculum-school', programmeId: 'programme-school', version: '1.0', title: 'KSHS School-Based Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0 },
-    { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0 },
+    { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 'ShortCourse' },
+    { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, isDeleted: false, programmeType: 'ShortCourse' },
+    { id: 'curriculum-school', programmeId: 'programme-school', version: '1.0', title: 'KSHS School-Based Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 'FullProgramme' },
+    { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 'FullProgramme' },
   ],
   mockCourses: [
     { id: 'course-pharm-legacy', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
