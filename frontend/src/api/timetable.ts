@@ -75,11 +75,23 @@ export const generateTimetable = (semesterId: string, teachingGroupIds: string[]
 })
 
 
+export type SavedTimetableTemplate = {
+  teachingGroupId: string
+  teachingGroupLabel: string
+  programmeId: string
+  curriculumId?: string | null
+  yearOfStudy?: number | null
+  semesterId: string
+  semesterLabel: string
+  updatedAtUtc: string
+  sessionCount: number
+}
 export type TimetableTemplateLayout = {
   teachingGroupId: string
   layoutJson: string | null
   updatedAtUtc: string | null
 }
+export const listSavedTimetableTemplates = () => request<SavedTimetableTemplate[]>('/api/timetable/templates')
 export const getTimetableTemplate = (teachingGroupId: string) => request<TimetableTemplateLayout>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`)
 export const saveTimetableTemplate = (teachingGroupId: string, entries: CreateTimetableEntry[], layout: unknown) =>
   request<TimetableEntry[]>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`, {
