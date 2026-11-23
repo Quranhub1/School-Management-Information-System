@@ -1157,7 +1157,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <div>
               <p className="timetable-eyebrow">Timetable workspace</p>
               <h2>Saved timetables</h2>
-              <p>Open and continue working on a saved class timetable.</p>
+              <p>Only timetables you save from the designer appear here. Generated schedules stay out of this library until you save them.</p>
             </div>
           </div>
           <div className="timetable-actions">
@@ -2202,7 +2202,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               }
             >
               <Save size={15} />
-              {templateSaving ? 'Saving template…' : 'Save timetable template'}
+              {templateSaving ? 'Saving…' : 'Save timetable'}
             </button>
             <button
               className="timetable-action"
@@ -2210,7 +2210,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               onClick={downloadTimetableTemplatePdf}
               disabled={!institutionLoaded || !institution.isActive}
             >
-              Download PDF
+              Download
             </button>
             <button
               className="timetable-action"
@@ -2218,7 +2218,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               onClick={printTimetableTemplate}
               disabled={!institutionLoaded || !institution.isActive}
             >
-              Print template
+              Print
             </button>
           </div>
         </section>
