@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { Curriculum } from '../api/curriculumManagement'
-import type { Programme } from '../api/programmes'
 
 function normalizeProgrammeType(value: number | string | null | undefined): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value
