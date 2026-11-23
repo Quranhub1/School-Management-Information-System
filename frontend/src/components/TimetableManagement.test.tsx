@@ -104,28 +104,28 @@ describe('TimetableManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
     expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
-    expect(screen.getByRole('button', { name: /back to main editor/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
     expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
     expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /open timetable/i }))
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Saved timetables' })).toBeNull())
-    expect(screen.getByLabelText('Programme')).toBeTruthy()
+    expect(screen.queryByLabelText('Programme')).toBeNull()
+    expect(screen.queryByLabelText('Curriculum')).toBeNull()
+    expect(screen.queryByLabelText('Year of study')).toBeNull()
+    expect(screen.queryByLabelText('Curriculum semester')).toBeNull()
+    expect(screen.queryByLabelText('Academic period')).toBeNull()
     expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
-    const programmeSelect = screen.getByLabelText('Programme') as HTMLSelectElement
-    expect(Array.from(programmeSelect.options).map(option => option.textContent?.trim())).toEqual([
-      'Select programme',
-      'Certificate in Pharmacy (Certificate)',
-      'Diploma in Pharmacy (Diploma)',
-    ])
+    const backToMain = screen.getByRole('button', { name: /^back to main$/i })
+    expect(backToMain.closest('.timetable-hero-heading')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: /back to main editor/i }))
+    fireEvent.click(backToMain)
     expect(await screen.findByRole('button', { name: /saved timetables/i })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /back to main editor/i }))
+    fireEvent.click(screen.getByRole('button', { name: /back to main/i }))
     expect(screen.getByRole('heading', { name: 'Timetable management' })).toBeTruthy()
   }, 15000)
 
