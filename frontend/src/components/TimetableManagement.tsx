@@ -199,14 +199,23 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       const preferredMapping =
         preferredMappings.find(item =>
           loadedOptions.teachingGroups.some(group =>
+            group.isProgrammeYearClass &&
             group.programmeId === preferredCurriculum?.programmeId &&
+            group.curriculumId === preferredCurriculum?.id &&
             group.semesterId === preferredPeriodId &&
-            group.courseId === item.courseId
+            group.yearOfStudy === item.yearOfStudy &&
+            group.semesterNumber === item.semesterNumber &&
+            item.yearOfStudy === group.yearOfStudy &&
+            item.semesterNumber === group.semesterNumber
           )
         ) ?? preferredMappings[0]
       const preferredGroup = loadedOptions.teachingGroups.find(
-        item => item.programmeId === preferredCurriculum?.programmeId &&
-          item.semesterId === preferredPeriodId && item.courseId === preferredMapping?.courseId
+        item => item.isProgrammeYearClass &&
+          item.programmeId === preferredCurriculum?.programmeId &&
+          item.curriculumId === preferredCurriculum?.id &&
+          item.semesterId === preferredPeriodId &&
+          item.yearOfStudy === preferredMapping?.yearOfStudy &&
+          item.semesterNumber === preferredMapping?.semesterNumber
       )
       setProgrammeId(current => current || preferredProgramme?.id || '')
       setCurriculumId(current => current || preferredCurriculum?.id || '')
@@ -319,8 +328,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         )
       : []
   const selectedGroupCourses = selectedGroup
-    ? options.courses.filter(
-        item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)
+    ? options.courses.filter(item =>
+        eligibleCourseIds.has(item.id) &&
+        (selectedGroup.isProgrammeYearClass || item.id === selectedGroup.courseId)
       )
     : []
   const activeEntries = useMemo(
@@ -686,7 +696,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
     if (
       !eligibleCourseIds.has(courseId) ||
-      options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId
+      (!options.teachingGroups.find(item => item.id === teachingGroupId)?.isProgrammeYearClass &&
+        options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId)
     ) {
       setError(
         'The selected course unit does not belong to this teaching group and curriculum selection.'
@@ -1127,9 +1138,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               {semesterTemplates.map(item => {
                 const matchingGroups = options.teachingGroups.filter(
                   group =>
+                    group.isProgrammeYearClass &&
                     group.programmeId === selectedCurriculum?.programmeId &&
-                    group.semesterId === semesterId &&
-                    item.courseIds.has(group.courseId)
+                    group.curriculumId === selectedCurriculum?.id &&
+                    group.yearOfStudy === item.year &&
+                    group.semesterNumber === item.semester &&
+                    group.semesterId === semesterId
                 )
                 const matchingCurriculumSemester = selection.curriculumSemesters.find(
                   option => option.year === item.year && option.semesterNumber === item.semester
@@ -1501,8 +1515,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     const nextGroup = options.teachingGroups.find(item => item.id === nextGroupId)
                     setTemplateGroupId(nextGroupId)
                     setTeachingGroupId(nextGroupId)
-                    setSelectedCourseUnitId(nextGroup?.courseId ?? '')
-                    setCourseId(nextGroup?.courseId ?? '')
+                    setSelectedCourseUnitId(nextGroup?.isProgrammeYearClass ? '' : nextGroup?.courseId ?? '')
+                    setCourseId(nextGroup?.isProgrammeYearClass ? '' : nextGroup?.courseId ?? '')
                     setTeacherId('')
                     setTemplateLoadedGroupId('')
                     setTemplateCells({})
@@ -2001,9 +2015,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 onChange={event => {
                   const next = event.target.value
                   setTeachingGroupId(next)
-                  setCourseId(
-                    options.teachingGroups.find(item => item.id === next)?.courseId ?? ''
-                  )
+                  const selected = options.teachingGroups.find(item => item.id === next)
+                  setCourseId(selected?.isProgrammeYearClass ? '' : selected?.courseId ?? '')
                   setTeacherId('')
                 }}
                 required

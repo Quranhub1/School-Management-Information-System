@@ -17,7 +17,7 @@ export type TimetableEntry = {
 
 export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'generatedAt' | 'generationSource'> & { curriculumId: string; yearOfStudy: number; curriculumSemesterNumber: number }
 export type TimetableOptions = {
-  teachingGroups: { id: string; label: string; programmeId: string; semesterId: string; courseId: string }[]
+  teachingGroups: { id: string; label: string; programmeId: string; semesterId: string; courseId: string; curriculumId?: string | null; yearOfStudy?: number | null; semesterNumber?: number; isProgrammeYearClass?: boolean }[]
   courses: { id: string; label: string }[]
   teachers: { id: string; label: string; courseUnitIds?: string[] }[]
   semesters: { id: string; label: string; academicYearId: string; academicYearLabel: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean }[]

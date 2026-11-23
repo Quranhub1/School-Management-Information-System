@@ -100,14 +100,17 @@ export function deriveTimetableSelection(
   const selectedCourseId = courseUnitId && eligibleCourseIds.has(courseUnitId)
     ? courseUnitId
     : ''
-  const allTeachingGroups = options.teachingGroups.filter(
+  const matchingCohortGroups = options.teachingGroups.filter(
     item =>
+      item.isProgrammeYearClass &&
       programmeIdSet.has(item.programmeId) &&
-      item.semesterId === academicPeriodId
+      item.semesterId === academicPeriodId &&
+      item.curriculumId === selectedCurriculum?.id &&
+      item.yearOfStudy === (yearOfStudy ? Number(yearOfStudy) : undefined) &&
+      (!selectedCurriculumSemester || item.semesterNumber === selectedCurriculumSemester.semesterNumber)
   )
-  const teachingGroups = selectedCourseId
-    ? allTeachingGroups.filter(item => item.courseId === selectedCourseId)
-    : allTeachingGroups
+  const allTeachingGroups = matchingCohortGroups
+  const teachingGroups = allTeachingGroups
   const tutors = filterTutorsForCourse(options.teachers, selectedCourseId)
 
   return {

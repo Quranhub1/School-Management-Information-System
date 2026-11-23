@@ -27,11 +27,11 @@ const options: TimetableOptions = {
     { id: 'course-b1', label: 'B101 — ICT' },
   ],
   teachingGroups: [
-    { id: 'group-a1', label: 'A1', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a1' },
-    { id: 'group-a1b', label: 'A1B', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a1' },
-    { id: 'group-a2', label: 'A2', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a2' },
-    { id: 'group-a3', label: 'A3', programmeId: 'programme-a', semesterId: 'period-2', courseId: 'course-a3' },
-    { id: 'group-b1', label: 'B1', programmeId: 'programme-b', semesterId: 'period-1', courseId: 'course-b1' },
+    { id: 'group-a1', label: 'Programme A Year 1', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a1', curriculumId: 'curriculum-a', yearOfStudy: 1, semesterNumber: 1, isProgrammeYearClass: true },
+    { id: 'group-a1b', label: 'Legacy course group', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a1' },
+    { id: 'group-a2', label: 'Programme A Year 1', programmeId: 'programme-a', semesterId: 'period-1', courseId: 'course-a2', curriculumId: 'curriculum-a', yearOfStudy: 1, semesterNumber: 2, isProgrammeYearClass: true },
+    { id: 'group-a3', label: 'Programme A Year 2', programmeId: 'programme-a', semesterId: 'period-2', courseId: 'course-a3', curriculumId: 'curriculum-a', yearOfStudy: 2, semesterNumber: 1, isProgrammeYearClass: true },
+    { id: 'group-b1', label: 'Programme B Year 1', programmeId: 'programme-b', semesterId: 'period-1', courseId: 'course-b1', curriculumId: 'curriculum-b', yearOfStudy: 1, semesterNumber: 1, isProgrammeYearClass: true },
   ],
   teachers: [
     { id: 'tutor-a1', label: 'Tutor A1', courseUnitIds: ['course-a1'] },
@@ -70,10 +70,19 @@ describe('timetable programme-to-template selection flow', () => {
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-a2'])
   })
 
-  it('loads teaching groups for the selected course unit and academic period', () => {
+  it('loads the selected year cohort without narrowing it to its anchor course offering', () => {
+    const result = deriveTimetableSelection(
+      options, ['programme-a'], 'curriculum-a', '2', 'A21', 'period-2', 'course-a3'
+    )
+    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a3'])
+    expect(result.courseUnits.map(item => item.id)).toEqual(['course-a3'])
+    expect(result.allTeachingGroups[0].isProgrammeYearClass).toBe(true)
+  })
+
+  it('loads the whole programme-year class for the selected curriculum year and academic semester', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
     expect(result.teachingGroups.map(item => item.id)).toEqual(['group-a1'])
-    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1', 'group-a1b'])
+    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1'])
   })
 
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {
