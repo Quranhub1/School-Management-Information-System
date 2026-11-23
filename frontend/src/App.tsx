@@ -420,7 +420,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if (item.module === 'academics' && item.subsection === 'classes' && !ac) return false;
   if (item.module === 'staff' && item.subsection === 'payroll') return effectivePermissions===null?canReadPayroll(r)&&!isAdminSecretary:Boolean(hasPermission('hr.read-payroll','hr.manage-payroll'));
   if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
-  if (item.module === 'system-administration') return r.includes('SystemAdministrator');
+  if (item.module === 'system-administration') return moduleAllowed('system-administration');
   return true;
 }
 const visibleSidebarGroups=sidebarGroups.map(group=>({
@@ -545,8 +545,8 @@ return <main className="app-shell">
 {activeModule==='communication'&&moduleAllowed('communication')&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement canOpenCalendar={ac} canOpenNotices={moduleAllowed('communication')} canOpenFinance={fi && !isAdminSecretary}/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
-{activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/>}
- {activeModule==='campuses'&&r.includes('SystemAdministrator')&&<CampusManagement/>}
+{activeModule==='system-administration'&&moduleAllowed('system-administration')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/> }
+ {activeModule==='campuses'&&moduleAllowed('campuses')&&<CampusManagement/>}
  </motion.div></AnimatePresence></Suspense></div></main> }
 function App(){
   return <AppContent />
