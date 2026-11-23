@@ -1112,7 +1112,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       : `Y${year}S${semesterNumber}`
 
     setSemesterId(template.semesterId)
-    setProgrammeId(template.programmeId)
+    setProgrammeId(programme?.id ?? template.programmeId)
     setCurriculumId(curriculumId)
     setYearOfStudy(String(year))
     setCurriculumSemester(semesterCode)
