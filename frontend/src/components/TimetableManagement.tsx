@@ -1548,12 +1548,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 </select>
               </label>
               <button
-                className="timetable-action"
+                className="timetable-action timetable-load-class-button"
                 type="button"
                 onClick={() => void loadTemplate()}
                 disabled={!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)}
+                aria-label="Load selected class timetable"
               >
-                <Pencil size={15} /> Load class
+                <Pencil size={15} /> Load Class
               </button>
               {availableGroups.length === 0 && (
                 <small className="timetable-class-empty-hint" role="status">
