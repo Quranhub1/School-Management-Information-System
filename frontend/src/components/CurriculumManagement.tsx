@@ -1186,23 +1186,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving}>{editingCurriculumId ? 'Save curriculum' : 'Add curriculum'}</button>{editingCurriculumId && <button type="button" className="secondary-button" onClick={() => { setEditingCurriculumId(null); setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' }) }}>Cancel edit</button>}
             </form>
 
-            <form id="curriculum-course-catalogue" className="student-form" onSubmit={saveCourse}>
-              <h3>Course / unit catalogue</h3>
-              <div className="form-row">
-                <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
-                <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
-              </div>
-              <div className="form-row">
-              <input required type="number" min="0" placeholder="Credit units" value={uf.creditUnits} onChange={e => setUf({ ...uf, creditUnits: e.target.value })} />
-              <select aria-label="Course unit type" required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="">Select course unit type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
-              </div>
-              <input placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
-              <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
-            </form>
-            <div className="table-wrap curriculum-course-catalogue-table"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-              {authorityCourses.length === 0 && <tr><td colSpan={6}>No course units are registered under this authority. Add course units above to make them available for curriculum mapping.</td></tr>}
-            </tbody></table></div>
           </div>
 
           <div className="form-row curriculum-course-mapping-form">
@@ -1385,28 +1368,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving}>{editingCurriculumId ? 'Save short-course curriculum' : 'Add short-course curriculum'}</button>{editingCurriculumId && <button type="button" className="secondary-button" onClick={() => { setEditingCurriculumId(null); setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'ShortCourse' }) }}>Cancel edit</button>}
             </form>
           </div>
-          <section className="catalogue-board" aria-label="Short-course course catalogue">
-            <form id="curriculum-course-catalogue" className="student-form" onSubmit={saveCourse}>
-              <h3>Course / unit catalogue</h3>
-              <div className="form-row">
-                <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
-                <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
-              </div>
-              <div className="form-row">
-              <input required type="number" min="0" placeholder="Credit units" value={uf.creditUnits} onChange={e => setUf({ ...uf, creditUnits: e.target.value })} />
-              <select aria-label="Course unit type" required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
-              </div>
-              <input placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
-              <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
-            </form>
-            <div className="table-wrap curriculum-course-catalogue-table"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {groupedAuthorityCourses.map(group => <Fragment key={`group-${group.programme?.id ?? 'other'}`}>
-                <tr className="course-catalogue-group"><th colSpan={6}>{group.programme ? `${group.programme.code} — ${group.programme.name}` : 'Other / unassigned courses'} <span>({group.courses.length})</span></th></tr>
-                {group.courses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-              </Fragment>)}
-              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
-            </tbody></table></div>
-          </section>
           <div className="form-row curriculum-course-mapping-form">
             <select aria-label="Select curriculum" value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">{authority ? 'Select curriculum' : 'Select a curriculum authority first'}</option>
