@@ -153,6 +153,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showSystemData, setShowSystemData] = useState(false)
   const [showTemplateEditor, setShowTemplateEditor] = useState(true)
   const [showSavedTemplates, setShowSavedTemplates] = useState(false)
+  const [openedSavedTemplate, setOpenedSavedTemplate] = useState(false)
   const [savedTemplates, setSavedTemplates] = useState<SavedTimetableTemplate[]>([])
   const [savedTemplatesLoading, setSavedTemplatesLoading] = useState(false)
   const [savedTemplatesError, setSavedTemplatesError] = useState('')
@@ -1121,6 +1122,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setTemplateGroupId(group.id)
     setTemplateLoadedGroupId('')
     setTemplateCells({})
+    setOpenedSavedTemplate(true)
     setShowTemplateEditor(true)
     setShowGenerator(false)
     setShowScheduleForm(false)
@@ -1151,8 +1153,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <section className="timetable-screen timetable-saved-screen" aria-label="Saved timetables">
         <header className="timetable-hero timetable-saved-hero">
           <div className="timetable-saved-heading">
-            <button className="timetable-action" type="button" onClick={() => setShowSavedTemplates(false)}>
-              <ArrowLeft /> Back
+            <button className="timetable-action primary timetable-back-main-button" type="button" onClick={() => { setShowSavedTemplates(false); setOpenedSavedTemplate(false) }}>
+              <ArrowLeft /> Back to main editor
             </button>
             <div>
               <p className="timetable-eyebrow">Timetable workspace</p>
@@ -1248,7 +1250,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     <span><Clock3 /> Updated {new Date(template.updatedAtUtc).toLocaleString()}</span>
                   </div>
                   <div className="timetable-saved-card-footer">
-                    <button className="timetable-action primary" type="button" onClick={() => openSavedTemplate(template)}>
+                    <button className="timetable-action primary timetable-open-saved-button" type="button" onClick={() => openSavedTemplate(template)}>
                       <Pencil /> Open timetable
                     </button>
                   </div>
@@ -1726,6 +1728,22 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
           <div className="timetable-template-editor-heading">
             <div className="timetable-template-controls">
+              {openedSavedTemplate && (
+                <button
+                  className="timetable-action primary timetable-back-main-button"
+                  type="button"
+                  onClick={() => {
+                    setOpenedSavedTemplate(false)
+                    setTemplateLoadedGroupId('')
+                    setTemplateGroupId('')
+                    setTeachingGroupId('')
+                    setTemplateCells({})
+                    setTemplateSlots(defaultTemplateSlots)
+                  }}
+                >
+                  <ArrowLeft /> Back to main editor
+                </button>
+              )}
               <label>
                 Class / teaching group
                 <select
