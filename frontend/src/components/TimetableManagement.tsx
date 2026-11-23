@@ -264,7 +264,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     [options.teachingGroups]
   )
   const courseLabels = useMemo(
-    () => new Map(options.courses.map(item => [item.id, item.label])),
+    () => new Map(options.courses.map(item => [item.id, item.label.toUpperCase()])),
     [options.courses]
   )
   const teacherLabels = useMemo(
@@ -1316,10 +1316,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                     const rowSpan = Math.max(1, Math.min(previewDays.length - previewDays.indexOf(day), Number(cell?.rowSpan) || 1))
                                     const colSpan = Math.max(1, Math.min(preview.slots.length - slotIndex, Number(cell?.colSpan) || 1))
                                     const course = cell ? options.courses.find(item => item.id === cell.courseId) : undefined
-                                    const teacher = cell ? options.teachers.find(item => item.id === cell.teacherId) : undefined
                                     return <React.Fragment key={slotIndex}>
                                       <td rowSpan={rowSpan} colSpan={colSpan} className={cell?.courseId ? 'is-filled' : ''}>
-                                        {cell?.courseId && <><strong>{course?.label || 'Course'}</strong><span>{teacher?.label || ''}</span>{cell.room && <small>{cell.room}</small>}</>}
+                                        {cell?.courseId && <strong>{(course?.label || 'COURSE').toUpperCase()}</strong>}
                                       </td>
                                       {preview.breakAfter === slotIndex && <td className="timetable-saved-thumbnail-break-cell" rowSpan={rowSpan}>{(preview.breakLabel || 'BREAK').split('').join(' ')}</td>}
                                     </React.Fragment>
@@ -2022,7 +2021,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                 <div className="timetable-inline-cell-editor" aria-label={days[day] + ' period ' + (slotIndex + 1)}>
                                   <select aria-label="Course unit" value={cell.courseId} disabled={!templateCourseOptions.length} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}>
                                     <option value="">+ Select course</option>
-                                    {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                                    {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{item.label.toUpperCase()}</option>)}
                                   </select>
                                   <select aria-label="Lecturer" value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}>
                                     <option value="">Select lecturer</option>
@@ -2132,7 +2131,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                           <option value="">— Select course —</option>
                           {templateCourseOptions.map(item => (
                             <option key={item.id} value={item.id}>
-                              {item.label}
+                              {item.label.toUpperCase()}
                             </option>
                           ))}
                         </select>
