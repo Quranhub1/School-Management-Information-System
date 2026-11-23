@@ -127,11 +127,19 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     public async Task<IActionResult> GetCourses([FromQuery] string? authorityCode, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(authorityCode))
-            return Ok((await service.GetCoursesAsync(ct)).Select(CourseResponseDto.FromDomain).ToArray());
+        {
+            var allCourses = await db.Courses.AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.Code)
+                .ToListAsync(ct);
+            return Ok(allCourses.Select(CourseResponseDto.FromDomain).ToArray());
+        }
+
         var code = authorityCode.Trim().ToUpperInvariant();
         if (!await db.AcademicAuthorities.AsNoTracking().AnyAsync(x => x.Code == code && x.IsActive, ct))
             return NotFound(new { message = "The selected academic authority is not registered or active." });
-        var courses = await db.Courses.AsNoTracking().Where(x => x.AuthorityCode == code || x.AuthorityCode == null)
+        var courses = await db.Courses.AsNoTracking()
+            .Where(x => !x.IsDeleted && (x.AuthorityCode == code || x.AuthorityCode == null))
             .OrderBy(x => x.AuthorityCode == null).ThenBy(x => x.Code).ToListAsync(ct);
         return Ok(courses.Select(CourseResponseDto.FromDomain).ToArray());
     }
