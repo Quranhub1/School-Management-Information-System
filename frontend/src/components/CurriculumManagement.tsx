@@ -40,6 +40,17 @@ import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, g
 
 type Tab = 'full' | 'short'
 
+// ASP.NET serializes enums as strings in API responses. Accept both the current
+// string contract and legacy numeric payloads so filtering never hides curricula.
+function normalizeProgrammeType(value: number | string | null | undefined): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/[ _-]/g, '')
+  if (normalized === 'fullprogramme' || normalized === 'fullprogram' || normalized === '0') return 0
+  if (normalized === 'shortcourse' || normalized === '1') return 1
+  const numeric = Number(normalized)
+  return Number.isFinite(numeric) ? numeric : -1
+}
+
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
@@ -75,10 +86,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const authorityCurricula = curricula.filter(c => {
     const programme = programmes.find(item => item.id === c.programmeId)
     return Boolean(programme) &&
-      Number(programme?.type) === expectedProgrammeType &&
+      normalizeProgrammeType(programme?.type) === expectedProgrammeType &&
       authorityOfProgramme(c.programmeId) === selectedAuthority
   })
-  const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && Number(p.type) === expectedProgrammeType && authorityOfProgramme(p.id) === selectedAuthority)
+  const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && normalizeProgrammeType(p.type) === expectedProgrammeType && authorityOfProgramme(p.id) === selectedAuthority)
   // The API already scopes courses to the selected authority (including legacy unassigned courses).
   // Do not infer course ownership from `mappings`: that state contains only the currently opened curriculum.
   const authorityCourses = courses.filter(course =>
@@ -126,7 +137,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     const eligibleCurricula = curricula.filter(item => {
       const programme = programmes.find(row => row.id === item.programmeId)
       return Boolean(programme) &&
-        Number(programme?.type) === (tab === 'short' ? 1 : 0) &&
+        normalizeProgrammeType(programme?.type) === (tab === 'short' ? 1 : 0) &&
         resolveAcademicAuthority(programme?.regulator) === resolveAcademicAuthority(authority)
     })
     if (eligibleCurricula.length === 0) {
@@ -198,7 +209,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           .filter(programme =>
             programme.isActive &&
             !programme.isReferenceOnly &&
-            Number(programme.type) === (tabForAuthority === 'short' ? 1 : 0)
+            normalizeProgrammeType(programme.type) === (tabForAuthority === 'short' ? 1 : 0)
           )
           .map(programme => resolveAcademicAuthority(programme.regulator))
           .filter(Boolean)
@@ -574,7 +585,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     selectedCurriculumRef.current = ''
     setSelected('')
     setMappings([])
-    const programmeType = Number(programmes.find(programme => programme.id === item.programmeId)?.type ?? item.programmeType)
+    const programmeType = normalizeProgrammeType(programmes.find(programme => programme.id === item.programmeId)?.type ?? item.programmeType)
     setTab(programmeType === 1 ? 'short' : 'full')
     setCf({
       programmeId: item.programmeId, version: item.version, title: item.title,
@@ -806,7 +817,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     const currentHasProgrammes = programmes.some(programme =>
       programme.isActive &&
       !programme.isReferenceOnly &&
-      Number(programme.type) === programmeType &&
+      normalizeProgrammeType(programme.type) === programmeType &&
       resolveAcademicAuthority(programme.regulator) === resolveAcademicAuthority(authority)
     )
     if (!currentHasProgrammes) {
@@ -814,7 +825,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         item.isActive && programmes.some(programme =>
           programme.isActive &&
           !programme.isReferenceOnly &&
-          Number(programme.type) === programmeType &&
+          normalizeProgrammeType(programme.type) === programmeType &&
           resolveAcademicAuthority(programme.regulator) === resolveAcademicAuthority(item.code)
         )
       )
