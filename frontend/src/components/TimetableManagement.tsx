@@ -1276,7 +1276,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                 {previewDays.map(day => {
                                   const cell = preview.cells[day + '-' + slotIndex]
                                   const course = cell ? options.courses.find(item => item.id === cell.courseId) : undefined
-                                  return <span className={cell ? 'is-filled' : ''} key={day} title={course?.label ?? cell?.sessionType ?? ''}>{cell ? (course?.code || course?.label || cell.sessionType).slice(0, 10) : ''}</span>
+                                  return <span className={cell ? 'is-filled' : ''} key={day} title={course?.label ?? cell?.sessionType ?? ''}>{cell ? (course?.label || cell.sessionType).slice(0, 10) : ''}</span>
                                 })}
                               </div>
                             ))}
