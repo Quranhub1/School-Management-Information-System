@@ -91,10 +91,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   })
   const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && normalizeProgrammeType(p.type) === expectedProgrammeType && authorityOfProgramme(p.id) === selectedAuthority)
   // The API already scopes courses to the selected authority (including legacy unassigned courses).
-  // Do not infer course ownership from `mappings`: that state contains only the currently opened curriculum.
-  const authorityCourses = courses.filter(course =>
+  // Keep this derived array stable: it drives prerequisite loading and must not retrigger
+  // that effect on every render (which would repeatedly request prerequisites).
+  const authorityCourses = useMemo(() => courses.filter(course =>
     !course.authorityCode || resolveAcademicAuthority(course.authorityCode) === selectedAuthority
-  )
+  ), [courses, selectedAuthority])
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
