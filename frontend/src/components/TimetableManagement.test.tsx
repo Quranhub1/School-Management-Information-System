@@ -33,6 +33,7 @@ vi.mock('../api/timetable', () => ({
     programmes: [
       { id: 'programme-1', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH', durationYears: 0 },
       { id: 'programme-duplicate', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH', durationYears: 2 },
+      { id: 'programme-legacy-code', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH-LEGACY', durationYears: 1 },
       { id: 'programme-2', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH', durationYears: 0 },
       { id: 'programme-2-duplicate', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH', durationYears: 3 },
     ],
@@ -103,7 +104,8 @@ describe('TimetableManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
     expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
-    expect(screen.getByRole('button', { name: /back to timetable/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /back to main editor/i })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
     expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
     expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
 
@@ -111,10 +113,19 @@ describe('TimetableManagement', () => {
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Saved timetables' })).toBeNull())
     expect(screen.getByLabelText('Programme')).toBeTruthy()
     expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
+    const programmeSelect = screen.getByLabelText('Programme') as HTMLSelectElement
+    expect(Array.from(programmeSelect.options).map(option => option.textContent?.trim())).toEqual([
+      'Select programme',
+      'Certificate in Pharmacy (Certificate)',
+      'Diploma in Pharmacy (Diploma)',
+    ])
 
+    fireEvent.click(screen.getByRole('button', { name: /back to main editor/i }))
+    expect(await screen.findByRole('button', { name: /saved timetables/i })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /back to timetable/i }))
+    fireEvent.click(screen.getByRole('button', { name: /back to main editor/i }))
     expect(screen.getByRole('heading', { name: 'Timetable management' })).toBeTruthy()
   }, 15000)
 
