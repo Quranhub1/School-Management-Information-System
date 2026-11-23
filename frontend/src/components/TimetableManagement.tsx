@@ -1157,7 +1157,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <header className="timetable-hero timetable-saved-hero">
           <div className="timetable-saved-heading">
             <button className="timetable-action primary timetable-back-main-button" type="button" onClick={() => { setShowSavedTemplates(false); setOpenedSavedTemplate(false) }}>
-              <ArrowLeft /> Back to main editor
+              <ArrowLeft /> Back to main
             </button>
             <div>
               <p className="timetable-eyebrow">Timetable workspace</p>
