@@ -44,7 +44,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         var courses = await db.Courses.AsNoTracking()
             .Where(x => x.IsActive && !x.IsDeleted)
             .OrderBy(x => x.Code)
-            .Select(x => new { x.Id, Label = x.Code + " — " + x.Name })
+            .Select(x => new { x.Id, x.Code, Label = x.Name })
             .ToListAsync(cancellationToken);
         var teachingStaff = await db.StaffMembers.AsNoTracking()
             .Where(x => x.IsActive && x.EmploymentStatus == "Active" && x.StaffType == StaffType.Teaching)
