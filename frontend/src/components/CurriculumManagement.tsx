@@ -30,6 +30,7 @@ import {
 } from '../api/curriculumManagement'
 import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
+import './CurriculumManagement.css'
 import { CurriculumCard } from './CurriculumCard'
 import { CurriculumLogbookManagement } from './CurriculumLogbookManagement'
 import { CurriculumGovernancePanel } from './CurriculumGovernancePanel'
@@ -913,6 +914,22 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <button type="button" role="tab" aria-selected={workspaceView === 'courses'} className={workspaceView === 'courses' ? 'active' : ''} onClick={() => setWorkspaceView('courses')}>Course Catalogue <span>{authorityCourses.length}</span></button>
         <button type="button" role="tab" aria-selected={workspaceView === 'curricula'} className={workspaceView === 'curricula' ? 'active' : ''} onClick={() => setWorkspaceView('curricula')}>Programmes &amp; Curricula</button>
       </div>
+      {workspaceView === 'courses' && <div className="course-catalogue-authority">
+        <label htmlFor="course-catalogue-authority">Academic authority</label>
+        <select id="course-catalogue-authority" value={authority} disabled={loading} onChange={async event => {
+          const nextAuthority = event.target.value
+          setAuthority(nextAuthority)
+          setCourses([])
+          setCourseSearch('')
+          setError('')
+          if (!nextAuthority) return
+          try { setCourses(await getCourses(nextAuthority)) }
+          catch (loadError) { setError(loadError instanceof Error ? loadError.message : 'Unable to load this authority course catalogue.') }
+        }}>
+          <option value="">Select authority</option>
+          {authorities.filter(item => item.isActive).map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
+        </select>
+      </div>}
       {loading && <p role="status">Loading curriculum data…</p>}
       {error && <div className="error" role="alert">{error}</div>}
       {message && <p role="status">{message}</p>}
