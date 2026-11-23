@@ -319,8 +319,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         )
       : []
   const selectedGroupCourses = selectedGroup
-    ? options.courses.filter(
-        item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)
+    ? options.courses.filter(item =>
+        eligibleCourseIds.has(item.id) &&
+        (selectedGroup.isProgrammeYearClass || item.id === selectedGroup.courseId)
       )
     : []
   const activeEntries = useMemo(
@@ -686,7 +687,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
     if (
       !eligibleCourseIds.has(courseId) ||
-      options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId
+      (!options.teachingGroups.find(item => item.id === teachingGroupId)?.isProgrammeYearClass &&
+        options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId)
     ) {
       setError(
         'The selected course unit does not belong to this teaching group and curriculum selection.'
@@ -1501,8 +1503,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     const nextGroup = options.teachingGroups.find(item => item.id === nextGroupId)
                     setTemplateGroupId(nextGroupId)
                     setTeachingGroupId(nextGroupId)
-                    setSelectedCourseUnitId(nextGroup?.courseId ?? '')
-                    setCourseId(nextGroup?.courseId ?? '')
+                    setSelectedCourseUnitId(nextGroup?.isProgrammeYearClass ? '' : nextGroup?.courseId ?? '')
+                    setCourseId(nextGroup?.isProgrammeYearClass ? '' : nextGroup?.courseId ?? '')
                     setTeacherId('')
                     setTemplateLoadedGroupId('')
                     setTemplateCells({})
@@ -2001,9 +2003,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 onChange={event => {
                   const next = event.target.value
                   setTeachingGroupId(next)
-                  setCourseId(
-                    options.teachingGroups.find(item => item.id === next)?.courseId ?? ''
-                  )
+                  const selected = options.teachingGroups.find(item => item.id === next)
+                  setCourseId(selected?.isProgrammeYearClass ? '' : selected?.courseId ?? '')
                   setTeacherId('')
                 }}
                 required
