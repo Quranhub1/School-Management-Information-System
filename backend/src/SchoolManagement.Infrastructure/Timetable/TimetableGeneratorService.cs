@@ -378,6 +378,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                 .ToListAsync(cancellationToken);
             var allocations = await db.TeachingAllocations.AsNoTracking()
                 .Where(allocation => allocation.IsActive &&
+                    allocation.SemesterId == semester.Id &&
                     courses.Select(course => course.Id).Contains(allocation.CourseId))
                 .ToListAsync(cancellationToken);
             var teacherIds = allocations.Select(allocation => allocation.StaffMemberId).Distinct().ToArray();
