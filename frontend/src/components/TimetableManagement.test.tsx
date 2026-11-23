@@ -67,7 +67,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
 }))
 
 import { generateTimetable, getTimetableTemplate, saveTimetableTemplate } from '../api/timetable'
-import { downloadInstitutionalPdf } from '../lib/pdfmake'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
 describe('TimetableManagement', () => {
@@ -94,6 +94,7 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to timetable/i })).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
     expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
@@ -235,7 +236,7 @@ describe('TimetableManagement', () => {
     fireEvent.change(screen.getAllByLabelText('Lecturer')[0], { target: { value: 'teacher-1' } })
     fireEvent.change(screen.getAllByLabelText('Merge days')[0], { target: { value: '2' } })
     fireEvent.change(screen.getAllByLabelText('Merge periods')[0], { target: { value: '2' } })
-    fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save timetable' }))
     await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
     expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', expect.arrayContaining([
       expect.objectContaining({ dayOfWeek: 1, startTime: '08:00:00', endTime: '10:00:00', courseId: 'course-1', teacherId: 'teacher-1' }),
@@ -245,8 +246,13 @@ describe('TimetableManagement', () => {
       registrarName: 'JANE DOE',
       cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2', colSpan: '2' }) }),
     }))
-    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }))
     expect(downloadInstitutionalPdf).toHaveBeenCalledWith(expect.objectContaining({
+      orientation: 'landscape',
+      title: 'OFFICIAL CLASS TIMETABLE',
+    }))
+    fireEvent.click(screen.getByRole('button', { name: 'Print' }))
+    expect(printInstitutionalPdf).toHaveBeenCalledWith(expect.objectContaining({
       orientation: 'landscape',
       title: 'OFFICIAL CLASS TIMETABLE',
     }))
