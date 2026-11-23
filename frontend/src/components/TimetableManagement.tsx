@@ -1152,12 +1152,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <header className="timetable-hero timetable-saved-hero">
           <div className="timetable-saved-heading">
             <button className="timetable-action" type="button" onClick={() => setShowSavedTemplates(false)}>
-              <ArrowLeft /> Back to timetable
+              <ArrowLeft /> Back
             </button>
             <div>
               <p className="timetable-eyebrow">Timetable workspace</p>
               <h2>Saved timetables</h2>
-              <p>Open a previously saved class timetable and continue editing its official layout.</p>
+              <p>Open and continue working on a saved class timetable.</p>
             </div>
           </div>
           <div className="timetable-actions">
@@ -1176,56 +1176,68 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
         {savedTemplatesError && <div className="timetable-notice" role="alert">{savedTemplatesError}</div>}
 
-        <div className="timetable-saved-summary" aria-label="Saved timetable summary">
-          <div className="timetable-saved-summary-icon"><FileText /></div>
-          <div><span>Saved class timetables</span><strong>{savedTemplates.length}</strong></div>
-          <div className="timetable-saved-summary-divider" />
-          <div><span>Matching results</span><strong>{savedTemplateCards.length}</strong></div>
-        </div>
-
         <section className="timetable-saved-library" aria-label="Saved timetable library">
-          <div className="timetable-saved-filters">
-            <label className="timetable-saved-search">
-              <span>Search saved timetables</span>
-              <span className="timetable-saved-search-input"><Search /><input value={savedTemplateSearch} onChange={event => setSavedTemplateSearch(event.target.value)} placeholder="Search class, programme or curriculum" /></span>
-            </label>
-            <label>
-              <span>Programme</span>
-              <select value={savedTemplateProgrammeFilter} onChange={event => setSavedTemplateProgrammeFilter(event.target.value)}>
-                <option value="">All programmes</option>
-                {programmeOptions.map(programme => <option key={programme.id} value={programme.id}>{programme.code ? programme.code + ' — ' : ''}{programme.label}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>Academic period</span>
-              <select value={savedTemplateSemesterFilter} onChange={event => setSavedTemplateSemesterFilter(event.target.value)}>
-                <option value="">All academic periods</option>
-                {options.semesters.map(semester => <option key={semester.id} value={semester.id}>{semester.label} · {semester.academicYearLabel}</option>)}
-              </select>
-            </label>
+          <div className="timetable-saved-toolbar">
+            <div className="timetable-saved-count">
+              <strong>{savedTemplates.length}</strong>
+              <span>saved timetable{savedTemplates.length === 1 ? '' : 's'}</span>
+              {savedTemplateCards.length !== savedTemplates.length && (
+                <span className="timetable-saved-match-count">· {savedTemplateCards.length} shown</span>
+              )}
+            </div>
+            <div className="timetable-saved-filters">
+              <label className="timetable-saved-search">
+                <span>Search</span>
+                <span className="timetable-saved-search-input">
+                  <Search />
+                  <input aria-label="Search saved timetables" value={savedTemplateSearch} onChange={event => setSavedTemplateSearch(event.target.value)} placeholder="Class, programme or curriculum" />
+                </span>
+              </label>
+              <label>
+                <span>Programme</span>
+                <select aria-label="Filter by programme" value={savedTemplateProgrammeFilter} onChange={event => setSavedTemplateProgrammeFilter(event.target.value)}>
+                  <option value="">All programmes</option>
+                  {programmeOptions.map(programme => <option key={programme.id} value={programme.id}>{programme.code ? programme.code + ' — ' : ''}{programme.label}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>Academic period</span>
+                <select aria-label="Filter by academic period" value={savedTemplateSemesterFilter} onChange={event => setSavedTemplateSemesterFilter(event.target.value)}>
+                  <option value="">All periods</option>
+                  {options.semesters.map(semester => <option key={semester.id} value={semester.id}>{semester.label} · {semester.academicYearLabel}</option>)}
+                </select>
+              </label>
+            </div>
           </div>
 
           {savedTemplatesLoading ? (
-            <div className="timetable-empty"><LoadingSpinner /><strong>Loading saved timetables…</strong><span>Retrieving templates from the school database.</span></div>
+            <div className="timetable-empty"><LoadingSpinner /><strong>Loading saved timetables…</strong></div>
           ) : savedTemplates.length === 0 ? (
             <div className="timetable-empty">
               <BookOpen size={28} />
               <strong>No saved timetables yet</strong>
-              <span>Save a class timetable from the timetable designer. It will appear here for future access.</span>
+              <span>Save a class timetable from the timetable designer to see it here.</span>
               <button className="timetable-action primary" type="button" onClick={() => {
                 setShowSavedTemplates(false)
                 setShowTemplateEditor(true)
-              }}><Plus /> Create the first timetable</button>
+              }}><Plus /> Create timetable</button>
             </div>
           ) : savedTemplateCards.length === 0 ? (
-            <div className="timetable-empty"><Search size={26} /><strong>No matching timetables</strong><span>Try another search term or clear the programme and academic-period filters.</span><button className="timetable-action" type="button" onClick={() => { setSavedTemplateSearch(''); setSavedTemplateProgrammeFilter(''); setSavedTemplateSemesterFilter('') }}>Clear filters</button></div>
+            <div className="timetable-empty">
+              <Search size={26} />
+              <strong>No matching timetables</strong>
+              <span>Change your search or filters to see more results.</span>
+              <button className="timetable-action" type="button" onClick={() => { setSavedTemplateSearch(''); setSavedTemplateProgrammeFilter(''); setSavedTemplateSemesterFilter('') }}>Clear filters</button>
+            </div>
           ) : (
             <div className="timetable-saved-grid">
               {savedTemplateCards.map(template => (
                 <article className="timetable-saved-card" key={template.teachingGroupId}>
                   <div className="timetable-saved-card-top">
                     <span className="timetable-saved-card-icon"><CalendarDays /></span>
-                    <span className="timetable-saved-card-badge">SAVED</span>
+                    <span className={template.sessionCount > 0 ? 'timetable-saved-status has-sessions' : 'timetable-saved-status'}>
+                      {template.sessionCount > 0 ? 'Schedule saved' : 'Layout only'}
+                    </span>
                   </div>
                   <h3>{template.groupLabel}</h3>
                   <p className="timetable-saved-programme">{template.programmeCode ? template.programmeCode + ' · ' : ''}{template.programmeLabel}</p>
@@ -1236,7 +1248,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     <span><Clock3 /> Updated {new Date(template.updatedAtUtc).toLocaleString()}</span>
                   </div>
                   <div className="timetable-saved-card-footer">
-                    <span>{template.sessionCount > 0 ? 'Schedule available' : 'Layout saved · no sessions yet'}</span>
                     <button className="timetable-action primary" type="button" onClick={() => openSavedTemplate(template)}>
                       <Pencil /> Open timetable
                     </button>
