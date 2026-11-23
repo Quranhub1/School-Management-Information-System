@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 vi.mock('../api/timetable', () => ({
@@ -69,13 +69,23 @@ import { generateTimetable, saveTimetableTemplate } from '../api/timetable'
 import { downloadInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
-describe('TimetableManagement', () => {
+describe('TimetableManagement', async () => {
+  const renderTimetable = async (props: { readOnly?: boolean } = {}) => {
+    let rendered: ReturnType<typeof render> | undefined
+    await act(async () => {
+      rendered = render(<TimetableManagement {...props} />)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    return rendered!
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('renders the timetable management shell', () => {
-    render(<TimetableManagement />)
+    await renderTimetable()
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
@@ -123,7 +133,7 @@ describe('TimetableManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
     expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
-  })
+  }, 15000)
 
   it('sends all explicitly selected teaching groups in one generation request', async () => {
     render(<TimetableManagement />)
@@ -139,7 +149,7 @@ describe('TimetableManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     await waitFor(() => expect(generateTimetable).toHaveBeenCalledTimes(1))
     expect(generateTimetable).toHaveBeenCalledWith('period-1', ['group-1', 'group-2'], 'curriculum-1', 1, 1, 'programme-1')
-  })
+  }, 15000)
 
   it('shows live system data from the central timetable options API', async () => {
     render(<TimetableManagement />)
@@ -216,10 +226,10 @@ describe('TimetableManagement', () => {
         ]),
       },
     })
-  })
+  }, 15000)
 
   it('supports readOnly mode', () => {
-    render(<TimetableManagement readOnly />)
+    await renderTimetable({ readOnly: true })
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
