@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import {
   addCurriculumCourse,
   updateCurriculumCourse,
@@ -1298,10 +1298,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {groupedAuthorityCourses.map(group => <>
-                <tr key={`group-${group.programme?.id ?? 'other'}`} className="course-catalogue-group"><th colSpan={6}>{group.programme ? `${group.programme.code} — ${group.programme.name}` : 'Other / unassigned courses'} <span>({group.courses.length})</span></th></tr>
+              {groupedAuthorityCourses.map(group => <Fragment key={`group-${group.programme?.id ?? 'other'}`}>
+                <tr className="course-catalogue-group"><th colSpan={6}>{group.programme ? `${group.programme.code} — ${group.programme.name}` : 'Other / unassigned courses'} <span>({group.courses.length})</span></th></tr>
                 {group.courses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-              </>)}
+              </Fragment>)}
               {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
             </tbody></table></div>
           </section>
