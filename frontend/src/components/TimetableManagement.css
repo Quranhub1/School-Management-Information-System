@@ -666,3 +666,46 @@ justify-content:space-around;
     min-width: 0 !important;
   }
 }
+
+
+/* Saved timetable library */
+.timetable-saved-screen{gap:18px}
+.timetable-saved-hero{align-items:flex-start}
+.timetable-saved-heading{display:flex;align-items:flex-start;gap:16px;min-width:0}
+.timetable-saved-heading>div{min-width:0}
+.timetable-saved-heading .timetable-action{flex:0 0 auto}
+.timetable-saved-heading h2{margin:0;color:#172033;font-size:clamp(1.35rem,2vw,1.8rem)}
+.timetable-saved-heading p:not(.timetable-eyebrow){margin:6px 0 0;color:#667085;font-size:.86rem}
+.timetable-saved-summary{display:flex;align-items:center;gap:16px;padding:15px 18px;border:1px solid #d8dde5;background:#fff}
+.timetable-saved-summary-icon,.timetable-saved-card-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;background:#edf4f0;color:#176b45}
+.timetable-saved-summary-icon svg,.timetable-saved-card-icon svg{width:20px;height:20px}
+.timetable-saved-summary>div:nth-child(2),.timetable-saved-summary>div:nth-child(4){display:flex;flex-direction:column;gap:3px}
+.timetable-saved-summary span{font-size:.76rem;color:#667085}
+.timetable-saved-summary strong{font-size:1.35rem;line-height:1.2;color:#172033}
+.timetable-saved-summary-divider{width:1px;height:34px;background:#d8dde5;margin:0 8px}
+.timetable-saved-library{padding:17px;border:1px solid #d8dde5;background:#fff}
+.timetable-saved-filters{display:grid;grid-template-columns:minmax(220px,1.6fr) minmax(180px,1fr) minmax(200px,1fr);gap:12px;margin-bottom:16px}
+.timetable-saved-filters label{display:flex;flex-direction:column;gap:6px;min-width:0;color:#364152;font-size:.76rem;font-weight:700}
+.timetable-saved-filters input,.timetable-saved-filters select{box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid #cbd2dc;border-radius:3px;background:#fff;color:#172033;font:inherit}
+.timetable-saved-search-input{display:flex;align-items:center;gap:8px;min-height:40px;padding-left:10px;border:1px solid #cbd2dc;border-radius:3px}
+.timetable-saved-search-input svg{width:16px;height:16px;color:#748094;flex:0 0 auto}
+.timetable-saved-search-input input{border:0;outline:0;padding-left:0}
+.timetable-saved-search-input:focus-within{outline:2px solid rgba(23,107,69,.18);border-color:#176b45}
+.timetable-saved-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.timetable-saved-card{display:flex;flex-direction:column;min-width:0;padding:16px;border:1px solid #d8dde5;background:#fff;transition:border-color .15s,box-shadow .15s}
+.timetable-saved-card:hover{border-color:#9db8a9;box-shadow:0 3px 12px rgba(15,23,42,.06)}
+.timetable-saved-card-top{display:flex;align-items:center;justify-content:space-between}
+.timetable-saved-card-badge{padding:4px 7px;background:#edf4f0;color:#176b45;font-size:.64rem;font-weight:800;letter-spacing:.08em}
+.timetable-saved-card h3{margin:13px 0 4px;color:#172033;font-size:1rem}
+.timetable-saved-programme{margin:0;color:#596579;font-size:.8rem}
+.timetable-saved-meta{display:flex;flex-direction:column;gap:8px;margin:14px 0;color:#596579;font-size:.75rem}
+.timetable-saved-meta span{display:flex;align-items:flex-start;gap:8px;min-width:0;overflow-wrap:anywhere}
+.timetable-saved-meta svg{width:14px;height:14px;flex:0 0 14px;color:#758196}
+.timetable-saved-card-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px;border-top:1px solid #edf0f3}
+.timetable-saved-card-footer>span{color:#667085;font-size:.72rem}
+.timetable-saved-screen .timetable-empty{gap:11px}
+.timetable-saved-screen .timetable-empty .timetable-action{margin-top:5px}
+.timetable-saved-screen .is-spinning{animation:timetable-refresh-spin .9s linear infinite}
+@keyframes timetable-refresh-spin{to{transform:rotate(360deg)}}
+@media(max-width:850px){.timetable-saved-grid{grid-template-columns:1fr}.timetable-saved-filters{grid-template-columns:1fr 1fr}.timetable-saved-search{grid-column:1/-1}}
+@media(max-width:560px){.timetable-saved-hero,.timetable-saved-heading{flex-direction:column;align-items:stretch}.timetable-saved-hero .timetable-actions{width:100%}.timetable-saved-hero .timetable-actions .timetable-action{flex:1}.timetable-saved-filters{grid-template-columns:1fr}.timetable-saved-search{grid-column:auto}.timetable-saved-card-footer{align-items:stretch;flex-direction:column}.timetable-saved-card-footer .timetable-action{width:100%}}
