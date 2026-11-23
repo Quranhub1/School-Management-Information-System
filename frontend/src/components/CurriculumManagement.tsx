@@ -1240,10 +1240,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                       { key: 'active', label: 'Active courses', items: group.mappings.filter(mapping => courses.find(course => course.id === mapping.courseId)?.isActive === true) },
                       { key: 'inactive', label: 'Inactive courses', items: group.mappings.filter(mapping => courses.find(course => course.id === mapping.courseId)?.isActive !== true) },
                     ]).map(statusGroup => (
-                      <section className={`curriculum-course-status-section is-${statusGroup.key}`} key={statusGroup.key}>
-                        <div className="curriculum-course-status-heading">
+                      <section className={`curriculum-course-status-section is-${statusGroup.key}`} key={statusGroup.key} style={{ marginBottom: 16, border: '1px solid var(--border-color, #e5e7eb)', borderRadius: 8, overflow: 'hidden' }}>
+                        <div className="curriculum-course-status-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 14px', background: 'var(--surface-muted, #f5f5f4)', borderBottom: '1px solid var(--border-color, #e5e7eb)' }}>
                           <h4>{statusGroup.label}</h4>
-                          <span>{statusGroup.items.length}</span>
+                          <span style={{ minWidth: 28, padding: '2px 9px', borderRadius: 999, textAlign: 'center', fontWeight: 600, background: statusGroup.key === 'active' ? '#dcfce7' : '#f3f4f6', color: statusGroup.key === 'active' ? '#166534' : '#4b5563' }}>{statusGroup.items.length}</span>
                         </div>
                         <table>
                           <thead><tr><th>Course code</th><th>Course unit</th><th>Credit units</th><th>Core / Elective</th><th>Status</th><th>Actions</th></tr></thead>
@@ -1263,7 +1263,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                                     <td>{course?.name ?? 'Course record unavailable'}</td>
                                     <td>{course?.creditUnits ?? '—'}</td>
                                     <td>{mapping.isCore ? 'Core' : 'Elective'}</td>
-                                    <td><span className={`course-status-label ${course?.isActive ? 'is-active' : 'is-inactive'}`}>{course ? (course.isActive ? 'Active' : 'Inactive') : 'Unavailable'}</span></td>
+                                    <td><span className={`course-status-label ${course?.isActive ? 'is-active' : 'is-inactive'}`} style={{ display: 'inline-block', padding: '3px 8px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: course?.isActive ? '#dcfce7' : '#f3f4f6', color: course?.isActive ? '#166534' : '#4b5563' }}>{course ? (course.isActive ? 'Active' : 'Inactive') : 'Unavailable'}</span></td>
                                     <td>
                                       <button type="button" onClick={() => editMapping(mapping)}>Edit</button>
                                       <button type="button" className="danger-button" onClick={() => void removeCourseUnit(mapping)}>Remove</button>
