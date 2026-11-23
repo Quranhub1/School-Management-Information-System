@@ -288,9 +288,19 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const scheduleTutors = filterTutorsForCourse(options.teachers, courseId)
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
-  // Every timetable cell offers the complete course list mapped to the selected
-  // curriculum, year and semester. The class selector must not narrow it to one course.
-  const templateCourseOptions = availableCourses
+  // Course-unit choices belong only inside the timetable template. Keep every
+  // cell restricted to mappings for the exact selected curriculum, year and semester.
+  const templateCourseOptions =
+    selectedCurriculum && yearOfStudy && selection.selectedCurriculumSemester
+      ? options.courses.filter(course =>
+          curriculumMappings.some(
+            mapping =>
+              mapping.courseId === course.id &&
+              mapping.yearOfStudy === Number(yearOfStudy) &&
+              mapping.semesterNumber === selection.selectedCurriculumSemester?.semesterNumber
+          )
+        )
+      : []
   const selectedGroupCourses = selectedGroup
     ? options.courses.filter(
         item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)
@@ -1660,7 +1670,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                 }
                               >
                                 <div className="timetable-inline-cell-editor" aria-label={days[day] + ' period ' + (slotIndex + 1)}>
-                                  <select aria-label="Course unit" value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}>
+                                  <select aria-label="Course unit" value={cell.courseId} disabled={!templateCourseOptions.length} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}>
                                     <option value="">+ Select course</option>
                                     {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                                   </select>
