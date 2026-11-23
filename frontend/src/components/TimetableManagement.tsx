@@ -36,9 +36,12 @@ const emptyOptions: TimetableOptions = {
 
 type ProgrammeOption = TimetableOptions['programmes'][number] & { sourceIds: string[] }
 
+// The catalogue can contain legacy and imported records for the same visible
+// programme under different IDs/codes. Group by the normalized programme name
+// and retain every source ID so curricula and teaching groups remain selectable.
 const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
-  programme.code?.trim().toLocaleUpperCase() ||
-  programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+  programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase() ||
+  programme.code?.trim().toLocaleUpperCase() || programme.id
 
 const compactCurriculumLabel = (label: string, programmeLabel?: string, fallbackIndex = 0) => {
   const programmeName = programmeLabel?.split(' (')[0].trim()
@@ -1168,6 +1171,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             </button>
             <button className="timetable-action primary" type="button" onClick={() => {
               setShowSavedTemplates(false)
+              setOpenedSavedTemplate(false)
               setShowTemplateEditor(true)
               setTemplateLoadedGroupId('')
             }}>
@@ -1268,7 +1272,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <header className="timetable-hero">
         <div className="timetable-hero-heading">
           <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
-          {!readOnly && (
+          {!readOnly && !openedSavedTemplate && (
             <button className="timetable-action primary timetable-saved-entry" type="button" onClick={() => void openSavedTemplates()}>
               <BookOpen /> Saved timetables
             </button>
