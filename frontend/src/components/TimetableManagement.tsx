@@ -1348,9 +1348,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <form className="timetable-form-panel" onSubmit={handleGenerate}>
           <h3>Generate a timetable</h3>
           <div className="timetable-form-grid">
-            <label>
+            <label htmlFor="timetable-teaching-groups">
               Teaching groups
               <select
+                id="timetable-teaching-groups"
+                aria-label="Teaching groups"
                 multiple
                 size={Math.min(6, Math.max(2, allAvailableGroups.length))}
                 value={selectedTeachingGroupIds}
