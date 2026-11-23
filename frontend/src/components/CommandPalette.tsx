@@ -88,7 +88,6 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
     let active = true
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      // This is a global search, not a search limited to the currently open module.
       globalSearch(term, undefined, undefined, controller.signal)
         .then(data => { if (active) setResults(toSearchItems(data)) })
         .catch(error => {
@@ -126,10 +125,10 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
   }
 
   return (
-    <div className="command-palette-container" ref={paletteRef}>
+    <div className="command-palette-container" ref={paletteRef} data-search-scope={scope}>
       <CommandMenu className="command-palette-menu" shouldFilter={false}>
         <div className="command-palette-input-wrap">
-          <Search size={17} aria-hidden="true" />
+          <Search size={18} strokeWidth={2.1} aria-hidden="true" />
           <CommandMenu.Input
             ref={searchInputRef}
             value={query}
@@ -141,16 +140,17 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
                 searchInputRef.current?.blur()
               }
             }}
-            placeholder={scope === 'dashboard' ? 'Search all records…' : `Search all records (currently: ${scope.replaceAll('-', ' ')})…`}
+            placeholder="Search students, staff, courses..."
             aria-label="Search all records"
           />
+          <kbd className="command-palette-shortcut" aria-hidden="true">Ctrl K</kbd>
         </div>
 
         {open && (
           <div className="command-palette-results">
             <CommandMenu.List>
               <CommandMenu.Empty>
-                {loading ? 'Searching…' : searchError ?? (query.trim().length < 2 ? '' : 'No results')}
+                {loading ? 'Searching records…' : searchError ?? (query.trim().length < 2 ? 'Type at least 2 characters to search' : 'No matching records found')}
               </CommandMenu.Empty>
               {groupedResults.map(([type, group]) => (
                 <CommandMenu.Group key={type} heading={type}>
@@ -162,7 +162,7 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
                     >
                       <Search size={14} aria-hidden="true" />
                       <span>{item.label}</span>
-                      <small>{item.detail}</small>
+                      {item.detail && <small>{item.detail}</small>}
                     </CommandMenu.Item>
                   ))}
                 </CommandMenu.Group>
