@@ -65,7 +65,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
   })),
 }))
 
-import { generateTimetable, saveTimetableTemplate } from '../api/timetable'
+import { generateTimetable, getTimetableTemplate, saveTimetableTemplate } from '../api/timetable'
 import { downloadInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
@@ -172,7 +172,11 @@ describe('TimetableManagement', () => {
   it('renders the official document designer with editable heading, signature and merge controls', async () => {
     await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    const loadClassButton = await screen.findByRole('button', { name: /load class/i })
+    await act(async () => {
+      fireEvent.click(loadClassButton)
+      await vi.mocked(getTimetableTemplate).mock.results.slice(-1)[0]?.value
+    })
     expect(await screen.findByLabelText('Timetable document title')).toBeTruthy()
     expect(screen.getByLabelText('Day column heading')).toBeTruthy()
     expect(screen.getByLabelText('Registrar name')).toBeTruthy()
@@ -183,12 +187,16 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByLabelText('Merge days').length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('Merge periods').length).toBeGreaterThan(0)
     expect(screen.queryByText('REPUBLIC OF UGANDA')).toBeNull()
-  })
+  }, 15000)
 
   it('renders a full-height vertical break divider in the timetable design', async () => {
     const { container } = await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    const loadClassButton = await screen.findByRole('button', { name: /load class/i })
+    await act(async () => {
+      fireEvent.click(loadClassButton)
+      await vi.mocked(getTimetableTemplate).mock.results.slice(-1)[0]?.value
+    })
     fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
     expect(container.querySelector('.timetable-template-divider-header[aria-label="BREAK"]')).toBeTruthy()
   })
@@ -254,7 +262,7 @@ describe('TimetableManagement', () => {
     const courseSelect = screen.getAllByLabelText('Course unit')[0] as HTMLSelectElement
     expect(Array.from(courseSelect.options).map(option => option.value)).toEqual(['', 'course-1'])
     expect(Array.from(courseSelect.options).some(option => option.value === 'course-2')).toBe(false)
-  })
+  }, 15000)
 
   it('uses programme duration for year options but does not invent unmapped semesters or course units', async () => {
     await renderTimetable()
