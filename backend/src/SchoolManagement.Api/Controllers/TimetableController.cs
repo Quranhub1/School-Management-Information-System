@@ -167,7 +167,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
             join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
             join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
-            where legacyTeachingGroup.Id == legacyTeachingGroupId && legacyTeachingGroup.IsActive && offering.IsActive &&
+            where legacyTeachingGroup.Id == teachingGroupId && legacyTeachingGroup.IsActive && offering.IsActive &&
                 programme.IsActive && !programme.IsReferenceOnly && course.IsActive &&
                 offering.CourseId == courseId && mapping.CourseId == courseId && curriculum.IsActive &&
                 curriculum.Id == curriculumId && mapping.YearOfStudy == yearOfStudy && mapping.SemesterNumber == curriculumSemesterNumber
