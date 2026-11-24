@@ -25,6 +25,14 @@ using System.Threading.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// SMIS uses one predictable HTTP endpoint for local and school-LAN clients.
+// Override with ASPNETCORE_URLS only when a deployment intentionally needs a
+// different binding (for example, behind a reverse proxy).
+var backendUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+builder.WebHost.UseUrls(string.IsNullOrWhiteSpace(backendUrls)
+    ? "http://0.0.0.0:5000"
+    : backendUrls);
 var dataProtectionPath = builder.Configuration["Security:DataProtectionKeysPath"];
 if (string.IsNullOrWhiteSpace(dataProtectionPath))
 {
