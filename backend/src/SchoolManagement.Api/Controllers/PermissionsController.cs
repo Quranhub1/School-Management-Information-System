@@ -34,6 +34,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
                 .Select(permission => permission.Code).ToListAsync(cancellationToken);
             return Ok(new { permissions = allPermissionCodes
                 .Concat(SchoolManagement.Infrastructure.Identity.PermissionCatalog.All.Select(permission => permission.Code))
+                .Concat(SchoolManagement.Application.Authorization.PermissionCatalog.All.Select(permission => permission.Code))
                 .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(code => code).ToArray() });
         }
 
