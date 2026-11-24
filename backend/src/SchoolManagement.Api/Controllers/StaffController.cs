@@ -24,10 +24,16 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> List([FromQuery] bool activeOnly = true, CancellationToken cancellationToken = default)
     {
-        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
-        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        // System Administrators must be able to audit and manage legacy staff
+        // profiles that predate campus assignment (CampusId is null). Other users
+        // remain restricted to their explicitly assigned active campuses.
+        var isSystemAdministrator = campusAccess.IsSystemAdministrator(User);
+        var accessibleCampuses = isSystemAdministrator
+            ? null
+            : await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (!isSystemAdministrator && accessibleCampuses is { Count: 0 }) return Forbid();
         var query = db.StaffMembers.AsNoTracking();
-        if (accessibleCampuses is not null)
+        if (!isSystemAdministrator && accessibleCampuses is not null)
             query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
         if (activeOnly) query = query.Where(x => x.IsActive);
         var staff = await query.OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToListAsync(cancellationToken);
