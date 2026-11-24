@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Academic;
+using SchoolManagement.Domain.Academic;
 using SchoolManagement.Application.Hostel;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
@@ -11,7 +13,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/hostel")]
 [Authorize(Policy = AuthorizationPolicies.HostelManagement)]
-public sealed class HostelController(HostelService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class HostelController(HostelService service, SchoolManagementDbContext db, CampusAccessService campusAccess, ProgrammeService programmeService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken) => Ok((await service.GetAsync(cancellationToken)).Select(HostelResponseDto.FromDomain).ToArray());
@@ -53,11 +55,17 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
                     allocation.StudentId == student.Id && (allocation.SemesterId == semester.Id || allocation.SemesterId == null) && allocation.Status == "Active")))
             .ToListAsync(cancellationToken);
 
-        var programmes = await db.Programmes.AsNoTracking()
-            .Where(programme => programme.IsActive)
+        // Use the same programme catalogue service as Curriculum Management so
+        // hostel filtering cannot drift from the programmes maintained there.
+        // Hostel users receive this catalogue through the hostel policy without
+        // needing the separate AcademicManagement permission.
+        var programmes = (await programmeService.GetAllAsync(cancellationToken))
+            .Where(programme => programme.IsActive
+                && !programme.IsReferenceOnly
+                && programme.Type == ProgrammeType.FullProgramme)
             .OrderBy(programme => programme.Name)
             .Select(programme => new HostelProgrammeOptionDto(programme.Id, programme.Name))
-            .ToListAsync(cancellationToken);
+            .ToArray();
 
         return Ok(new HostelAllocationContextDto(
             semester is null ? null : new HostelSemesterDto(semester.Id, semester.Name, semester.AcademicYearName, semester.StartDate, semester.EndDate),
