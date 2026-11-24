@@ -779,3 +779,21 @@
     flex-wrap: wrap;
   }
 }
+
+
+/* Keep the Add Academic Year name field compact and proportionate. */
+.app-shell .academic-workspace .academic-year-name-input {
+  flex: 0 1 220px;
+  width: 220px;
+  max-width: 100%;
+  min-height: 35px;
+  height: 35px;
+  padding: 6px 9px !important;
+  font-size: 13px;
+}
+@media (max-width: 640px) {
+  .app-shell .academic-workspace .academic-year-name-input {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
