@@ -53,9 +53,16 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
                     allocation.StudentId == student.Id && (allocation.SemesterId == semester.Id || allocation.SemesterId == null) && allocation.Status == "Active")))
             .ToListAsync(cancellationToken);
 
+        var programmes = await db.Programmes.AsNoTracking()
+            .Where(programme => programme.IsActive)
+            .OrderBy(programme => programme.Name)
+            .Select(programme => new HostelProgrammeOptionDto(programme.Id, programme.Name))
+            .ToListAsync(cancellationToken);
+
         return Ok(new HostelAllocationContextDto(
             semester is null ? null : new HostelSemesterDto(semester.Id, semester.Name, semester.AcademicYearName, semester.StartDate, semester.EndDate),
-            students));
+            students,
+            programmes));
     }
 
     [HttpPost("hostels")]
@@ -147,7 +154,8 @@ public sealed record HostelAllocationResponseDto(Guid Id, Guid BedId, Guid Stude
 
 public sealed record HostelSemesterDto(Guid Id, string Name, string AcademicYearName, DateOnly StartDate, DateOnly EndDate);
 public sealed record HostelAllocationStudentDto(Guid Id, string StudentNumber, string FullName, Guid? ProgrammeId, string? ProgrammeName, bool IsAllocatedForCurrentSemester);
-public sealed record HostelAllocationContextDto(HostelSemesterDto? CurrentSemester, IReadOnlyCollection<HostelAllocationStudentDto> RegistryStudents);
+public sealed record HostelProgrammeOptionDto(Guid Id, string Name);
+public sealed record HostelAllocationContextDto(HostelSemesterDto? CurrentSemester, IReadOnlyCollection<HostelAllocationStudentDto> RegistryStudents, IReadOnlyCollection<HostelProgrammeOptionDto> Programmes);
 
 public sealed record CreateHostelRequest(string Name, string? Description);
 public sealed record UpdateHostelRequest(string Name, string? Description);
