@@ -88,7 +88,16 @@ export function deriveTimetableSelection(
   const curriculumSemesters = yearOfStudy
     ? allCurriculumSemesters.filter(item => item.year === Number(yearOfStudy))
     : allCurriculumSemesters
-  const selectedCurriculumSemester = allCurriculumSemesters.find(item => item.code === curriculumSemester)
+  // Older editor/template state stored the semester number (for example "1")
+  // while the selector now stores a generated code (for example "CN11").
+  // Accept both representations so existing timetable/template selections
+  // continue to resolve their course mappings.
+  const selectedCurriculumSemester = allCurriculumSemesters.find(
+    item =>
+      item.code === curriculumSemester ||
+      item.value === curriculumSemester ||
+      (yearOfStudy && item.year === Number(yearOfStudy) && String(item.semesterNumber) === curriculumSemester)
+  )
 
   const eligibleMappings = mappings.filter(
     item =>

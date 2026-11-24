@@ -70,6 +70,18 @@ describe('timetable programme-to-template selection flow', () => {
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-a2'])
   })
 
+  it('resolves legacy numeric semester selections used by existing timetable templates', () => {
+    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '2', 'period-1', '')
+    expect(result.selectedCurriculumSemester?.code).toBe('A12')
+    expect(result.courseUnits.map(item => item.id)).toEqual(['course-a2'])
+  })
+
+  it('resolves a semester value when the generated display code is unavailable', () => {
+    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '1-2', 'period-1', '')
+    expect(result.selectedCurriculumSemester?.code).toBe('A12')
+    expect(result.courseUnits.map(item => item.id)).toEqual(['course-a2'])
+  })
+
   it('loads the selected year cohort without narrowing it to its anchor course offering', () => {
     const result = deriveTimetableSelection(
       options, ['programme-a'], 'curriculum-a', '2', 'A21', 'period-2', 'course-a3'
