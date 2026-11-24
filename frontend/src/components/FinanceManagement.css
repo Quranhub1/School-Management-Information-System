@@ -947,3 +947,37 @@
  .finance-workspace .finance-dashboard-heading,.finance-workspace .finance-dashboard-section-title { align-items:flex-start; flex-direction:column; }
  .finance-workspace .finance-dashboard-latest .finance-surface-heading { align-items:flex-start; flex-direction:column; }
 }
+
+
+/* Keep the Finance & Accounting title centered independently of the action button. */
+.finance-workspace .finance-workspace-header {
+  position: relative;
+  justify-content: center;
+}
+.finance-workspace .finance-workspace-header > div:first-child {
+  flex: 1 1 100%;
+  min-width: 0;
+  text-align: center;
+}
+.finance-workspace .finance-workspace-header .page-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.finance-workspace .finance-workspace-header h2 {
+  text-align: center;
+  text-transform: uppercase;
+}
+@media (max-width: 620px) {
+  .finance-workspace .finance-workspace-header {
+    padding-right: 0;
+    padding-bottom: 48px;
+  }
+  .finance-workspace .finance-workspace-header .page-actions {
+    top: auto;
+    right: 0;
+    bottom: 8px;
+    transform: none;
+  }
+}
