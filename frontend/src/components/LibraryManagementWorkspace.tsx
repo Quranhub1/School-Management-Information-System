@@ -24,7 +24,7 @@ export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean 
     let active = true;
     setToolsLoading(true);
     setToolsError('');
-    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/+$/, '') ?? '';
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ?? '';
     const token = getAccessToken();
     void fetch(`${base}/api/library/integrations`, {
       headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
