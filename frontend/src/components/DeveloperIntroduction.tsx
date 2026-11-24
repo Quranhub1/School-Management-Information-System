@@ -1,4 +1,4 @@
-import { ArrowUpRight, Code2, Database, Layers3, Server, ShieldCheck } from 'lucide-react'
+import { Code2, Database, Layers3, Server, ShieldCheck } from 'lucide-react'
 import './DeveloperIntroduction.css'
 
 // Keep company identity assets inside the frontend source tree so Vite bundles them locally.
@@ -78,7 +78,6 @@ export function DeveloperIntroduction() {
       <footer className="developer-intro-footer">
         <span>JOES TECHNOLOGIES</span>
         <span>Software development · Systems engineering</span>
-        <a href="https://github.com/Quranhub1/School-Management-Information-System" target="_blank" rel="noreferrer">SMIS repository <ArrowUpRight size={14} aria-hidden="true" /></a>
       </footer>
     </section>
   )
