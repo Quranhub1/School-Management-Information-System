@@ -9,7 +9,6 @@ import { paymentListSchema } from '../schemas/finance.schema'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
 import { CashBankPositionReport } from './CashBankPositionReport'
-import { FinanceControlCenter } from './FinanceControlCenter'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
@@ -255,18 +254,11 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
       {feePaymentTicker}
 
-      <div className="finance-tab-strip" role="tablist" aria-label="Finance workspaces">
-        {([
-          { key: 'overview', label: 'Overview' },
-          { key: 'student-accounts', label: 'Student Fees & Invoices' },
-          { key: 'collections', label: 'Payments & Receipts' },
-          ...(isAssistantAccountant ? [] : [{ key: 'fees', label: 'Fee Structures' }, { key: 'accounting', label: 'Accounts & Ledgers' }]),
-          { key: 'allowances', label: 'Staff Allowances' },
-          { key: 'reports', label: 'Financial Reports' },
-        ] as { key: FinanceTab; label: string }[]).map(item => (
-          <button key={item.key} role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'active' : ''} onClick={() => setTab(item.key)}>{item.label}</button>
-        ))}
-      </div>
+      {tab !== 'overview' && (
+        <div className="finance-workspace-back">
+          <button type="button" className="secondary-button" onClick={() => setTab('overview')}>← Finance overview</button>
+        </div>
+      )}
       {error && <div className="error" role="alert">{error}</div>}
 
       {tab === 'overview' && (
