@@ -1,10 +1,9 @@
 import { ArrowUpRight, Code2, Database, Layers3, Server, ShieldCheck } from 'lucide-react'
 import './DeveloperIntroduction.css'
 
-// The image files live at the repository root. Importing them bundles the assets
-// into Vite's production output, so the profile also works without internet access.
-import joesTechnologiesLogo from '../../../joes tech logo.jpg'
-import developerPhotograph from '../../../joes technologies photograph.jpg'
+// Keep company identity assets inside the frontend source tree so Vite bundles them locally.
+import joesTechnologiesLogo from '../assets/branding/joes-technologies-logo.jpg'
+import developerPhotograph from '../assets/branding/joes-technologies-developer.jpg'
 
 const capabilities = [
   { icon: Code2, title: 'Application development', description: 'Design and implementation of practical software workflows.' },
@@ -61,6 +60,18 @@ export function DeveloperIntroduction() {
               <div><h4>{title}</h4><p>{description}</p></div>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="developer-intro-contact" aria-labelledby="developer-intro-contact-title">
+        <div className="developer-intro-section-heading">
+          <p className="developer-intro-eyebrow">GET IN TOUCH</p>
+          <h3 id="developer-intro-contact-title">Contact JOES TECHNOLOGIES</h3>
+        </div>
+        <div className="developer-intro-contact-grid">
+          <a href="mailto:kaigwaakram123@gmail.com"><span className="developer-intro-contact-label">EMAIL</span><strong>kaigwaakram123@gmail.com</strong></a>
+          <a href="tel:+256749846848"><span className="developer-intro-contact-label">PHONE</span><strong>+256 749 846 848</strong></a>
+          <div><span className="developer-intro-contact-label">LOCATION</span><strong>Malaba, Uganda</strong></div>
         </div>
       </section>
 
