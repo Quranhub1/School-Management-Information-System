@@ -4,11 +4,12 @@ import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, Clipbo
 import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, getPermissionCatalogue, getPermissionRoles, getRolePermissionCodes, setRolePermissionCodes as saveRolePermissionCodes, type CreateUserRequest, type UpdateUserRequest, type UserSummary, type PermissionGroup, type PermissionRole } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
+import { AcademicCalendarManagement } from './AcademicCalendarManagement'
 
 const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'SchoolWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
 
-type AdminTab = 'users' | 'roles' | 'offices' | 'settings'
+type AdminTab = 'users' | 'roles' | 'offices' | 'settings' | 'academic-calendar'
 
 type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
 
@@ -70,6 +71,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
     else if (activeSubsection === 'roles') setTab('roles')
     else if (activeSubsection === 'offices') setTab('offices')
     else if (activeSubsection === 'settings') setTab('settings')
+    else if (activeSubsection === 'academic-calendar') setTab('academic-calendar')
   }, [activeSubsection])
   const [selectedOffice, setSelectedOffice] = useState<Office | null>(null)
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
@@ -253,6 +255,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
       <button role="tab" aria-selected={tab === 'roles'} className={tab === 'roles' ? 'active' : ''} onClick={() => setTab('roles')}>Roles</button>
       <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => { setTab('offices'); setSelectedOffice(null) }}>Leadership & Offices</button>
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
+      <button role="tab" aria-selected={tab === 'academic-calendar'} className={tab === 'academic-calendar' ? 'active' : ''} onClick={() => setTab('academic-calendar')}>Academic Year &amp; Calendar</button>
     </div>
 
     {error && <div className="error" role="alert">{error}</div>}
@@ -494,6 +497,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
       )
     )}
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
+    {tab === 'academic-calendar' && <AcademicCalendarManagement />}
   </section>
 }
 
