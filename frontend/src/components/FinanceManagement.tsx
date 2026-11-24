@@ -255,72 +255,64 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
       {feePaymentTicker}
 
-      <div className="finance-tab-strip" role="tablist" aria-label="Finance sections">
+      <div className="finance-tab-strip" role="tablist" aria-label="Finance workspaces">
         {([
           { key: 'overview', label: 'Overview' },
-          { key: 'student-accounts', label: 'Student Fees & Payments' },
-          { key: 'collections', label: 'Collections' },
-          ...(isAssistantAccountant ? [] : [{ key: 'fees', label: 'Fee Structures' }, { key: 'accounting', label: 'Accounting' }]),
+          { key: 'student-accounts', label: 'Student Fees & Invoices' },
+          { key: 'collections', label: 'Payments & Receipts' },
+          ...(isAssistantAccountant ? [] : [{ key: 'fees', label: 'Fee Structures' }, { key: 'accounting', label: 'Accounts & Ledgers' }]),
           { key: 'allowances', label: 'Staff Allowances' },
-          { key: 'reports', label: 'Reports' },
-        ] as { key: FinanceTab; label: string }[]).map((item) => (
+          { key: 'reports', label: 'Financial Reports' },
+        ] as { key: FinanceTab; label: string }[]).map(item => (
           <button key={item.key} role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'active' : ''} onClick={() => setTab(item.key)}>{item.label}</button>
         ))}
       </div>
-
       {error && <div className="error" role="alert">{error}</div>}
 
       {tab === 'overview' && (
-        <>
-          <FinanceControlCenter onNavigate={nextTab => setTab(nextTab)} />
-          <div className="finance-kpi-grid">
-            <article className="finance-kpi finance-kpi-blue"><span>Total billed</span><strong>{dashboard ? money(dashboard.totalBilled) : '—'}</strong><small>Current student billing</small></article>
-            <article className="finance-kpi finance-kpi-green"><span>Total collected</span><strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong><small>Posted student payments</small></article>
-            <article className="finance-kpi finance-kpi-red"><span>Outstanding</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong><small>Receivables requiring follow-up</small></article>
-            <article className="finance-kpi finance-kpi-orange"><span>Today's collection</span><strong>{dashboard ? money(dashboard.todayCollection) : '—'}</strong><small>Payments posted today</small></article>
+        <section className="finance-dashboard-home" aria-label="Finance dashboard overview">
+          <div className="finance-dashboard-heading">
+            <div><span className="eyebrow">FINANCIAL POSITION</span><h3>Finance overview</h3></div>
+            <span className="finance-dashboard-currency">{SYSTEM_CURRENCY}</span>
           </div>
-            {dashboard?.totalsByCurrency && dashboard.totalsByCurrency.length > 0 && (
-              <div className="finance-currency-summary" aria-label="Financial totals by currency">
-                <strong>Totals by currency</strong>
-                {dashboard.totalsByCurrency.map(total => (
-                  <span key={total.currency}>
-                    <b>{total.currency}</b>
-                    <span>Billed {money(total.billed, total.currency)}</span>
-                    <span>Paid {money(total.paid, total.currency)}</span>
-                    <span>Balance {money(total.balance, total.currency)}</span>
-                  </span>
-                ))}
-              </div>
-            )}
-
-          <div className="finance-overview-grid">
-            <section className="finance-surface finance-collection-panel">
-              <div className="finance-surface-heading"><div><span className="eyebrow">COLLECTION PERFORMANCE</span><h3>Fee collection</h3></div><strong>{collectionRate.toFixed(0)}%</strong></div>
-              <div className="finance-progress-track"><div style={{ width: collectionRate + '%' }} /></div>
-              <div className="finance-mini-stats"><span>Paid <strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong></span><span>Balance <strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></span><span>Invoices <strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></span></div>
-              <div className="finance-bar-chart" aria-label="Recent daily collection activity">
-                {collectionByDate.labels.length === 0 ? <div className="empty">No recent collection activity.</div> : <BarChart labels={collectionByDate.labels} datasets={collectionByDate.datasets} ariaLabel="Daily fee collections shown as separate series for each transaction currency" valueFormatter={value => new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(value)} />}
-              </div>
-            </section>
-
-            <section className="finance-surface">
-              <div className="finance-surface-heading"><div><span className="eyebrow">FINANCE CONTROL</span><h3>Account health</h3></div></div>
-              <div className="finance-control-list">
-                <div><span>Open receivables</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
-                <div><span>Payment records</span><strong>{dashboard?.paymentCount.toLocaleString() ?? '—'}</strong></div>
-                <div><span>Collection rate</span><strong className="finance-value-success">{collectionRate.toFixed(1)}%</strong></div>
-                <div><span>Currency</span><strong>{SYSTEM_CURRENCY}</strong></div>
-              </div>
-              <div className="finance-legend"><span><i className="finance-dot success" />Paid / collected</span><span><i className="finance-dot warning" />Partial</span><span><i className="finance-dot danger" />Outstanding</span></div>
-            </section>
+          <div className="finance-dashboard-metrics">
+            <article className="finance-dashboard-metric"><span>Total collections</span><strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong><small>Posted student payments</small></article>
+            <article className="finance-dashboard-metric"><span>Outstanding fees</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong><small>{dashboard?.outstandingCount.toLocaleString() ?? '—'} open invoices</small></article>
+            <article className="finance-dashboard-metric"><span>Student invoices</span><strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong><small>Total invoices issued</small></article>
+            <article className="finance-dashboard-metric"><span>Transactions</span><strong>{dashboard?.paymentCount.toLocaleString() ?? '—'}</strong><small>Recorded payment transactions</small></article>
           </div>
-
-          <section className="finance-surface" style={{ marginTop: 18 }}>
-            <div className="finance-surface-heading"><div><span className="eyebrow">SCHOOL FEES WORKSPACE</span><h3>Student receivables</h3><p>Search admitted student accounts, review balances and track collection progress.</p></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>Open collections</button></div>
-            <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search student name / code / programme" aria-label="Search finance accounts" /><span>{filteredOutstanding.length.toLocaleString()} outstanding accounts</span></div>
-            <AgGridTable rows={filteredOutstanding.slice(0, 8)} columns={accountColumns} height={360} pageSize={8} />
+          <div className="finance-dashboard-section-title"><h3>Finance workspaces</h3><span>Choose a workspace to continue</span></div>
+          <div className="finance-dashboard-workspaces">
+            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('collections')}>
+              <span className="finance-dashboard-workspace-icon">PR</span><span className="finance-dashboard-workspace-copy"><strong>Payments & Receipts</strong><small>Review SchoolPay and verified manual payments, receipts and references</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>
+            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('student-accounts')}>
+              <span className="finance-dashboard-workspace-icon">SI</span><span className="finance-dashboard-workspace-copy"><strong>Student Fees & Invoices</strong><small>View student fee statements, balances, invoices and payment allocations</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>
+            {!isAssistantAccountant && <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('fees')}>
+              <span className="finance-dashboard-workspace-icon">FS</span><span className="finance-dashboard-workspace-copy"><strong>Fee Structures</strong><small>Configure fee schedules and apply approved charges to students</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>}
+            {!isAssistantAccountant && <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('accounting')}>
+              <span className="finance-dashboard-workspace-icon">AL</span><span className="finance-dashboard-workspace-copy"><strong>Accounts & Ledgers</strong><small>Manage chart of accounts, journals, ledgers and payroll controls</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>}
+            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('reports')}>
+              <span className="finance-dashboard-workspace-icon">BR</span><span className="finance-dashboard-workspace-copy"><strong>Bank & Financial Reports</strong><small>Review cash and bank positions, reconciliation and financial reports</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>
+            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('accounting')} disabled={isAssistantAccountant}>
+              <span className="finance-dashboard-workspace-icon">BE</span><span className="finance-dashboard-workspace-copy"><strong>Budgets & Expenditure</strong><small>Review approved budgets, actual spending and variances</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>
+            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('reports')}>
+              <span className="finance-dashboard-workspace-icon">FR</span><span className="finance-dashboard-workspace-copy"><strong>Financial Reports</strong><small>Open period-based reports and financial position statements</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>
+            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('allowances')}>
+              <span className="finance-dashboard-workspace-icon">SA</span><span className="finance-dashboard-workspace-copy"><strong>Staff Allowances</strong><small>Process and track staff advances and allowances</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+            </button>
+          </div>
+          <section className="finance-dashboard-latest">
+            <div className="finance-surface-heading"><div><span className="eyebrow">LATEST ACTIVITY</span><h3>Recent transactions</h3></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>View all payments</button></div>
+            <AgGridTable rows={payments.slice(0, 5)} columns={recentPaymentColumns} height={230} pageSize={5} />
           </section>
-        </>
+        </section>
       )}
 
       {tab === 'student-accounts' && <StudentFinanceDashboard />}
