@@ -20,12 +20,30 @@ public sealed class HostelController(HostelService service) : ControllerBase
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
+    [HttpPut("hostels/{hostelId:guid}")]
+    public async Task<IActionResult> UpdateHostel(Guid hostelId, UpdateHostelRequest request, CancellationToken cancellationToken)
+    {
+        try { var item = await service.UpdateHostelAsync(hostelId, request.Name, request.Description, cancellationToken); return Ok(HostelResponseDto.FromDomain(item)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpDelete("hostels/{hostelId:guid}")]
+    public async Task<IActionResult> DeleteHostel(Guid hostelId, CancellationToken cancellationToken)
+    {
+        try { await service.DeleteHostelAsync(hostelId, cancellationToken); return NoContent(); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
     [HttpPost("rooms")]
     public async Task<IActionResult> CreateRoom(CreateRoomRequest request, CancellationToken cancellationToken)
     {
         try { var item = await service.CreateRoomAsync(request.HostelId, request.RoomNumber, request.Capacity, cancellationToken); return Created($"/api/hostel/rooms/{item.Id}", HostelRoomResponseDto.FromDomain(item)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPost("beds")]
@@ -55,7 +73,6 @@ public sealed class HostelController(HostelService service) : ControllerBase
     }
 }
 
-
 public sealed record HostelResponseDto(Guid Id, string Name, string? Description, bool IsActive, IReadOnlyCollection<HostelRoomResponseDto> Rooms)
 {
     public static HostelResponseDto FromDomain(SchoolManagement.Domain.Hostel.Hostel hostel) =>
@@ -84,6 +101,7 @@ public sealed record HostelAllocationResponseDto(Guid Id, Guid BedId, Guid Stude
 }
 
 public sealed record CreateHostelRequest(string Name, string? Description);
+public sealed record UpdateHostelRequest(string Name, string? Description);
 public sealed record CreateRoomRequest(Guid HostelId, string RoomNumber, int Capacity);
 public sealed record CreateBedRequest(Guid RoomId, string BedNumber);
 public sealed record AllocateRequest(Guid BedId, Guid StudentId, DateOnly StartDate);
