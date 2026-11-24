@@ -43,6 +43,15 @@ export function BulkOperations() {
         ? await importSpreadsheetData(entityType, selectedFile, selectedSheet || undefined)
         : await importData({ entityType, csvData: parsed.csvData })
       setResult({ success: res.successCount, errors: res.errors, warnings: res.warnings })
+      // Clear the pasted CSV only after the complete import succeeds; retain it when rows need correction.
+      if (res.successCount > 0 && res.errors.length === 0) {
+        setCsv('')
+        setSelectedFile(null)
+        setSheetNames([])
+        setSelectedSheet('')
+        setPreviewCount(null)
+        if (fileRef.current) fileRef.current.value = ''
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Import failed.')
     } finally {
