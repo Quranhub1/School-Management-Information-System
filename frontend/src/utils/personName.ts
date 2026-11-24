@@ -1,18 +1,24 @@
 /**
- * Formats a person's display name in the institution's required order:
- * surname, first name, then other/given names.
+ * Formats a person's display name as SURNAME, FIRSTNAME OTHER NAMES.
  *
- * Display names are uppercase. Stored/API fields remain unchanged;
- * this helper is for presentation only.
+ * This is presentation-only: it never changes the stored/API name fields.
+ * Applying it in the shared helper also corrects the display of existing
+ * records whenever they are loaded from the API.
  */
 export function formatPersonName(
   surname?: string | null,
   firstName?: string | null,
   otherNames?: string | null,
 ): string {
-  return [surname, firstName, otherNames]
+  const familyName = surname?.trim()
+  const givenNames = [firstName, otherNames]
     .map(value => value?.trim())
     .filter((value): value is string => Boolean(value))
     .join(' ')
-    .toUpperCase()
+
+  if (familyName && givenNames) {
+    return `${familyName}, ${givenNames}`.toUpperCase()
+  }
+
+  return (familyName || givenNames).toUpperCase()
 }
