@@ -8,11 +8,11 @@ public sealed class HostelService(IHostelRepository repository)
 {
     public async Task<IReadOnlyList<HostelEntity>> GetAsync(CancellationToken cancellationToken = default)
     {
-        await ExpireEndedAllocationsAsync(cancellationToken);
+        await RefreshSemesterAllocationsAsync(cancellationToken);
         return await repository.GetHostelsAsync(cancellationToken);
     }
 
-    private Task ExpireEndedAllocationsAsync(CancellationToken cancellationToken) =>
+    public Task RefreshSemesterAllocationsAsync(CancellationToken cancellationToken = default) =>
         repository.ExpireEndedSemesterAllocationsAsync(DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(3)).DateTime), cancellationToken);
 
     public async Task<HostelEntity> CreateHostelAsync(string name, string? description, CancellationToken cancellationToken = default)
@@ -77,7 +77,8 @@ public sealed class HostelService(IHostelRepository repository)
 
     public async Task<HostelAllocation> AllocateAsync(Guid bedId, Guid studentId, DateOnly startDate, CancellationToken cancellationToken = default)
     {
-        await ExpireEndedAllocationsAsync(cancellationToken);
+        await RefreshSemesterAllocationsAsync(cancellationToken);
+        if (!await repository.IsActiveStudentAsync(studentId, cancellationToken)) throw new KeyNotFoundException("Student is not present in the active student registry.");
         var bed = await repository.GetBedAsync(bedId, cancellationToken) ?? throw new KeyNotFoundException("Bed not found.");
         if (!bed.IsActive) throw new InvalidOperationException("Cannot allocate an inactive bed.");
         var semester = await repository.GetSemesterForDateAsync(startDate, cancellationToken)
