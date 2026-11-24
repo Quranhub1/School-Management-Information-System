@@ -26,6 +26,7 @@ public sealed class HostelRepository(SchoolManagementDbContext db) : IHostelRepo
     public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) => db.Set<HostelAllocation>().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     public Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, Guid semesterId, CancellationToken cancellationToken = default) => db.Set<HostelAllocation>().FirstOrDefaultAsync(a => a.BedId == bedId && a.SemesterId == semesterId && a.Status == "Active", cancellationToken);
     public Task<HostelAllocation?> GetActiveAllocationByStudentAsync(Guid studentId, Guid semesterId, CancellationToken cancellationToken = default) => db.Set<HostelAllocation>().FirstOrDefaultAsync(a => a.StudentId == studentId && a.SemesterId == semesterId && a.Status == "Active", cancellationToken);
+    public Task<bool> IsActiveStudentAsync(Guid studentId, CancellationToken cancellationToken = default) => db.Students.AsNoTracking().AnyAsync(student => student.Id == studentId && !student.IsArchived, cancellationToken);
     public Task<SchoolManagement.Domain.Academic.Semester?> GetSemesterForDateAsync(DateOnly date, CancellationToken cancellationToken = default) =>
         (from semester in db.Semesters.AsNoTracking()
          join year in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals year.Id
@@ -49,7 +50,7 @@ public sealed class HostelRepository(SchoolManagementDbContext db) : IHostelRepo
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try { await db.SaveChangesAsync(cancellationToken); }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg && (pg.ConstraintName == "UX_HostelAllocations_ActiveBed" || pg.ConstraintName == "UX_HostelAllocations_ActiveStudent"))
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg && (pg.ConstraintName == "UX_HostelAllocations_ActiveBedSemester" || pg.ConstraintName == "UX_HostelAllocations_ActiveStudentSemester"))
         { throw new InvalidOperationException("The hostel allocation conflicts with an existing active allocation.", ex); }
     }
 }
