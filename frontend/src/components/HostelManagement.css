@@ -129,3 +129,57 @@
   .hostel-management-panel .management-form > button,
   .warden-management-panel .management-form > button { width: 100%; }
 }
+
+.hostel-management-panel .hostel-form-heading {
+  grid-column: 1 / -1;
+  color: #263d2e;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.hostel-management-panel .hostel-form-actions,
+.hostel-management-panel .hostel-row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hostel-management-panel .hostel-form-actions { grid-column: 1 / -1; }
+.hostel-management-panel .hostel-row-actions button {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hostel-management-panel .hostel-row-actions .hostel-edit-button {
+  border-color: #166534;
+  background: #15803d;
+  color: #fff;
+}
+.hostel-management-panel .hostel-row-actions .hostel-delete-button {
+  border-color: #b91c1c;
+  background: #dc2626;
+  color: #fff;
+}
+.hostel-management-panel .hostel-row-actions button:disabled { cursor: not-allowed; opacity: .55; }
+.hostel-management-panel .hostel-form-actions .hostel-cancel-button {
+  border: 1px solid #9ca3af;
+  background: #fff;
+  color: #374151;
+}
+.hostel-management-panel .hostel-description-cell {
+  display: block;
+  max-width: 360px;
+  margin-top: 4px;
+  color: #64748b;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+[data-theme="dark"] .hostel-management-panel .hostel-form-heading { color: #e1eee5; }
+[data-theme="dark"] .hostel-management-panel .hostel-description-cell { color: #b5c4ba; }
+@media (max-width: 720px) {
+  .hostel-management-panel .hostel-row-actions { min-width: 130px; }
+}
