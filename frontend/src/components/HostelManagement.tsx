@@ -202,7 +202,7 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
     setError('')
     setLoading(true)
     try {
-      await request(`/api/hostel/allocations/${id}/vacate`, { method: 'POST', body: JSON.stringify({ endDate: new Date().toISOString().slice(0, 10) }) })
+      await request(`/api/hostel/allocations/${id}/vacate`, { method: 'POST', body: JSON.stringify({ endDate: localDateString() }) })
       notify('Allocation closed successfully.', 'success', 'Allocation closed')
       await load()
     } catch (e) {
