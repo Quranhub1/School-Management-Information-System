@@ -243,9 +243,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     <section className="finance-workspace" aria-label="Finance and accounting workspace">
         <div className="workspace-header finance-workspace-header">
         <div>
-          <p className="eyebrow">{`FINANCE & ACCOUNTS · ${SYSTEM_CURRENCY}`}</p>
           <h2>Finance & Accounting</h2>
-          <p>Billing, collections and accounting controls.</p>
         </div>
         <div className="page-actions">
           <button type="button" className="secondary-button" onClick={() => void loadOverview()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
