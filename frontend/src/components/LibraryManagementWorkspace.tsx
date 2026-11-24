@@ -24,7 +24,7 @@ export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean 
     let active = true;
     setToolsLoading(true);
     setToolsError('');
-    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ?? '';
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/+$/, '') ?? '';
     const token = getAccessToken();
     void fetch(`${base}/api/library/integrations`, {
       headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -35,12 +35,18 @@ export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean 
     }).then(value => {
       if (active) setToolLinks(value);
     }).catch(reason => {
-      if (active) setToolsError(reason instanceof Error ? reason.message : 'Unable to load library tools.');
+      if (active) {
+        setToolLinks(emptyToolLinks);
+        setToolsError(reason instanceof Error ? reason.message : 'Unable to load library tools.');
+      }
     }).finally(() => {
       if (active) setToolsLoading(false);
     });
     return () => { active = false; };
   }, [activeTab]);
+
+  const kohaAvailable = !toolsLoading && !toolsError && toolLinks.koha.enabled && Boolean(toolLinks.koha.baseUrl);
+  const dspaceAvailable = !toolsLoading && !toolsError && toolLinks.dspace.enabled && Boolean(toolLinks.dspace.baseUrl);
 
   return (
     <section className="library-workspace-shell" aria-labelledby="library-management-workspace-title">
@@ -56,26 +62,42 @@ export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean 
         <section className="library-tools-panel" aria-labelledby="library-tools-title">
           <div className="library-tools-heading">
             <h2 id="library-tools-title">Library Tools</h2>
-            <p>Open the institution's connected library platforms.</p>
+            <p>Choose a connected platform to open its interface.</p>
           </div>
-          {toolsLoading ? <p role="status">Checking connected library tools…</p> : toolsError ? (
-            <p className="form-error" role="alert">{toolsError}</p>
-          ) : (
-            <div className="library-tools-actions">
-              <article className="library-tool-card">
-                <div><span className="integration-label">KOHA</span><h3>Library Management System</h3><p>Open the Koha staff interface or OPAC configured by your administrator.</p></div>
-                {toolLinks.koha.enabled && toolLinks.koha.baseUrl ? (
-                  <a className="library-primary" href={toolLinks.koha.baseUrl} target="_blank" rel="noopener noreferrer">Open Koha</a>
-                ) : <span className="library-tool-unavailable">Not connected — ask an administrator to configure Koha.</span>}
-              </article>
-              <article className="library-tool-card">
-                <div><span className="integration-label">DSPACE</span><h3>Digital Repository</h3><p>Browse the institution's digital publications, research and academic documents.</p></div>
-                {toolLinks.dspace.enabled && toolLinks.dspace.baseUrl ? (
-                  <a className="library-primary" href={toolLinks.dspace.baseUrl} target="_blank" rel="noopener noreferrer">Open DSpace</a>
-                ) : <span className="library-tool-unavailable">Not connected — ask an administrator to configure DSpace.</span>}
-              </article>
-            </div>
-          )}
+          {toolsLoading && <p role="status">Checking connected library platforms…</p>}
+          {toolsError && <p className="form-error" role="alert">{toolsError}</p>}
+          <div className="library-tools-actions">
+            <article className="library-tool-card">
+              <div>
+                <span className="integration-label">KOHA</span>
+                <h3>Library Management System</h3>
+                <p>Open the institution's configured Koha OPAC.</p>
+              </div>
+              {kohaAvailable ? (
+                <a className="library-primary" href={toolLinks.koha.baseUrl} target="_blank" rel="noopener noreferrer">Open Koha</a>
+              ) : (
+                <button className="library-primary" type="button" disabled aria-disabled="true">
+                  {toolsLoading ? 'Loading Koha…' : 'Koha not connected'}
+                </button>
+              )}
+              {!toolsLoading && !toolsError && !kohaAvailable && <span className="library-tool-unavailable">Ask an administrator to configure the Koha URL.</span>}
+            </article>
+            <article className="library-tool-card">
+              <div>
+                <span className="integration-label">DSPACE</span>
+                <h3>Digital Repository</h3>
+                <p>Browse the institution's digital publications, research and academic documents.</p>
+              </div>
+              {dspaceAvailable ? (
+                <a className="library-primary" href={toolLinks.dspace.baseUrl} target="_blank" rel="noopener noreferrer">Open DSpace</a>
+              ) : (
+                <button className="library-primary" type="button" disabled aria-disabled="true">
+                  {toolsLoading ? 'Loading DSpace…' : 'DSpace not connected'}
+                </button>
+              )}
+              {!toolsLoading && !toolsError && !dspaceAvailable && <span className="library-tool-unavailable">Ask an administrator to configure the DSpace URL.</span>}
+            </article>
+          </div>
         </section>
       )}
     </section>
