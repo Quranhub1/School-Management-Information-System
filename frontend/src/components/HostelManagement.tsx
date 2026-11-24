@@ -34,7 +34,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export function HostelManagement({ canManage = true }: { canManage?: boolean }) {
-  const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports' | 'setup'>('houses')
+  const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports'>('houses')
   const [hostels, setHostels] = useState<Hostel[]>([])
   const [hostelId, setHostelId] = useState('')
   const [editingHostelId, setEditingHostelId] = useState<string | null>(null)
