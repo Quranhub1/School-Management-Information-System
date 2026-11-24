@@ -57,6 +57,14 @@ export type StaffAttendanceHistory = {
   departmentId: string | null
   from: string
   to: string
+  attendanceDays: Array<{
+    date: string
+    checkIn: string | null
+    checkOut: string | null
+    hoursWorked: number | null
+    status: 'Absent' | 'Checked in' | 'Complete' | string
+    eventCount: number
+  }>
   events: Array<{
     id: string
     eventType: 'IN' | 'OUT' | string
