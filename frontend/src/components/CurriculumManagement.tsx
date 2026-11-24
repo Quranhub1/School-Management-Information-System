@@ -40,7 +40,7 @@ import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityAc
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
 
 type Tab = 'full' | 'short'
-type WorkspaceView = 'dashboard' | 'courses' | 'curricula'
+type WorkspaceView = 'courses' | 'curricula'
 
 // ASP.NET serializes enums as strings in API responses. Accept both the current
 // string contract and legacy numeric payloads so filtering never hides curricula.
@@ -55,7 +55,7 @@ function normalizeProgrammeType(value: number | string | null | undefined): numb
 
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
-  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('dashboard')
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('courses')
   const [courseSearch, setCourseSearch] = useState('')
   const [courseStatusFilter, setCourseStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
@@ -162,7 +162,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       if (!(event instanceof CustomEvent)) return
       const detail = event.detail as { module?: string; subsection?: string } | undefined
       if (detail?.module !== 'curriculum' || detail.subsection !== 'courses') return
-      setWorkspaceView('courses')
       // The full-programme and short-course catalogues share this destination ID;
       // only one is mounted at a time, according to the selected curriculum tab.
       window.requestAnimationFrame(() => {
@@ -912,47 +911,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </div>
       <div className="curriculum-workspace-nav" role="tablist" aria-label="Academic workspaces">
-        <button type="button" role="tab" aria-selected={workspaceView === 'dashboard'} className={workspaceView === 'dashboard' ? 'active' : ''} onClick={() => setWorkspaceView('dashboard')}>Overview</button>
         <button type="button" role="tab" aria-selected={workspaceView === 'courses'} className={workspaceView === 'courses' ? 'active' : ''} onClick={() => setWorkspaceView('courses')}>Course Catalogue <span>{authorityCourses.length}</span></button>
         <button type="button" role="tab" aria-selected={workspaceView === 'curricula'} className={workspaceView === 'curricula' ? 'active' : ''} onClick={() => setWorkspaceView('curricula')}>Programmes &amp; Curricula</button>
       </div>
-      {workspaceView === 'dashboard' && (
-        <div className="curriculum-dashboard">
-          <div className="curriculum-dashboard-heading">
-            <div><h3>Academic catalogue overview</h3><p>Manage the institution’s academic programmes, curriculum versions and course units.</p></div>
-            <span className="curriculum-dashboard-authority">{authorities.find(item => item.code === authority)?.name ?? 'No authority selected'}</span>
-          </div>
-          <div className="curriculum-metric-grid">
-            <article className="curriculum-metric-card"><span>Academic authorities</span><strong>{authorities.filter(item => item.isActive).length}</strong><small>Active regulatory / awarding bodies</small></article>
-            <article className="curriculum-metric-card"><span>Programmes</span><strong>{authorityProgrammes.length}</strong><small>Active programmes under selected authority</small></article>
-            <article className="curriculum-metric-card"><span>Course units</span><strong>{authorityCourses.length}</strong><small>{authorityCourses.filter(item => item.isActive).length} active · {authorityCourses.filter(item => !item.isActive).length} inactive</small></article>
-            <article className="curriculum-metric-card"><span>Curricula</span><strong>{authorityCurricula.length}</strong><small>{authorityCurricula.filter(item => item.isActive).length} active curriculum versions</small></article>
-          </div>
-          <div className="curriculum-dashboard-section-heading"><h3>Workspaces</h3><span>Open a dedicated workspace</span></div>
-          <div className="curriculum-workspace-cards">
-            <button type="button" className="curriculum-workspace-card" onClick={() => setWorkspaceView('courses')}>
-              <span className="curriculum-workspace-card-icon">CU</span><span className="curriculum-workspace-card-copy"><strong>Course Catalogue</strong><small>Browse, search, add and maintain course units, credits and prerequisites.</small></span><span className="curriculum-workspace-card-count">{authorityCourses.length} courses</span><span className="curriculum-workspace-card-arrow" aria-hidden="true">→</span>
-            </button>
-            <button type="button" className="curriculum-workspace-card" onClick={() => setWorkspaceView('curricula')}>
-              <span className="curriculum-workspace-card-icon">PC</span><span className="curriculum-workspace-card-copy"><strong>Programmes &amp; Curricula</strong><small>Manage programmes, curriculum versions, course mapping and academic structure.</small></span><span className="curriculum-workspace-card-count">{authorityProgrammes.length} programmes</span><span className="curriculum-workspace-card-arrow" aria-hidden="true">→</span>
-            </button>
-          </div>
-          <div className="curriculum-dashboard-footer">
-            <label htmlFor="curriculum-dashboard-authority">Academic authority</label>
-            <select id="curriculum-dashboard-authority" value={authority} disabled={loading} onChange={async event => {
-              const nextAuthority = event.target.value
-              setAuthority(nextAuthority); setCourses([]); setCourseSearch(''); setError('')
-              if (!nextAuthority) return
-              try { setCourses(await getCourses(nextAuthority)) }
-              catch (loadError) { setError(loadError instanceof Error ? loadError.message : 'Unable to load this authority course catalogue.') }
-            }}>
-              <option value="">Select authority</option>
-              {authorities.filter(item => item.isActive).map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
-            </select>
-            <button type="button" className="curriculum-refresh-button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh overview'}</button>
-          </div>
-        </div>
-      )}
       {workspaceView === 'courses' && <div className="course-catalogue-authority">
         <label htmlFor="course-catalogue-authority">Academic authority</label>
         <select id="course-catalogue-authority" value={authority} disabled={loading} onChange={async event => {
@@ -1546,10 +1507,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
         </>
       )}
-      {workspaceView === 'curricula' && <>
-        <CurriculumLogbookManagement curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} />
-        <CurriculumGovernancePanel curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} canManage={canManage} onChanged={() => void load()} />
-      </>}
+      <CurriculumLogbookManagement curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} />
+      <CurriculumGovernancePanel curricula={authorityCurricula} selectedCurriculumId={selected} onSelectCurriculum={id => void refreshMappings(id)} canManage={canManage} onChanged={() => void load()} />
     </section>
   )
 }
