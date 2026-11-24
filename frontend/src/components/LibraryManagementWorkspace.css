@@ -7,7 +7,9 @@
 .library-tool-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:18px;min-height:190px;padding:20px;border:1px solid var(--border-color,#e5e7eb);border-radius:10px;background:var(--surface-primary,#fff)}
 .library-tool-card h3{margin:7px 0;font-size:1.05rem;font-weight:700;color:var(--text-primary,#1f2937)}
 .library-tool-card p{margin:0;color:var(--text-secondary,#6b7280);font-size:.9rem;line-height:1.5}
-.library-tool-card .library-primary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 16px;border:0;border-radius:6px;background:#176b43;color:#fff;text-decoration:none;font-weight:700}
-.library-tool-card .library-primary:hover{background:#125735}
+.library-tool-card .library-primary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 18px;border:0;border-radius:6px;background:#176b43;color:#fff;text-decoration:none;font:inherit;font-weight:750;cursor:pointer}
+.library-tool-card .library-primary:hover:not(:disabled){background:#125735}
+.library-tool-card .library-primary:focus-visible{outline:3px solid rgba(23,107,67,.25);outline-offset:2px}
+.library-tool-card .library-primary:disabled{background:#a8a29e;color:#fff;cursor:not-allowed;opacity:1}
 .library-tool-unavailable{font-size:.85rem;color:var(--text-secondary,#6b7280)}
 @media(max-width:700px){.library-tools-actions{grid-template-columns:1fr}}
