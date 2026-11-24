@@ -5,6 +5,14 @@ import LoadingSpinner from './LoadingSpinner'
 
 const shiftDate = (value: string, days: number) => { const [year, month, day] = value.split('-').map(Number); return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10) }
 
+function isLateCheckIn(value: string | null, deadline: string) {
+  if (!value) return false
+  const time = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Kampala', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(new Date(value))
+  return time > deadline
+}
+
 function localDate(value: string | null) {
   if (!value) return '—'
   return new Intl.DateTimeFormat('en-UG', {
@@ -61,6 +69,8 @@ export function StaffAttendanceManagement() {
   const checkIns = rows.filter(row => row.checkIn).length
   const checkOuts = rows.filter(row => row.checkOut).length
   const incomplete = rows.filter(row => row.checkIn && !row.checkOut).length
+  const absences = rows.filter(row => row.status === 'Absent').length
+  const lateCheckIns = rows.filter(row => isLateCheckIn(row.checkIn, checkInDeadline)).length
   const localClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Kampala', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
   const deadlinePassed = localClock >= checkInDeadline
   const lastSevenDates = Array.from({ length: 7 }, (_, index) => shiftDate(today, index - 6))
@@ -70,6 +80,7 @@ export function StaffAttendanceManagement() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">Daily Staff Attendance</h3>
+          <p className="text-sm text-slate-500">One row per staff member per date. Staff number identifies each person independently.</p>
         </div>
         <button type="button" className="btn btn-secondary" onClick={() => void load()} disabled={loading}>Refresh register</button>
       </div>
@@ -88,17 +99,19 @@ export function StaffAttendanceManagement() {
         <button type="button" className="btn btn-secondary" onClick={() => { const [year, month, day] = today.split('-').map(Number); const start = new Date(Date.UTC(year, month - 1, day - 6)).toISOString().slice(0, 10); setFrom(start); setTo(today) }}>Last 7 days</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="summary-card"><span>Check-ins</span><strong>{checkIns}</strong></div>
-        <div className="summary-card"><span>Check-outs</span><strong>{checkOuts}</strong></div>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="summary-card"><span>Check-ins · selected period</span><strong>{checkIns}</strong></div>
+        <div className="summary-card"><span>Check-outs · selected period</span><strong>{checkOuts}</strong></div>
+        <div className="summary-card"><span>Late check-ins</span><strong>{lateCheckIns}</strong></div>
         <div className="summary-card"><span>Missing check-out</span><strong>{incomplete}</strong></div>
+        <div className="summary-card"><span>Absent days</span><strong>{absences}</strong></div>
       </div>
 
       {error && <div className="error-message" role="alert">{error}</div>}
       <div className="table-responsive">
         <table className="data-table">
           <thead><tr>
-            <th>Staff No.</th><th>Staff member</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Last 7 days</th><th>Status</th><th>Action</th>
+            <th>Staff No.</th><th>Staff member</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>7-day trend</th><th>Status</th><th>Action</th>
           </tr></thead>
           <tbody>
             {loading ? <tr><td colSpan={9}><LoadingSpinner /></td></tr>
@@ -110,8 +123,8 @@ export function StaffAttendanceManagement() {
                 <td>{localDate(row.checkIn)}</td>
                 <td>{localDate(row.checkOut)}</td>
                 <td>{row.hoursWorked == null ? '—' : row.hoursWorked.toFixed(2)}</td>
-                <td><div aria-label={`Last seven days attendance for ${row.name}`} style={{ display: 'flex', gap: 3 }}>{lastSevenDates.map(date => { const day = rows.find(item => item.staffMemberId === row.staffMemberId && item.date === date); return <span key={date} title={`${date}: ${day?.status ?? 'Not loaded'}`} style={{ width: 10, height: 18, borderRadius: 3, background: day?.checkOut ? '#16a34a' : day?.checkIn ? '#f59e0b' : day ? '#fee2e2' : '#e2e8f0' }} /> })}</div></td>
-                <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' || (row.date === today && deadlinePassed) ? 'status status-warning' : 'status'}>{row.date === today && row.status === 'Absent' && deadlinePassed ? 'Not checked in by ' + checkInDeadline : row.status}</span></td>
+                <td><div aria-label={`Last seven days attendance for ${row.name}`} style={{ display: 'flex', gap: 3 }}>{lastSevenDates.map(date => { const day = rows.find(item => item.staffMemberId === row.staffMemberId && item.date === date); return <span key={date} title={`${date}: ${day?.status ?? (date < from || date > to ? 'Outside selected date range' : 'No attendance row')}`} style={{ width: 10, height: 18, borderRadius: 3, background: day?.checkOut ? '#16a34a' : day?.checkIn ? '#f59e0b' : day ? '#fee2e2' : '#e2e8f0' }} /> })}</div></td>
+                <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' || isLateCheckIn(row.checkIn, checkInDeadline) || (row.date === today && deadlinePassed) ? 'status status-warning' : 'status'}>{row.date === today && row.status === 'Absent' && deadlinePassed ? 'Not checked in by ' + checkInDeadline : isLateCheckIn(row.checkIn, checkInDeadline) ? 'Late' : row.status}</span></td>
                 <td>{row.date === today && row.status === 'Absent'
                   ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'IN')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check in'}</button>
                   : row.date === today && row.status === 'Checked in'
