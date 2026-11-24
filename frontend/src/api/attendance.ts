@@ -1,11 +1,9 @@
 import { readApiErrorMessage } from './errors'
-import { z } from 'zod'
 import {
   attendanceMarkRequestSchema,
   attendanceBulkMarkRequestSchema,
   attendanceEligibleStudentSchema,
   attendanceSessionSummarySchema,
-  staffCheckEventSchema,
 } from '../schemas'
 
 const API_BASE_URL =
@@ -76,16 +74,6 @@ export type SessionSummary = {
   attendancePercentage: number
 }
 
-
-export type StaffCheckEvent = {
-  id: string
-  staffMemberId: string
-  staffName: string
-  staffNumber: string
-  eventType: 'IN' | 'OUT'
-  recordedAtUtc: string
-  confirmation: string
-}
 
 /** ---------- Session management ---------- */
 
@@ -172,47 +160,4 @@ export async function getStudentAttendanceHistory(
   return request<AttendanceRecord[]>(
     `/api/attendance/students/${encodeURIComponent(studentId)}?${params.toString()}`,
   )
-}
-
-/** ---------- Staff check-in/check-out ---------- */
-
-export async function checkInStaff(staffMemberId: string) {
-  return request<StaffCheckEvent>(
-    `/api/staff-attendance/${encodeURIComponent(staffMemberId)}/checkin`,
-    { method: 'POST' },
-  )
-}
-
-export async function checkOutStaff(staffMemberId: string) {
-  return request<StaffCheckEvent>(
-    `/api/staff-attendance/${encodeURIComponent(staffMemberId)}/checkout`,
-    { method: 'POST' },
-  )
-}
-
-/** ---------- Staff daily attendance (existing) ---------- */
-
-export type StaffDailyAttendanceRow = {
-  staffMemberId: string
-  staffNumber: string
-  name: string
-  departmentId: string | null
-  date: string
-  checkIn: string | null
-  checkOut: string | null
-  hoursWorked: number | null
-  status: 'Absent' | 'Checked in' | 'Complete' | string
-  eventCount: number
-}
-
-export function listStaffDailyAttendance(filters: {
-  from: string
-  to: string
-  search?: string
-  departmentId?: string
-}) {
-  const params = new URLSearchParams({ from: filters.from, to: filters.to })
-  if (filters.search?.trim()) params.set('search', filters.search.trim())
-  if (filters.departmentId) params.set('departmentId', filters.departmentId)
-  return request<StaffDailyAttendanceRow[]>(`/api/staff-attendance/daily?${params.toString()}`)
 }
