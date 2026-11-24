@@ -458,7 +458,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                 <legend>Course units taught</legend>
                 <div className="staff-create-course-summary">{form.courseUnitIds.length} selected</div>
                 {courseUnits.length === 0
-                  ? <p className="staff-create-hint">No active course units are available. Populate the course catalogue or check the staff lookup API.</p>
+                  ? <p className="staff-create-hint">No active course units are configured yet. Add course units in Curriculum Management before assigning teaching loads.</p>
                   : <div className="staff-create-permissions-grid">
                     {courseUnits.map(unit => {
                       const checked = form.courseUnitIds.includes(unit.id)
@@ -505,7 +505,6 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                     })}
                   </div>
                   <p className="staff-create-hint staff-permission-notice">Direct grants are saved to the linked login account. Inherited permissions come from assigned roles and cannot be changed here.</p>
-                </section>
               </section>
 
               <div className="staff-create-bottom-grid staff-account-grid">
