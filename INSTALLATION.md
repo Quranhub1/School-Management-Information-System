@@ -168,23 +168,25 @@ curl -X POST http://localhost:5000/api/auth/register \
 
 For a test/development environment, the seeder creates `admin` with the deterministic password `admin123` when `SEED_ADMIN_PASSWORD` is not supplied. You can override it by setting `SEED_ADMIN_PASSWORD` before startup. **Production does not use this fallback: `SEED_ADMIN_PASSWORD` is required and must be at least 12 characters. Never expose or retain the development password in production.**
 
-## 9. Frontend installation
+## 9. Frontend installation and production LAN hosting
 
-The frontend is under `frontend/`.
+The frontend is under `frontend/`. Install dependencies and build the production web bundle:
 
-```bash
+```powershell
 cd frontend
 npm ci
-npm run build
+npm run build:lan
 ```
 
-For development:
+`npm run build:lan` runs the normal frontend checks (offline-login check, tests and TypeScript), creates a Vite production build with root-relative asset URLs, and copies the generated `dist/` files into `backend/src/SchoolManagement.Api/wwwroot/`. The ASP.NET Core API serves the React application and API from the same origin. The copy script replaces the API's existing `wwwroot` directory, so keep any intentional server-owned static files outside that directory.
 
-```bash
+For local development only:
+
+```powershell
 npm run dev
 ```
 
-Set the frontend API base URL using the project's supported Vite environment configuration when the API is not at the default development origin.
+The Vite development server remains on port 5173 and proxies `/api` to `http://127.0.0.1:5000`. Do not use Vite's development server as the school-wide production host.
 
 ## 10. Full local development startup
 
@@ -213,12 +215,24 @@ Open the frontend in the development browser URL shown by Vite and log in with t
 
 ## 11. Production server deployment
 
-Publish the API:
+On the build workstation, create the production web bundle first:
 
-```bash
-cd backend/src/SchoolManagement.Api
+```powershell
+cd frontend
+npm ci
+npm run build:lan
+```
+
+Then publish the API, which now includes the copied React assets under `wwwroot`:
+
+```powershell
+cd ../backend/src/SchoolManagement.Api
 dotnet publish -c Release -o /opt/schoolmanagement/api
 ```
+
+Set `ASPNETCORE_ENVIRONMENT=Production`, a strong `Authentication__JwtKey`, the production PostgreSQL connection string, `SEED_ADMIN_PASSWORD`, and the attendance QR secret through the service environment or secret manager. Never put real secrets in the repository. The default listener is `http://0.0.0.0:5000`; use `http://127.0.0.1:5000` on the host PC and `http://HOST-PC-LAN-IP:5000` from other trusted school computers.
+
+The web root serves static frontend files without authentication; API endpoints retain their configured authentication and authorization. SPA deep links fall back to `index.html`, while unknown `/api` routes remain API 404 responses. Same-origin hosting does not require CORS. If a separately hosted client must call the API, configure its exact origin in `AllowedOrigins__0` (and subsequent indexed entries).
 
 Create a systemd service similar to:
 
@@ -249,19 +263,13 @@ sudo systemctl status schoolmanagement.service
 journalctl -u schoolmanagement.service -f
 ```
 
-## 12. LAN deployment with Nginx
+## 12. LAN deployment and network addressing
 
-Build the frontend:
+For a simple single-server school LAN deployment, the ASP.NET Core service can serve both the production React frontend and `/api` on TCP port `5000`. Nginx remains an optional reverse proxy when the institution is ready to configure a trusted HTTPS certificate and DNS name.
 
-```bash
-cd frontend
-npm ci
-npm run build
-```
+Reserve the host PC's LAN IPv4 address in the router's DHCP settings before distributing the URL to client computers. The reservation must use the host PC's active Ethernet/Wi-Fi adapter MAC address and an unused address in the router's LAN subnet. This router task is intentionally **not completed by the repository change**: it requires access to the actual router administration interface and confirmation of the active adapter and DHCP scope. See `docs/LAN_HOST_SETUP.md`.
 
-Serve the generated frontend from Nginx and proxy `/api/` to the ASP.NET Core service. Configure HTTPS using the institution's DNS name and certificate. The native client must use the same trusted HTTPS system origin.
-
-Firewall the server so PostgreSQL is not exposed to ordinary client machines. Client machines should normally reach only the HTTPS application endpoint.
+Allow inbound TCP port `5000` only from the trusted Private/school LAN in the host firewall. Do not expose PostgreSQL (normally TCP 5432) to client machines or expose port 5000 on the public/WAN interface. For production use with sensitive student and staff data, plan HTTPS on the LAN; plain HTTP is a connectivity baseline, not transport encryption.
 
 ## 13. Native Windows desktop client
 
