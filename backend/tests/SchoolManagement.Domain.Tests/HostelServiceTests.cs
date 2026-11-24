@@ -22,7 +22,7 @@ public sealed class HostelServiceTests
     {
         var bed = new HostelBed { BedNumber = "B1", RoomId = Guid.NewGuid() };
         var active = new HostelAllocation { BedId = Guid.NewGuid(), StudentId = Guid.NewGuid(), StartDate = new DateOnly(2026, 1, 1) };
-        var service = new HostelService(new FakeHostelRepository { Bed = bed, ActiveStudentAllocation = active });
+        var service = new HostelService(new FakeHostelRepository { Bed = bed, ActiveStudentAllocation = active, CurrentSemester = new SchoolManagement.Domain.Academic.Semester { AcademicYearId = Guid.NewGuid(), Name = "Semester 1", Sequence = 1, StartDate = new DateOnly(2026, 9, 1), EndDate = new DateOnly(2026, 12, 31) } });
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.AllocateAsync(bed.Id, active.StudentId, new DateOnly(2026, 9, 8)));
     }
 
@@ -80,13 +80,16 @@ public sealed class HostelServiceTests
         public HostelRoom? Room { get; init; }
         public HostelBed? Bed { get; init; }
         public HostelAllocation? ActiveStudentAllocation { get; init; }
+        public SchoolManagement.Domain.Academic.Semester? CurrentSemester { get; init; }
         public Task<IReadOnlyList<HostelEntity>> GetHostelsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<HostelEntity>>(Array.Empty<HostelEntity>());
         public Task<HostelEntity?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Hostel);
         public Task<HostelRoom?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Room);
         public Task<HostelBed?> GetBedAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Bed);
         public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<HostelAllocation?>(null);
-        public Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, CancellationToken cancellationToken = default) => Task.FromResult<HostelAllocation?>(null);
-        public Task<HostelAllocation?> GetActiveAllocationByStudentAsync(Guid studentId, CancellationToken cancellationToken = default) => Task.FromResult(ActiveStudentAllocation);
+        public Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, Guid semesterId, CancellationToken cancellationToken = default) => Task.FromResult<HostelAllocation?>(null);
+        public Task<HostelAllocation?> GetActiveAllocationByStudentAsync(Guid studentId, Guid semesterId, CancellationToken cancellationToken = default) => Task.FromResult(ActiveStudentAllocation);
+        public Task<SchoolManagement.Domain.Academic.Semester?> GetSemesterForDateAsync(DateOnly date, CancellationToken cancellationToken = default) => Task.FromResult(CurrentSemester);
+        public Task ExpireEndedSemesterAllocationsAsync(DateOnly today, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
