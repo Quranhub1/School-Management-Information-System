@@ -60,6 +60,12 @@ public sealed class AddSemesterAwareHostelAllocations : Migration
             CREATE UNIQUE INDEX IF NOT EXISTS "UX_HostelAllocations_ActiveStudentSemester"
                 ON "HostelAllocations" ("StudentId", "SemesterId")
                 WHERE "Status" = 'Active' AND "SemesterId" IS NOT NULL;
+            CREATE UNIQUE INDEX IF NOT EXISTS "UX_HostelAllocations_ActiveLegacyBed"
+                ON "HostelAllocations" ("BedId")
+                WHERE "Status" = 'Active' AND "SemesterId" IS NULL;
+            CREATE UNIQUE INDEX IF NOT EXISTS "UX_HostelAllocations_ActiveLegacyStudent"
+                ON "HostelAllocations" ("StudentId")
+                WHERE "Status" = 'Active' AND "SemesterId" IS NULL;
             """);
     }
 
@@ -68,6 +74,8 @@ public sealed class AddSemesterAwareHostelAllocations : Migration
         migrationBuilder.Sql("""
             DROP INDEX IF EXISTS "UX_HostelAllocations_ActiveBedSemester";
             DROP INDEX IF EXISTS "UX_HostelAllocations_ActiveStudentSemester";
+            DROP INDEX IF EXISTS "UX_HostelAllocations_ActiveLegacyBed";
+            DROP INDEX IF EXISTS "UX_HostelAllocations_ActiveLegacyStudent";
             CREATE UNIQUE INDEX IF NOT EXISTS "UX_HostelAllocations_ActiveBed"
                 ON "HostelAllocations" ("BedId") WHERE "Status" = 'Active';
             CREATE UNIQUE INDEX IF NOT EXISTS "UX_HostelAllocations_ActiveStudent"
