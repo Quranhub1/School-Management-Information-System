@@ -590,8 +590,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     <section className="library-workspace">
       <div className="library-heading">
         <div>
-          <span className="eyebrow">LIBRARY SERVICES</span>
-          <h2>{activeView === 'books' ? 'Books' : activeView === 'issue' ? 'Issue & Return Books' : activeView === 'overdue' ? 'Overdue Loans' : activeView === 'cards' ? 'Library Cards' : activeView === 'clearance-students' ? 'Course-book Requirements' : activeView === 'clearance-settings' ? 'Fees & Settings' : 'Library Management'}</h2>
+          <h2 className="library-services-title">LIBRARY SERVICES</h2>
           
         </div>
       </div>
