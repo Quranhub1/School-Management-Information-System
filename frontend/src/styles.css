@@ -6256,3 +6256,9 @@ table { font-variant-numeric: tabular-nums; }
   text-align: center;
   text-transform: uppercase;
 }
+
+/* Use consistent uppercase typography for screen, section, card, and modal titles. */
+.app-shell :is(h1, h2, h3, h4, h5, h6),
+.app-shell :is(.screen-title, .page-title, .workspace-title, .section-title, .panel-title, .card-title, .modal-title) {
+  text-transform: uppercase !important;
+}
