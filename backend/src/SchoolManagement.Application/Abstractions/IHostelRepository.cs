@@ -14,6 +14,7 @@ public interface IHostelRepository
     Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, Guid semesterId, CancellationToken cancellationToken = default);
     Task<HostelAllocation?> GetActiveAllocationByStudentAsync(Guid studentId, Guid semesterId, CancellationToken cancellationToken = default);
     Task<Semester?> GetSemesterForDateAsync(DateOnly date, CancellationToken cancellationToken = default);
+    Task<bool> IsActiveStudentAsync(Guid studentId, CancellationToken cancellationToken = default);
     Task ExpireEndedSemesterAllocationsAsync(DateOnly today, CancellationToken cancellationToken = default);
     Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class;
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
