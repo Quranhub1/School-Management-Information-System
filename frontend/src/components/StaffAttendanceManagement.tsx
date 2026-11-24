@@ -38,6 +38,8 @@ export function StaffAttendanceManagement() {
   const [selectedStaff, setSelectedStaff] = useState<StaffDailyAttendanceRow | null>(null)
   const [staffHistory, setStaffHistory] = useState<StaffAttendanceHistory | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyFrom, setHistoryFrom] = useState(shiftDate(today, -365))
+  const [historyTo, setHistoryTo] = useState(today)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -60,12 +62,12 @@ export function StaffAttendanceManagement() {
     if (!selectedStaff) return
     let cancelled = false
     setHistoryLoading(true)
-    getStaffAttendanceHistory(selectedStaff.staffMemberId, { from, to })
+    getStaffAttendanceHistory(selectedStaff.staffMemberId, { from: historyFrom, to: historyTo })
       .then(history => { if (!cancelled) setStaffHistory(history) })
       .catch(cause => { if (!cancelled) setError(cause instanceof Error ? cause.message : 'Unable to load this staff member’s attendance history.') })
       .finally(() => { if (!cancelled) setHistoryLoading(false) })
     return () => { cancelled = true }
-  }, [selectedStaff?.staffMemberId, from, to])
+  }, [selectedStaff?.staffMemberId, historyFrom, historyTo])
 
   function openStaffHistory(row: StaffDailyAttendanceRow) {
     setSelectedStaff(row)
@@ -133,9 +135,13 @@ export function StaffAttendanceManagement() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold">{staffHistory?.staffName ?? selectedStaff.name}</h3>
-              <p className="text-sm text-slate-500">Staff No. {selectedStaff.staffNumber} · Full attendance history for {from} to {to}</p>
+              <p className="text-sm text-slate-500">Staff No. {selectedStaff.staffNumber} · Individual attendance record</p>
             </div>
             <button type="button" className="btn btn-secondary" onClick={() => { setSelectedStaff(null); setStaffHistory(null) }}>Back to attendance register</button>
+          </div>
+          <div className="grid-form" style={{ marginTop: 12 }}>
+            <label>History from<input type="date" max={historyTo} value={historyFrom} onChange={event => setHistoryFrom(event.target.value)} /></label>
+            <label>History to<input type="date" min={historyFrom} max={today} value={historyTo} onChange={event => setHistoryTo(event.target.value)} /></label>
           </div>
           {historyLoading ? <LoadingSpinner /> : staffHistory && (
             <div className="table-responsive" style={{ marginTop: 14 }}>
