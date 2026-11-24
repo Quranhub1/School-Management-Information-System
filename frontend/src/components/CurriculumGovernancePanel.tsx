@@ -55,6 +55,7 @@ export function CurriculumGovernancePanel({ curricula, selectedCurriculumId, onS
     try {
       await action()
       await refreshHistory()
+      setNotes('')
       setMessage(success)
       onChanged?.()
     } catch (reason) {
