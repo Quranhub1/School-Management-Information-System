@@ -212,7 +212,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
     setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
-    setTab('staff')
+    setTab('recruitment')
   }
   function cancelEdit() {
     setSelectedPermissions([])
@@ -340,10 +340,10 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
       </div>
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Staff sections" style={{ marginBottom: 18 }}>
-        <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff</button>
+        <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff Directory</button>
         {canReadPayroll && <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>}
         {canManage && <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>}
-        {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
+        {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => { setTab('recruitment'); setEditingStaffId(null) }}>Recruitment & Onboarding</button>}
         {canManage && <button role="tab" aria-selected={tab === 'attendance'} className={tab === 'attendance' ? 'active' : ''} onClick={() => setTab('attendance')}>Attendance</button>}
       </div>
 
@@ -390,6 +390,159 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
 
       {tab === 'staff' && (
         <>
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Staff No.</th><th>Surname, First name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
+              <tbody>
+                {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staffLoadError ? <tr><td colSpan={canManage ? 9 : 8} className="empty"><div role="alert" style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 14 }}><strong>Staff records could not be loaded</strong><span>{staffLoadError}</span><button type="button" className="secondary-button" onClick={() => void loadStaff()}>Retry loading staff</button></div></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records are currently available in your permitted campus scope.</td></tr> : staff.map(s => (
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName, s.otherNames)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
+                    {editingCourseUnitsStaffId === s.id ? (
+                      <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
+                        {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>
+                          {courseUnits.map(unit => <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, padding: '5px 6px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', whiteSpace: 'normal' }}>
+                            <input type="checkbox" checked={courseUnitDraftIds.includes(unit.id)} onChange={event => setCourseUnitDraftIds(current => event.target.checked ? [...current.filter(id => id !== unit.id), unit.id] : current.filter(id => id !== unit.id))} />
+                            <span><strong>{unit.code}</strong> — {unit.name}</span>
+                          </label>)}
+                        </div>}
+                        <span style={{ fontSize: 11, color: '#475569' }}>{courseUnitDraftIds.length} selected</span>
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          <button type="button" disabled={savingCourseUnits || courseUnits.length === 0} onClick={() => void saveCourseUnits(s)} style={{ padding: '4px 8px', minHeight: 26, borderRadius: 3, fontSize: 11 }}>{savingCourseUnits ? 'Saving…' : 'Save units'}</button>
+                          <button type="button" className="secondary-button" disabled={savingCourseUnits} onClick={cancelEditCourseUnits} style={{ padding: '4px 8px', minHeight: 26, borderRadius: 3, fontSize: 11 }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span>{(s.courseUnitIds ?? []).map(id => courseUnits.find(unit => unit.id === id)?.code).filter(Boolean).join(', ') || '—'}</span>
+                      {canManage && s.staffType === 'Teaching' && <button type="button" className="secondary-button" onClick={() => beginEditCourseUnits(s)} style={{ padding: '3px 6px', minHeight: 24, borderRadius: 3, fontSize: 10, lineHeight: 1.2 }}>Edit units</button>}
+                    </div>}
+                  </td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap items-center" style={{ gap: 4, minWidth: 0 }}><button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {tab === 'payroll' && (
+        <div className="payroll-workspace">
+          <div className="summary-grid" style={{ marginBottom: 22 }}>
+            <div className="summary-card"><span>Payroll period</span><strong>{new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}</strong></div>
+            <div className="summary-card"><span>Total net payroll</span><strong>{SYSTEM_CURRENCY} {selectedPayroll.reduce((sum, p) => sum + p.netPay, 0).toLocaleString()}</strong></div>
+            <div className="summary-card"><span>Paid records</span><strong style={{ color: '#047857' }}>{selectedPayroll.filter(p => p.status === 'Paid').length}</strong></div>
+            <div className="summary-card"><span>Pending records</span><strong style={{ color: '#b45309' }}>{selectedPayroll.filter(p => p.status === 'Pending').length}</strong></div>
+          </div>
+          {canReadPayroll && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 18, padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#334155', fontSize: 13, fontWeight: 600 }}>Month
+              <select aria-label="Payroll month" value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))} style={{ width: 142, minWidth: 142, height: 38, padding: '7px 10px', fontSize: 14, lineHeight: 1.2 }}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>)}</select>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#334155', fontSize: 13, fontWeight: 600 }}>Year
+              <input aria-label="Payroll year" type="number" value={payrollYear} onChange={e => setPayrollYear(Number(e.target.value))} style={{ width: 88, minWidth: 88, height: 38, boxSizing: 'border-box', padding: '7px 10px', fontSize: 14 }} />
+            </label>
+            {canManagePayroll && <button className="btn" onClick={() => void handleGeneratePayroll()}>Generate Payroll</button>}
+            <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: 12 }}>{selectedPayroll.length} record{selectedPayroll.length === 1 ? '' : 's'} in period</span>
+          </div>}
+          <div style={{ overflowX: 'auto', border: '1px solid #dbe3ed', borderRadius: 7, background: '#fff', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)' }}>
+            <table style={{ width: '100%', minWidth: canProcessPayroll ? 1120 : 1020, borderCollapse: 'separate', borderSpacing: 0, fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9', color: '#334155' }}>
+                  <th scope="col" style={{ width: 112, padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Payroll ID</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Staff member</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Period</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Basic salary</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Allowances</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Deductions</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Net pay</th>
+                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Status</th>
+                  {canProcessPayroll && <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Action</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {selectedPayroll.length === 0 ? <tr><td colSpan={canProcessPayroll ? 9 : 8} className="empty" style={{ padding: 28, textAlign: 'center' }}>No payroll records found for {new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}.</td></tr> : selectedPayroll.map((p, index) => {
+                  const person = staff.find(s => s.id === p.staffMemberId)
+                  const cellStyle: React.CSSProperties = { padding: '14px', borderBottom: '1px solid #e8edf3', verticalAlign: 'middle', color: '#334155', whiteSpace: 'nowrap' }
+  return (
+                    <tr key={p.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                      <td style={cellStyle}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', borderRadius: 4, background: '#e2e8f0', color: '#0f172a', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em' }}>PAY-{p.id}</span></td>
+                      <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${formatPersonName(person.lastName, person.firstName, person.otherNames)}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
+                      <td style={cellStyle}><span style={{ color: '#0f172a', fontWeight: 600 }}>{new Date(2000, p.month - 1).toLocaleString('default', { month: 'short' })}</span><span style={{ color: '#64748b' }}> {p.year}</span></td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.basicSalary.toLocaleString()}</td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.allowances.toLocaleString()}</td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.deductions.toLocaleString()}</td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}><strong style={{ color: '#0f172a', fontSize: 13 }}>{SYSTEM_CURRENCY} {p.netPay.toLocaleString()}</strong></td>
+                      <td style={{ ...cellStyle, textAlign: 'center' }}><span className="badge" style={{ display: 'inline-block', minWidth: 72, padding: '5px 9px', borderRadius: 4, background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e', fontSize: 11, fontWeight: 800, textAlign: 'center' }}>{p.status}</span></td>
+                      {canProcessPayroll && <td style={{ ...cellStyle, textAlign: 'center' }}>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)} style={{ whiteSpace: 'nowrap', borderRadius: 4, padding: '7px 11px', fontWeight: 700 }}>Mark Paid</button>}{p.status === 'Paid' && <span style={{ color: '#047857', fontSize: 12, fontWeight: 700 }}>Completed</span>}</td>}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'leave' && (
+        <div className="leave-workspace">
+          <section className="academic-authority-workspace">
+            <div className="panel-heading"><div><span className="eyebrow">HUMAN RESOURCES</span><h3>Leave request</h3></div><span className="status">{leaveRequests.length} recent request(s)</span></div>
+            {canManage ? (
+              <form className="grid-form" onSubmit={submitLeave}>
+                <label className="field-label">Name of staff
+                  <select value={leaveForm.staffMemberId} onChange={e => { setLeaveForm(current => ({ ...current, staffMemberId: e.target.value })); setLeaveRequests([]) }} required>
+                    <option value="">Select staff member</option>
+                    {staff.filter(person => person.isActive).map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName, person.otherNames)} · {person.staffNumber}</option>)}
+                  </select>
+                </label>
+                <label className="field-label">Leave type
+                  <select value={leaveForm.leaveType} onChange={e => setLeaveForm(current => ({ ...current, leaveType: e.target.value }))}>{LEAVE_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+                </label>
+                <fieldset className="field-label" style={{ border: '1px solid #cbd5e1', borderRadius: 4, padding: '8px 12px', gridColumn: '1 / -1' }}>
+                  <legend>Leave duration</legend>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginRight: 24 }}><input type="radio" name="leave-duration" checked={leaveDuration === 'single'} onChange={() => { setLeaveDuration('single'); setLeaveForm(current => ({ ...current, endDate: current.startDate })) }} /> Single day</label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><input type="radio" name="leave-duration" checked={leaveDuration === 'multiple'} onChange={() => setLeaveDuration('multiple')} /> Multiple days</label>
+                </fieldset>
+                <label className="field-label">Leave date
+                  <input type="date" value={leaveForm.startDate} onChange={e => setLeaveForm(current => ({ ...current, startDate: e.target.value, endDate: leaveDuration === 'single' ? e.target.value : current.endDate }))} required />
+                </label>
+                {leaveDuration === 'multiple' && <label className="field-label">Last day of leave
+                  <input type="date" min={leaveForm.startDate || undefined} value={leaveForm.endDate} onChange={e => setLeaveForm(current => ({ ...current, endDate: e.target.value }))} required />
+                </label>}
+                <label className="field-label" style={{ gridColumn: '1 / -1' }}>Reason for leave
+                  <textarea rows={3} value={leaveForm.reason} onChange={e => setLeaveForm(current => ({ ...current, reason: e.target.value }))} placeholder="Enter the reason for requesting leave" required />
+                </label>
+                <div className="form-row" style={{ gridColumn: '1 / -1' }}>
+                  <button type="submit" disabled={!leaveForm.staffMemberId || !leaveForm.startDate || (leaveDuration === 'multiple' && !leaveForm.endDate)}>Submit leave request</button>
+                  <button type="button" className="secondary-button" onClick={() => void loadLeave()} disabled={!leaveForm.staffMemberId}>Refresh requests</button>
+                </div>
+              </form>
+            ) : <p className="empty">You do not have permission to submit or process leave requests.</p>}
+          </section>
+          <section className="academic-authority-workspace">
+            <div className="panel-heading"><div><span className="eyebrow">REQUEST REGISTER</span><h3>Recent leave requests</h3></div></div>
+            {!leaveForm.staffMemberId ? <p className="empty">Select a staff member above to view their leave requests.</p> : (
+              <div className="table-wrap"><table>
+                <thead><tr><th>Staff member</th><th>Leave date</th><th>Type</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>{leaveRequests.length === 0 ? <tr><td colSpan={6} className="empty">No leave requests found for this staff member.</td></tr> : leaveRequests.map(lr => {
+                  const person = staff.find(item => item.id === lr.staffMemberId)
+                  return <tr key={lr.id}>
+                    <td>{person ? formatPersonName(person.lastName, person.firstName, person.otherNames) : lr.staffMemberId}</td>
+                    <td>{lr.startDate === lr.endDate ? lr.startDate : `${lr.startDate} – ${lr.endDate}`}</td>
+                    <td>{lr.leaveType}</td><td>{lr.reason}</td>
+                    <td><span className="badge" style={{ background: lr.status === 'Approved' ? '#d1fae5' : lr.status === 'Rejected' ? '#fee2e2' : '#fef3c7', color: lr.status === 'Approved' ? '#065f46' : lr.status === 'Rejected' ? '#991b1b' : '#92400e' }}>{lr.status}</span></td>
+                    <td>{lr.status === 'Pending' && canManage && <div className="form-row"><button type="button" className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, true)}>Approve</button><button type="button" className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, false)}>Decline</button></div>}</td>
+                  </tr>
+                })}</tbody>
+              </table></div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {tab === 'attendance' && <StaffAttendanceManagement />}
+
+      {tab === 'recruitment' && (
+        <div className="card">
+          <h3>Recruitment & Onboarding</h3>
+          <p className="staff-create-hint">Register newly recruited personnel and configure their institutional login access.</p>
+          {canManage ? (
           {canManage && (
             <form className="grid-form staff-management-create-form" onSubmit={submit}>
               <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
@@ -571,158 +724,8 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               </div>
             </form>
           )}
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Staff No.</th><th>Surname, First name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
-              <tbody>
-                {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staffLoadError ? <tr><td colSpan={canManage ? 9 : 8} className="empty"><div role="alert" style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 14 }}><strong>Staff records could not be loaded</strong><span>{staffLoadError}</span><button type="button" className="secondary-button" onClick={() => void loadStaff()}>Retry loading staff</button></div></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records are currently available in your permitted campus scope.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName, s.otherNames)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
-                    {editingCourseUnitsStaffId === s.id ? (
-                      <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
-                        {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>
-                          {courseUnits.map(unit => <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, padding: '5px 6px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', whiteSpace: 'normal' }}>
-                            <input type="checkbox" checked={courseUnitDraftIds.includes(unit.id)} onChange={event => setCourseUnitDraftIds(current => event.target.checked ? [...current.filter(id => id !== unit.id), unit.id] : current.filter(id => id !== unit.id))} />
-                            <span><strong>{unit.code}</strong> — {unit.name}</span>
-                          </label>)}
-                        </div>}
-                        <span style={{ fontSize: 11, color: '#475569' }}>{courseUnitDraftIds.length} selected</span>
-                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                          <button type="button" disabled={savingCourseUnits || courseUnits.length === 0} onClick={() => void saveCourseUnits(s)} style={{ padding: '4px 8px', minHeight: 26, borderRadius: 3, fontSize: 11 }}>{savingCourseUnits ? 'Saving…' : 'Save units'}</button>
-                          <button type="button" className="secondary-button" disabled={savingCourseUnits} onClick={cancelEditCourseUnits} style={{ padding: '4px 8px', minHeight: 26, borderRadius: 3, fontSize: 11 }}>Cancel</button>
-                        </div>
-                      </div>
-                    ) : <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <span>{(s.courseUnitIds ?? []).map(id => courseUnits.find(unit => unit.id === id)?.code).filter(Boolean).join(', ') || '—'}</span>
-                      {canManage && s.staffType === 'Teaching' && <button type="button" className="secondary-button" onClick={() => beginEditCourseUnits(s)} style={{ padding: '3px 6px', minHeight: 24, borderRadius: 3, fontSize: 10, lineHeight: 1.2 }}>Edit units</button>}
-                    </div>}
-                  </td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap items-center" style={{ gap: 4, minWidth: 0 }}><button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {tab === 'payroll' && (
-        <div className="payroll-workspace">
-          <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card"><span>Payroll period</span><strong>{new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}</strong></div>
-            <div className="summary-card"><span>Total net payroll</span><strong>{SYSTEM_CURRENCY} {selectedPayroll.reduce((sum, p) => sum + p.netPay, 0).toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Paid records</span><strong style={{ color: '#047857' }}>{selectedPayroll.filter(p => p.status === 'Paid').length}</strong></div>
-            <div className="summary-card"><span>Pending records</span><strong style={{ color: '#b45309' }}>{selectedPayroll.filter(p => p.status === 'Pending').length}</strong></div>
-          </div>
-          {canReadPayroll && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 18, padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#334155', fontSize: 13, fontWeight: 600 }}>Month
-              <select aria-label="Payroll month" value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))} style={{ width: 142, minWidth: 142, height: 38, padding: '7px 10px', fontSize: 14, lineHeight: 1.2 }}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>)}</select>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#334155', fontSize: 13, fontWeight: 600 }}>Year
-              <input aria-label="Payroll year" type="number" value={payrollYear} onChange={e => setPayrollYear(Number(e.target.value))} style={{ width: 88, minWidth: 88, height: 38, boxSizing: 'border-box', padding: '7px 10px', fontSize: 14 }} />
-            </label>
-            {canManagePayroll && <button className="btn" onClick={() => void handleGeneratePayroll()}>Generate Payroll</button>}
-            <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: 12 }}>{selectedPayroll.length} record{selectedPayroll.length === 1 ? '' : 's'} in period</span>
-          </div>}
-          <div style={{ overflowX: 'auto', border: '1px solid #dbe3ed', borderRadius: 7, background: '#fff', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)' }}>
-            <table style={{ width: '100%', minWidth: canProcessPayroll ? 1120 : 1020, borderCollapse: 'separate', borderSpacing: 0, fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', color: '#334155' }}>
-                  <th scope="col" style={{ width: 112, padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Payroll ID</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Staff member</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Period</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Basic salary</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Allowances</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Deductions</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Net pay</th>
-                  <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Status</th>
-                  {canProcessPayroll && <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Action</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {selectedPayroll.length === 0 ? <tr><td colSpan={canProcessPayroll ? 9 : 8} className="empty" style={{ padding: 28, textAlign: 'center' }}>No payroll records found for {new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}.</td></tr> : selectedPayroll.map((p, index) => {
-                  const person = staff.find(s => s.id === p.staffMemberId)
-                  const cellStyle: React.CSSProperties = { padding: '14px', borderBottom: '1px solid #e8edf3', verticalAlign: 'middle', color: '#334155', whiteSpace: 'nowrap' }
-  return (
-                    <tr key={p.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                      <td style={cellStyle}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', borderRadius: 4, background: '#e2e8f0', color: '#0f172a', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em' }}>PAY-{p.id}</span></td>
-                      <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${formatPersonName(person.lastName, person.firstName, person.otherNames)}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
-                      <td style={cellStyle}><span style={{ color: '#0f172a', fontWeight: 600 }}>{new Date(2000, p.month - 1).toLocaleString('default', { month: 'short' })}</span><span style={{ color: '#64748b' }}> {p.year}</span></td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.basicSalary.toLocaleString()}</td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.allowances.toLocaleString()}</td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.deductions.toLocaleString()}</td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}><strong style={{ color: '#0f172a', fontSize: 13 }}>{SYSTEM_CURRENCY} {p.netPay.toLocaleString()}</strong></td>
-                      <td style={{ ...cellStyle, textAlign: 'center' }}><span className="badge" style={{ display: 'inline-block', minWidth: 72, padding: '5px 9px', borderRadius: 4, background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e', fontSize: 11, fontWeight: 800, textAlign: 'center' }}>{p.status}</span></td>
-                      {canProcessPayroll && <td style={{ ...cellStyle, textAlign: 'center' }}>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)} style={{ whiteSpace: 'nowrap', borderRadius: 4, padding: '7px 11px', fontWeight: 700 }}>Mark Paid</button>}{p.status === 'Paid' && <span style={{ color: '#047857', fontSize: 12, fontWeight: 700 }}>Completed</span>}</td>}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          ) : <p className="empty">You do not have permission to create or update staff records.</p>}
         </div>
-      )}
-
-      {tab === 'leave' && (
-        <div className="leave-workspace">
-          <section className="academic-authority-workspace">
-            <div className="panel-heading"><div><span className="eyebrow">HUMAN RESOURCES</span><h3>Leave request</h3></div><span className="status">{leaveRequests.length} recent request(s)</span></div>
-            {canManage ? (
-              <form className="grid-form" onSubmit={submitLeave}>
-                <label className="field-label">Name of staff
-                  <select value={leaveForm.staffMemberId} onChange={e => { setLeaveForm(current => ({ ...current, staffMemberId: e.target.value })); setLeaveRequests([]) }} required>
-                    <option value="">Select staff member</option>
-                    {staff.filter(person => person.isActive).map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName, person.otherNames)} · {person.staffNumber}</option>)}
-                  </select>
-                </label>
-                <label className="field-label">Leave type
-                  <select value={leaveForm.leaveType} onChange={e => setLeaveForm(current => ({ ...current, leaveType: e.target.value }))}>{LEAVE_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-                </label>
-                <fieldset className="field-label" style={{ border: '1px solid #cbd5e1', borderRadius: 4, padding: '8px 12px', gridColumn: '1 / -1' }}>
-                  <legend>Leave duration</legend>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginRight: 24 }}><input type="radio" name="leave-duration" checked={leaveDuration === 'single'} onChange={() => { setLeaveDuration('single'); setLeaveForm(current => ({ ...current, endDate: current.startDate })) }} /> Single day</label>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><input type="radio" name="leave-duration" checked={leaveDuration === 'multiple'} onChange={() => setLeaveDuration('multiple')} /> Multiple days</label>
-                </fieldset>
-                <label className="field-label">Leave date
-                  <input type="date" value={leaveForm.startDate} onChange={e => setLeaveForm(current => ({ ...current, startDate: e.target.value, endDate: leaveDuration === 'single' ? e.target.value : current.endDate }))} required />
-                </label>
-                {leaveDuration === 'multiple' && <label className="field-label">Last day of leave
-                  <input type="date" min={leaveForm.startDate || undefined} value={leaveForm.endDate} onChange={e => setLeaveForm(current => ({ ...current, endDate: e.target.value }))} required />
-                </label>}
-                <label className="field-label" style={{ gridColumn: '1 / -1' }}>Reason for leave
-                  <textarea rows={3} value={leaveForm.reason} onChange={e => setLeaveForm(current => ({ ...current, reason: e.target.value }))} placeholder="Enter the reason for requesting leave" required />
-                </label>
-                <div className="form-row" style={{ gridColumn: '1 / -1' }}>
-                  <button type="submit" disabled={!leaveForm.staffMemberId || !leaveForm.startDate || (leaveDuration === 'multiple' && !leaveForm.endDate)}>Submit leave request</button>
-                  <button type="button" className="secondary-button" onClick={() => void loadLeave()} disabled={!leaveForm.staffMemberId}>Refresh requests</button>
-                </div>
-              </form>
-            ) : <p className="empty">You do not have permission to submit or process leave requests.</p>}
-          </section>
-          <section className="academic-authority-workspace">
-            <div className="panel-heading"><div><span className="eyebrow">REQUEST REGISTER</span><h3>Recent leave requests</h3></div></div>
-            {!leaveForm.staffMemberId ? <p className="empty">Select a staff member above to view their leave requests.</p> : (
-              <div className="table-wrap"><table>
-                <thead><tr><th>Staff member</th><th>Leave date</th><th>Type</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody>{leaveRequests.length === 0 ? <tr><td colSpan={6} className="empty">No leave requests found for this staff member.</td></tr> : leaveRequests.map(lr => {
-                  const person = staff.find(item => item.id === lr.staffMemberId)
-                  return <tr key={lr.id}>
-                    <td>{person ? formatPersonName(person.lastName, person.firstName, person.otherNames) : lr.staffMemberId}</td>
-                    <td>{lr.startDate === lr.endDate ? lr.startDate : `${lr.startDate} – ${lr.endDate}`}</td>
-                    <td>{lr.leaveType}</td><td>{lr.reason}</td>
-                    <td><span className="badge" style={{ background: lr.status === 'Approved' ? '#d1fae5' : lr.status === 'Rejected' ? '#fee2e2' : '#fef3c7', color: lr.status === 'Approved' ? '#065f46' : lr.status === 'Rejected' ? '#991b1b' : '#92400e' }}>{lr.status}</span></td>
-                    <td>{lr.status === 'Pending' && canManage && <div className="form-row"><button type="button" className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, true)}>Approve</button><button type="button" className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, false)}>Decline</button></div>}</td>
-                  </tr>
-                })}</tbody>
-              </table></div>
-            )}
-          </section>
-        </div>
-      )}
-
-      {tab === 'attendance' && <StaffAttendanceManagement />}
-
-      {tab === 'recruitment' && (
-        <div className="card">
-          <h3>Recruitment & Onboarding</h3>
-            </div>
       )}
     </section>
   )
