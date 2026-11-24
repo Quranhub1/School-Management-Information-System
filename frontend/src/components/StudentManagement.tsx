@@ -254,6 +254,12 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       setStudents(current => [created, ...current.filter(s => s.id !== created.id)])
       setNotice('Student application, photograph and student profile were saved successfully.')
       notify('Student application and profile saved successfully.', 'success', 'Student saved')
+      // Reset the complete application, including all medical-information textareas, after persistence succeeds.
+      setApplication({ ...emptyApplication, authority: academicAuthorities[0]?.code ?? '' })
+      setEducation([emptyEducation()])
+      setPhoto(null)
+      setStudentNumber('')
+      setValidationErrors({})
       setView('registry')
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to save the application.'; setError(message); notify(message, 'error', 'Student save failed') }
     finally { setSaving(false) }
