@@ -162,15 +162,15 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
         setStaff(current => current.map(item => item.id === updated.id ? { ...updated, isActive: staffStatus === 'Active' } : item))
         if (staffStatus === 'Active' && !updated.isActive) await activateStaff(updated.id)
         if (staffStatus === 'Inactive' && updated.isActive) await deactivateStaff(updated.id)
-        setSuccess(`${formatPersonName(updated.lastName, updated.firstName)} was updated successfully.`)
-        notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
+        setSuccess(`${formatPersonName(updated.lastName, updated.firstName, updated.otherNames)} was updated successfully.`)
+        notify(`${formatPersonName(updated.lastName, updated.firstName, updated.otherNames)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
         const created = await createStaff({ ...profile, ...accessForm })
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
-        setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
-        notify(`${formatPersonName(created.lastName, created.firstName)} saved successfully.`, 'success', 'Staff saved')
+        setSuccess(`${formatPersonName(created.lastName, created.firstName, created.otherNames)} was saved and added to the staff table.`)
+        notify(`${formatPersonName(created.lastName, created.firstName, created.otherNames)} saved successfully.`, 'success', 'Staff saved')
         void listStaff(false).then(latest => {
           setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
         }).catch(() => {
@@ -230,8 +230,8 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
       const updated = await updateStaffCourseUnits(person.id, courseUnitDraftIds)
       setStaff(current => current.map(item => item.id === updated.id ? updated : item))
       cancelEditCourseUnits()
-      setSuccess(`Course unit assignments for ${formatPersonName(updated.lastName, updated.firstName)} were saved.`)
-      notify(`Course unit assignments for ${formatPersonName(updated.lastName, updated.firstName)} saved.`, 'success', 'Course units updated')
+      setSuccess(`Course unit assignments for ${formatPersonName(updated.lastName, updated.firstName, updated.otherNames)} were saved.`)
+      notify(`Course unit assignments for ${formatPersonName(updated.lastName, updated.firstName, updated.otherNames)} saved.`, 'success', 'Course units updated')
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Unable to save course unit assignments.'
       setError(message)
@@ -260,14 +260,14 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to activate staff.'; setError(message); notify(message, 'error', 'Activation failed') }
   }
   async function removeStaff(person: StaffMember) {
-    if (!(await showConfirmDialog(`Permanently delete ${formatPersonName(person.lastName, person.firstName)} (staff no. ${person.staffNumber})? This cannot be undone.`, { title: 'Delete staff member', confirmLabel: "Yes, I'm sure", destructive: true }))) return
+    if (!(await showConfirmDialog(`Permanently delete ${formatPersonName(person.lastName, person.firstName, person.otherNames)} (staff no. ${person.staffNumber})? This cannot be undone.`, { title: 'Delete staff member', confirmLabel: "Yes, I'm sure", destructive: true }))) return
     try {
       await deleteStaff(person.id)
       setStaff(current => current.filter(item => item.id !== person.id))
       if (editingStaffId === person.id) cancelEdit()
       window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
-      setSuccess(`${formatPersonName(person.lastName, person.firstName)} was deleted.`)
-      notify(`${formatPersonName(person.lastName, person.firstName)} deleted successfully.`, 'success', 'Staff deleted')
+      setSuccess(`${formatPersonName(person.lastName, person.firstName, person.otherNames)} was deleted.`)
+      notify(`${formatPersonName(person.lastName, person.firstName, person.otherNames)} deleted successfully.`, 'success', 'Staff deleted')
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.'; setError(message); notify(message, 'error', 'Staff deletion failed') }
   }
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); setSuccess(''); const staffId = leaveForm.staffMemberId.trim(); const endDate = leaveDuration === 'single' ? leaveForm.startDate : leaveForm.endDate; if (!staffId || !leaveForm.startDate || !endDate) { setError('Select a staff member and complete the leave date(s).'); return } if (endDate < leaveForm.startDate) { setError('The end date cannot be earlier than the start date.'); return } try { await requestLeave(staffId, { ...leaveForm, staffMemberId: staffId, endDate }); setLeaveForm(current => ({ ...current, startDate: '', endDate: '', reason: '' })); await loadLeave(); setSuccess('Leave request submitted successfully.'); notify('Leave request submitted successfully.', 'success', 'Leave request saved') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to request leave.'; setError(message); notify(message, 'error', 'Leave request failed') } }
@@ -379,8 +379,8 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
           {canManage && (
             <form className="grid-form" onSubmit={submit}>
               <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
-              <input placeholder="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
-              <input placeholder="Last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
+              <input placeholder="Surname" aria-label="Surname" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
+              <input placeholder="First name" aria-label="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
               <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
               <label className="field-label">Staff category
                 <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
@@ -562,10 +562,10 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff No.</th><th>Name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
+              <thead><tr><th>Staff No.</th><th>Surname, First name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
                 {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName, s.otherNames)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
                     {editingCourseUnitsStaffId === s.id ? (
                       <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
                         {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>
@@ -632,7 +632,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
   return (
                     <tr key={p.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
                       <td style={cellStyle}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', borderRadius: 4, background: '#e2e8f0', color: '#0f172a', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em' }}>PAY-{p.id}</span></td>
-                      <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${formatPersonName(person.lastName, person.firstName)}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
+                      <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${formatPersonName(person.lastName, person.firstName, person.otherNames)}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
                       <td style={cellStyle}><span style={{ color: '#0f172a', fontWeight: 600 }}>{new Date(2000, p.month - 1).toLocaleString('default', { month: 'short' })}</span><span style={{ color: '#64748b' }}> {p.year}</span></td>
                       <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.basicSalary.toLocaleString()}</td>
                       <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.allowances.toLocaleString()}</td>
@@ -658,7 +658,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                 <label className="field-label">Name of staff
                   <select value={leaveForm.staffMemberId} onChange={e => { setLeaveForm(current => ({ ...current, staffMemberId: e.target.value })); setLeaveRequests([]) }} required>
                     <option value="">Select staff member</option>
-                    {staff.filter(person => person.isActive).map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName)} · {person.staffNumber}</option>)}
+                    {staff.filter(person => person.isActive).map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName, person.otherNames)} · {person.staffNumber}</option>)}
                   </select>
                 </label>
                 <label className="field-label">Leave type
@@ -693,7 +693,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                 <tbody>{leaveRequests.length === 0 ? <tr><td colSpan={6} className="empty">No leave requests found for this staff member.</td></tr> : leaveRequests.map(lr => {
                   const person = staff.find(item => item.id === lr.staffMemberId)
                   return <tr key={lr.id}>
-                    <td>{person ? formatPersonName(person.lastName, person.firstName) : lr.staffMemberId}</td>
+                    <td>{person ? formatPersonName(person.lastName, person.firstName, person.otherNames) : lr.staffMemberId}</td>
                     <td>{lr.startDate === lr.endDate ? lr.startDate : `${lr.startDate} – ${lr.endDate}`}</td>
                     <td>{lr.leaveType}</td><td>{lr.reason}</td>
                     <td><span className="badge" style={{ background: lr.status === 'Approved' ? '#d1fae5' : lr.status === 'Rejected' ? '#fee2e2' : '#fef3c7', color: lr.status === 'Approved' ? '#065f46' : lr.status === 'Rejected' ? '#991b1b' : '#92400e' }}>{lr.status}</span></td>
