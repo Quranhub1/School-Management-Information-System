@@ -368,15 +368,18 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   // Course-unit choices belong only inside the timetable template. Keep every
   // cell restricted to mappings for the exact selected curriculum, year and semester.
   const templateCourseOptions =
-    selectedCurriculum && yearOfStudy && selection.selectedCurriculumSemester
-      ? options.courses.filter(course =>
-          curriculumMappings.some(
-            mapping =>
-              mapping.courseId === course.id &&
-              mapping.yearOfStudy === Number(yearOfStudy) &&
-              mapping.semesterNumber === selection.selectedCurriculumSemester?.semesterNumber
+    selectedCurriculum && yearOfStudy
+      ? curriculumMappings
+          .filter(mapping =>
+            mapping.yearOfStudy === Number(yearOfStudy) &&
+            (!selection.selectedCurriculumSemester ||
+              mapping.semesterNumber === selection.selectedCurriculumSemester.semesterNumber)
           )
-        )
+          .map(mapping => {
+            const course = options.courses.find(item => item.id === mapping.courseId)
+            return course ?? { id: mapping.courseId, label: mapping.courseLabel }
+          })
+          .filter((course, index, all) => all.findIndex(item => item.id === course.id) === index)
       : []
   const selectedGroupCourses = selectedGroup
     ? options.courses.filter(item =>
