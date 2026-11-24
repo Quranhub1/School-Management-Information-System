@@ -61,9 +61,9 @@ public sealed class LibraryControllerTests
     {
         var repository = new EmptyLibraryRepository();
         var workflow = new LibraryWorkflowService(new LibraryService(repository));
+
         return new LibraryController(
             workflow,
-            new ConfigurationBuilder().Build(),
             db,
             null!,
             null!);
