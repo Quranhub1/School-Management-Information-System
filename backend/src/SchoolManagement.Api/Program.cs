@@ -141,9 +141,9 @@ builder.Services.AddRateLimiter(options =>
 });
 builder.Services.AddAntiforgery(options => { options.HeaderName = "X-CSRF-TOKEN"; });
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
-if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
-    throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
-builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(SchoolManagement.Api.Middleware.CorrelationIdMiddleware.HeaderName); }); });
+// Same-origin LAN hosting does not require CORS. Cross-origin clients (for example,
+ // a separately hosted desktop/web shell) must be explicitly listed in AllowedOrigins.
+builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(SchoolManagement.Api.Middleware.CorrelationIdMiddleware.HeaderName); }); });
 builder.Services.AddApplication();
 builder.Services.AddScoped<PaymentReceiptEmailService>();
 builder.Services.AddHostedService<PaymentReceiptEmailWorker>();
@@ -190,6 +190,11 @@ app.UseSerilogRequestLogging(options =>
 });
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseHttpsRedirection();
+
+// Serve the compiled React application from wwwroot when a production frontend
+// bundle has been copied there. Development continues to use the Vite server.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseCors();
 app.UseMiddleware<SchoolManagement.Api.Middleware.InputSanitizationMiddleware>();
 app.UseRateLimiter();
@@ -231,6 +236,26 @@ app.MapPost("/api/diagnostics/client-errors", (
     return Results.Accepted();
 }).RequireAuthorization().RequireRateLimiting("client-diagnostics");
 app.MapControllers();
+
+// Only enable SPA route fallback when the production frontend has been deployed.
+// Keep unknown API routes as API 404s rather than returning index.html.
+var spaIndexPath = Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "index.html");
+if (File.Exists(spaIndexPath))
+{
+    app.MapFallback(async context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api")
+            || context.Request.Method is not ("GET" or "HEAD")
+            || Path.HasExtension(context.Request.Path.Value))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(spaIndexPath);
+    });
+}
 app.Run();
 public partial class Program { }
 
