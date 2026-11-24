@@ -134,7 +134,7 @@ export function AcademicCalendarManagement() {
     <form className="student-form" onSubmit={saveYear}>
       <h3>{editingYear ? 'Edit academic year' : 'Add academic year'}</h3>
       <div className="form-row">
-        <input required value={yearForm.name} onChange={e => setYearForm({ ...yearForm, name: e.target.value })} placeholder="Academic year name" />
+        <input className="academic-year-name-input" required value={yearForm.name} onChange={e => setYearForm({ ...yearForm, name: e.target.value })} placeholder="Academic year name" />
         <label>Start <input required type="date" value={yearForm.startDate} onChange={e => setYearForm({ ...yearForm, startDate: e.target.value })} /></label>
         <label>End <input required type="date" value={yearForm.endDate} onChange={e => setYearForm({ ...yearForm, endDate: e.target.value })} /></label>
         <button type="submit" disabled={loading}>{editingYear ? 'Save Year' : 'Add Year'}</button>
