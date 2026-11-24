@@ -2,8 +2,6 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from '../api/academicRecords'
 import { ExaminationManagement } from './ExaminationManagement'
-import { AcademicCalendarManagement } from './AcademicCalendarManagement'
-import { CurriculumManagement } from './CurriculumManagement'
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
 interface AcademicManagementProps {
@@ -11,12 +9,10 @@ interface AcademicManagementProps {
   readOnly?: boolean
 }
 
-type AcademicView = 'records' | 'examinations' | 'setup'
-type AcademicSetupView = 'calendar' | 'programmes'
+type AcademicView = 'records' | 'examinations'
 
 export function AcademicManagement({ canManage = false, readOnly = false }: AcademicManagementProps) {
   const [view, setView] = useState<AcademicView>('records')
-  const [setupView, setSetupView] = useState<AcademicSetupView>('calendar')
   const [studentId, setStudentId] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [summaries, setSummaries] = useState<AcademicResultSummary[]>([])
@@ -51,27 +47,18 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
   return (
     <section className="academic-workspace" aria-label="Academic management workspace">
       <div className="panel-heading">
-        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : view === 'setup' ? 'Academic setup' : 'Examinations & Results'}</h2></div>
-        <span>{view === 'records' ? `${transcript.length} course results` : view === 'setup' ? 'Academic year, calendar and programmes' : 'Assessment plans'}</span>
+        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : 'Examinations & Results'}</h2></div>
+        <span>{view === 'records' ? `${transcript.length} course results` : 'Assessment plans'}</span>
       </div>
 
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
         {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>}
-        {!readOnly && canManage && <button type="button" aria-selected={view === 'setup'} onClick={() => setView('setup')}>Academic Setup</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      {view === 'setup' ? (
-        <section className="academic-setup-workspace" aria-label="Academic setup">
-          <div className="form-row" role="tablist" aria-label="Academic setup sections">
-            <button type="button" aria-selected={setupView === 'calendar'} className={setupView === 'calendar' ? 'active' : ''} onClick={() => setSetupView('calendar')}>Academic Year &amp; Calendar</button>
-            <button type="button" aria-selected={setupView === 'programmes'} className={setupView === 'programmes' ? 'active' : ''} onClick={() => setSetupView('programmes')}>School Programme Editor</button>
-          </div>
-          {setupView === 'calendar' ? <AcademicCalendarManagement /> : <CurriculumManagement canManage={canManage} />}
-        </section>
-      ) : view === 'examinations' ? (
+      {view === 'examinations' ? (
         <div className="academic-examinations-workspace"><ExaminationManagement canManage={canManage} /></div>
       ) : view === 'records' ? (
         <>
