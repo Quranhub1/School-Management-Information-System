@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import './HostelManagement.css'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 type Category = 'CheckIn' | 'CheckOut' | 'Inspection' | 'Maintenance' | 'Indiscipline'
@@ -92,7 +93,7 @@ export function SchoolWardenManagement() {
     finally { setSaving(false) }
   }
 
-  return <section className="panel" aria-label="School Warden workspace">
+  return <section className="panel warden-management-panel" aria-label="School Warden workspace">
     <div className="panel-heading">
       <div><span className="eyebrow">STUDENT WELFARE & RESIDENTIAL SAFETY</span><h2>School Warden</h2><p>Record resident movements, inspections, maintenance issues and indiscipline cases. All entries are saved to the school database.</p></div>
       <button type="button" className="secondary-button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh records'}</button>
