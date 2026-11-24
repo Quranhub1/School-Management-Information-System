@@ -67,11 +67,11 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
     try {
       const [hostelRows, context] = await Promise.all([
         request<Hostel[]>('/api/hostel'),
-        request<{ currentSemester: CurrentSemester | null; eligibleStudents: RegistryStudent[] }>('/api/hostel/allocation-context')
+        request<{ currentSemester: CurrentSemester | null; registryStudents: RegistryStudent[] }>('/api/hostel/allocation-context')
       ])
       setHostels(hostelRows)
       setCurrentSemester(context.currentSemester)
-      setRegistryStudents(context.eligibleStudents)
+      setRegistryStudents(context.registryStudents)
       if (context.currentSemester) {
         const today = new Date().toISOString().slice(0, 10)
         if (startDate < context.currentSemester.startDate || startDate > context.currentSemester.endDate)
