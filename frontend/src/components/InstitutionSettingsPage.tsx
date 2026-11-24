@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionEmailSettingsPanel } from './InstitutionEmailSettingsPanel'
+import { DeveloperIntroduction } from './DeveloperIntroduction'
 import { createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
 
-type SettingsTab = 'general' | 'branding' | 'gallery' | 'email'
+type SettingsTab = 'general' | 'branding' | 'gallery' | 'email' | 'developer'
 type GalleryFilter = 'all' | 'recent' | 'captioned'
 
 interface InstitutionSettingsPageProps {
@@ -250,9 +251,11 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         <button role="tab" aria-selected={tab === 'branding'} className={tab === 'branding' ? 'active' : ''} onClick={() => setTab('branding')}>Branding</button>
         <button role="tab" aria-selected={tab === 'gallery'} className={tab === 'gallery' ? 'active' : ''} onClick={() => setTab('gallery')}>Gallery</button>
         <button role="tab" aria-selected={tab === 'email'} className={tab === 'email' ? 'active' : ''} onClick={() => setTab('email')}>Institutional Email</button>
+        <button role="tab" aria-selected={tab === 'developer'} className={tab === 'developer' ? 'active' : ''} onClick={() => setTab('developer')}>Developer Introduction</button>
       </div>
 
       <form className="student-form" onSubmit={submit}>
+        {tab === 'developer' && <DeveloperIntroduction />}
         {tab === 'general' && (
           <div className="settings-grid">
             <div className="form-row">
@@ -436,7 +439,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
           </div>
         )}
 
-        {tab !== 'email' && (
+        {tab !== 'email' && tab !== 'developer' && (
           <div className="topbar-actions" style={{ marginTop: 22 }}>
             <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
             <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
