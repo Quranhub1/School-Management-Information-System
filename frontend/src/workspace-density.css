@@ -846,3 +846,30 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Academic Calendar — keep form controls clear of the table headings below. */
+.app-shell .academic-workspace > .student-form {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 9px;
+  margin: 0 0 14px !important;
+  padding: 12px 12px 14px !important;
+  overflow: visible;
+}
+.app-shell .academic-workspace > .student-form > .form-row {
+  position: relative;
+  margin: 0;
+  padding: 0 0 2px;
+}
+.app-shell .academic-workspace > .table-wrap {
+  position: relative;
+  z-index: 0;
+  clear: both;
+  margin-top: 12px !important;
+}
+.app-shell .academic-workspace > .table-wrap thead {
+  position: relative;
+  z-index: 0;
+}
