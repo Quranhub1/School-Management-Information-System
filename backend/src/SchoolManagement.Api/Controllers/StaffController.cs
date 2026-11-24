@@ -21,7 +21,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess, LeaveRequestService leaveService, PasswordHasher passwordHasher) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = "permission:staff.view")]
+    [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> List([FromQuery] bool activeOnly = true, CancellationToken cancellationToken = default)
     {
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
@@ -35,7 +35,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "permission:staff.view")]
+    [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -142,13 +142,13 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpGet("course-units")]
-    [Authorize(Policy = "permission:staff.view")]
+    [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> GetCourseUnits(CancellationToken cancellationToken)
         => Ok(await db.Courses.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Code)
             .Select(x => new { x.Id, x.Code, x.Name, x.CreditUnits }).ToListAsync(cancellationToken));
 
     [HttpGet("departments")]
-    [Authorize(Policy = "permission:staff.view")]
+    [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken)
         => Ok(await db.Departments.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Name)
             .Select(x => new { x.Id, x.Code, x.Name }).ToListAsync(cancellationToken));
@@ -493,7 +493,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     };
 
     [HttpGet("{id:guid}/leave")]
-    [Authorize(Policy = "permission:staff.view")]
+    [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> GetLeave(Guid id, CancellationToken cancellationToken)
     {
         var campusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
