@@ -24,6 +24,21 @@ public sealed class PermissionAuthorizationHandler(SchoolManagementDbContext db)
             ?? context.User.FindFirstValue("userId");
         if (!Guid.TryParse(userIdValue, out var userId)) return;
 
+        // System Administrator is the institution-wide superuser. This check is deliberately
+        // performed before permission lookup and user overrides so every policy (including
+        // newly introduced permission codes) grants access to this role.
+        var isSystemAdministrator = await (
+            from userRole in db.UserRoles
+            join role in db.Roles on userRole.RoleId equals role.Id
+            where userRole.UserId == userId && role.Name == "SystemAdministrator"
+            select userRole.UserId
+        ).AnyAsync();
+        if (isSystemAdministrator)
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
         var permission = await db.Permissions.AsNoTracking()
             .Where(x => x.Code == requirement.PermissionCode)
             .Select(x => new { x.Id })
