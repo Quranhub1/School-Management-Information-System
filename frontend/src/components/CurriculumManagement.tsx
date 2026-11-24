@@ -32,6 +32,7 @@ import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, up
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import './CurriculumManagement.css'
 import { CurriculumCard } from './CurriculumCard'
+import { AcademicCalendarManagement } from './AcademicCalendarManagement'
 import { CurriculumLogbookManagement } from './CurriculumLogbookManagement'
 import { CurriculumGovernancePanel } from './CurriculumGovernancePanel'
 import { CurriculumFilterPanel, type CurriculumFilters } from './CurriculumFilterPanel'
@@ -40,7 +41,7 @@ import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityAc
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
 
 type Tab = 'full' | 'short'
-type WorkspaceView = 'courses' | 'curricula'
+type WorkspaceView = 'courses' | 'curricula' | 'setup'
 
 // ASP.NET serializes enums as strings in API responses. Accept both the current
 // string contract and legacy numeric payloads so filtering never hides curricula.
@@ -913,7 +914,15 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       <div className="curriculum-workspace-nav" role="tablist" aria-label="Academic workspaces">
         <button type="button" role="tab" aria-selected={workspaceView === 'courses'} className={workspaceView === 'courses' ? 'active' : ''} onClick={() => setWorkspaceView('courses')}>Course Catalogue <span>{authorityCourses.length}</span></button>
         <button type="button" role="tab" aria-selected={workspaceView === 'curricula'} className={workspaceView === 'curricula' ? 'active' : ''} onClick={() => setWorkspaceView('curricula')}>Programmes &amp; Curricula</button>
+        {canManage && <button type="button" role="tab" aria-selected={workspaceView === 'setup'} className={workspaceView === 'setup' ? 'active' : ''} onClick={() => setWorkspaceView('setup')}>Academic Setup</button>}
       </div>
+      {workspaceView === 'setup' && (
+        <section className="academic-setup-workspace" aria-label="Academic setup">
+          <div className="panel-heading"><div><h3>Academic Year &amp; Calendar</h3><p>Configure the institution's academic years and calendar periods</p></div></div>
+          <AcademicCalendarManagement />
+          <p className="empty">School programmes and curriculum versions are maintained in the Programmes &amp; Curricula tab.</p>
+        </section>
+      )}
       {workspaceView === 'courses' && <div className="course-catalogue-authority">
         <label htmlFor="course-catalogue-authority">Academic authority</label>
         <select id="course-catalogue-authority" value={authority} disabled={loading} onChange={async event => {
