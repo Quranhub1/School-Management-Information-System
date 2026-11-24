@@ -269,9 +269,9 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
           </div>
           <div className="finance-dashboard-metrics">
             <article className="finance-dashboard-metric"><span>Total collections</span><strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong><small>Posted student payments</small></article>
-            <article className="finance-dashboard-metric"><span>Outstanding fees</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong><small>{dashboard?.outstandingCount.toLocaleString() ?? '—'} open invoices</small></article>
-            <article className="finance-dashboard-metric"><span>Student invoices</span><strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong><small>Total invoices issued</small></article>
-            <article className="finance-dashboard-metric"><span>Transactions</span><strong>{dashboard?.paymentCount.toLocaleString() ?? '—'}</strong><small>Recorded payment transactions</small></article>
+            <article className="finance-dashboard-metric"><span>Outstanding fees</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong><small>{dashboard?.outstandingCount?.toLocaleString() ?? '—'} open invoices</small></article>
+            <article className="finance-dashboard-metric"><span>Student invoices</span><strong>{dashboard?.invoiceCount?.toLocaleString() ?? '—'}</strong><small>Total invoices issued</small></article>
+            <article className="finance-dashboard-metric"><span>Transactions</span><strong>{dashboard?.paymentCount?.toLocaleString() ?? '—'}</strong><small>Recorded payment transactions</small></article>
           </div>
           <div className="finance-dashboard-section-title"><h3>Finance workspaces</h3><span>Choose a workspace to continue</span></div>
           <div className="finance-dashboard-workspaces">
@@ -288,10 +288,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               <span className="finance-dashboard-workspace-icon">AL</span><span className="finance-dashboard-workspace-copy"><strong>Accounts & Ledgers</strong><small>Manage chart of accounts, journals, ledgers and payroll controls</small></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>}
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('reports')}>
-              <span className="finance-dashboard-workspace-icon">BR</span><span className="finance-dashboard-workspace-copy"><strong>Bank & Financial Reports</strong><small>Review cash and bank positions, reconciliation and financial reports</small></span><span className="finance-dashboard-workspace-arrow">→</span>
-            </button>
-            <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('accounting')} disabled={isAssistantAccountant}>
-              <span className="finance-dashboard-workspace-icon">BE</span><span className="finance-dashboard-workspace-copy"><strong>Budgets & Expenditure</strong><small>Review approved budgets, actual spending and variances</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">BR</span><span className="finance-dashboard-workspace-copy"><strong>Cash & Bank Position</strong><small>Review cash, bank and mobile-money balances and reconciliation status</small></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('reports')}>
               <span className="finance-dashboard-workspace-icon">FR</span><span className="finance-dashboard-workspace-copy"><strong>Financial Reports</strong><small>Open period-based reports and financial position statements</small></span><span className="finance-dashboard-workspace-arrow">→</span>
