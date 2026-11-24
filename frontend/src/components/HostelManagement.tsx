@@ -1,27 +1,295 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { notify } from './GlobalNotifications'
+import { showConfirmDialog } from '../utils/confirmDialog'
 import './HostelManagement.css'
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+
 type Bed = { id: string; roomId: string; bedNumber: string; isActive: boolean; allocations?: Allocation[] }
 type Room = { id: string; hostelId: string; roomNumber: string; capacity: number; isActive: boolean; beds: Bed[] }
 type Hostel = { id: string; name: string; description?: string | null; isActive: boolean; rooms: Room[] }
 type Allocation = { id: string; bedId: string; studentId: string; startDate: string; endDate?: string | null; status: string; notes?: string | null }
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> { const token = getAccessToken(); const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init.headers ?? {}) } }); if (!response.ok) { const payload = await response.json().catch(() => null) as { message?: string } | null; throw new Error(payload?.message ?? `Request failed (${response.status})`) } return response.status === 204 ? undefined as T : await response.json() as T }
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getAccessToken()
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {})
+    }
+  })
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { message?: string } | null
+    throw new Error(payload?.message ?? `Request failed (${response.status})`)
+  }
+  return response.status === 204 ? undefined as T : await response.json() as T
+}
+
 export function HostelManagement({ canManage = true }: { canManage?: boolean }) {
-  const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports'>('houses'); const [hostels, setHostels] = useState<Hostel[]>([]); const [hostelId, setHostelId] = useState(''); const [roomId, setRoomId] = useState(''); const [bedId, setBedId] = useState(''); const [studentId, setStudentId] = useState(''); const [name, setName] = useState(''); const [description, setDescription] = useState(''); const [roomNumber, setRoomNumber] = useState(''); const [capacity, setCapacity] = useState(4); const [bedNumber, setBedNumber] = useState(''); const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10)); const [message, setMessage] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(false)
-  const rooms = useMemo(() => hostels.flatMap(h => h.rooms.map(r => ({ ...r, hostelName: h.name }))), [hostels]); const beds = useMemo(() => rooms.flatMap(r => r.beds.map(b => ({ ...b, roomNumber: r.roomNumber, hostelName: r.hostelName }))), [rooms]); const allocations = useMemo(() => beds.flatMap(b => (b.allocations ?? []).map(a => ({ ...a, bedNumber: b.bedNumber, roomNumber: b.roomNumber, hostelName: b.hostelName }))), [beds]); const occupied = allocations.filter(a => a.status === 'Active').length
-  const load = async () => { setError(''); setLoading(true); try { setHostels(await request<Hostel[]>('/api/hostel')) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load hostel data.') } finally { setLoading(false) } }
+  const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports'>('houses')
+  const [hostels, setHostels] = useState<Hostel[]>([])
+  const [hostelId, setHostelId] = useState('')
+  const [editingHostelId, setEditingHostelId] = useState<string | null>(null)
+  const [roomId, setRoomId] = useState('')
+  const [bedId, setBedId] = useState('')
+  const [studentId, setStudentId] = useState('')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [roomNumber, setRoomNumber] = useState('')
+  const [capacity, setCapacity] = useState(4)
+  const [bedNumber, setBedNumber] = useState('')
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const rooms = useMemo(() => hostels.flatMap(h => h.rooms.map(r => ({ ...r, hostelName: h.name }))), [hostels])
+  const beds = useMemo(() => rooms.flatMap(r => r.beds.map(b => ({ ...b, roomNumber: r.roomNumber, hostelName: r.hostelName }))), [rooms])
+  const allocations = useMemo(() => beds.flatMap(b => (b.allocations ?? []).map(a => ({ ...a, bedNumber: b.bedNumber, roomNumber: b.roomNumber, hostelName: b.hostelName }))), [beds])
+  const occupied = allocations.filter(a => a.status === 'Active').length
+
+  const load = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      setHostels(await request<Hostel[]>('/api/hostel'))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load hostel data.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => { void load() }, [])
-  async function createHostel(e: React.FormEvent) { e.preventDefault(); setError(''); setLoading(true); try { await request('/api/hostel/hostels', { method: 'POST', body: JSON.stringify({ name: name.trim(), description: description.trim() || null }) }); setName(''); setDescription(''); setMessage('Hostel created.'); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create hostel.') } finally { setLoading(false) } }
-  async function createRoom(e: React.FormEvent) { e.preventDefault(); setError(''); setLoading(true); try { await request('/api/hostel/rooms', { method: 'POST', body: JSON.stringify({ hostelId, roomNumber: roomNumber.trim(), capacity }) }); setRoomNumber(''); setMessage('Room created.'); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create room.') } finally { setLoading(false) } }
-  async function createBed(e: React.FormEvent) { e.preventDefault(); setError(''); setLoading(true); try { await request('/api/hostel/beds', { method: 'POST', body: JSON.stringify({ roomId, bedNumber: bedNumber.trim() }) }); setBedNumber(''); setMessage('Bed created.'); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create bed.') } finally { setLoading(false) } }
-  async function allocate(e: React.FormEvent) { e.preventDefault(); setError(''); setLoading(true); try { await request('/api/hostel/allocations', { method: 'POST', body: JSON.stringify({ bedId, studentId: studentId.trim(), startDate }) }); setStudentId(''); setMessage('Student allocated successfully.'); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to allocate student.') } finally { setLoading(false) } }
-  async function vacate(id: string) { setError(''); setLoading(true); try { await request(`/api/hostel/allocations/${id}/vacate`, { method: 'POST', body: JSON.stringify({ endDate: new Date().toISOString().slice(0, 10) }) }); setMessage('Allocation closed.'); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to vacate allocation.') } finally { setLoading(false) } }
-  return <section className="panel hostel-management-panel" aria-label="Hostel management"><div className="panel-heading"><div><span className="eyebrow">HOSTEL</span><h3>Hostel Management</h3></div><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button></div><div className="library-workspace-tabs" role="tablist" aria-label="Hostel sections">{(['houses', 'rooms', 'beds', 'allocations', 'reports'] as const).map(item => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>{item[0].toUpperCase() + item.slice(1)}</button>)}</div>{message && <div className="success" role="status">{message}</div>}{error && <div className="error" role="alert">{error}</div>}
-  {tab === 'houses' && <><>{canManage && <form className="management-form" onSubmit={createHostel}><label>Hostel name<input value={name} onChange={e => setName(e.target.value)} required /></label><label>Description<textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} maxLength={1000} placeholder="Enter hostel description or location details" /></label><button type="submit" disabled={loading}>Create hostel</button></form>}</><div className="table-wrap"><table><thead><tr><th>Hostel</th><th>Rooms</th><th>Beds</th><th>Occupancy</th></tr></thead><tbody>{hostels.map(h => { const hb = h.rooms.flatMap(r => r.beds); const ho = hb.filter(b => (b.allocations ?? []).some(a => a.status === 'Active')).length; return <tr key={h.id}><td>{h.name}</td><td>{h.rooms.length}</td><td>{hb.length}</td><td>{ho}/{hb.length}</td></tr> })}{hostels.length === 0 && <tr><td colSpan={4} className="empty">No hostels configured.</td></tr>}</tbody></table></div></>}
-  {tab === 'rooms' && <><>{canManage && <form className="management-form" onSubmit={createRoom}><label>Hostel<select value={hostelId} onChange={e => setHostelId(e.target.value)} required><option value="">Select hostel</option>{hostels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></label><label>Room number<input value={roomNumber} onChange={e => setRoomNumber(e.target.value)} required /></label><label>Capacity<input type="number" min={1} value={capacity} onChange={e => setCapacity(Number(e.target.value))} required /></label><button type="submit" disabled={loading}>Create room</button></form>}</><div className="table-wrap"><table><thead><tr><th>Hostel</th><th>Room</th><th>Capacity</th><th>Beds</th></tr></thead><tbody>{rooms.map(r => <tr key={r.id}><td>{r.hostelName}</td><td>{r.roomNumber}</td><td>{r.capacity}</td><td>{r.beds.length}/{r.capacity}</td></tr>)}{rooms.length === 0 && <tr><td colSpan={4} className="empty">No rooms configured.</td></tr>}</tbody></table></div></>}
-  {tab === 'beds' && <><>{canManage && <form className="management-form" onSubmit={createBed}><label>Room<select value={roomId} onChange={e => setRoomId(e.target.value)} required><option value="">Select room</option>{rooms.map(r => <option key={r.id} value={r.id}>{r.hostelName} / {r.roomNumber} ({r.beds.length}/{r.capacity})</option>)}</select></label><label>Bed number<input value={bedNumber} onChange={e => setBedNumber(e.target.value)} required /></label><button type="submit" disabled={loading}>Create bed</button></form>}</><div className="table-wrap"><table><thead><tr><th>Hostel</th><th>Room</th><th>Bed</th><th>Status</th></tr></thead><tbody>{beds.map(b => <tr key={b.id}><td>{b.hostelName}</td><td>{b.roomNumber}</td><td>{b.bedNumber}</td><td>{(b.allocations ?? []).some(a => a.status === 'Active') ? 'Occupied' : 'Available'}</td></tr>)}{beds.length === 0 && <tr><td colSpan={4} className="empty">No beds configured.</td></tr>}</tbody></table></div></>}
-  {tab === 'allocations' && <><>{canManage && <form className="management-form" onSubmit={allocate}><label>Available bed<select value={bedId} onChange={e => setBedId(e.target.value)} required><option value="">Select bed</option>{beds.filter(b => !(b.allocations ?? []).some(a => a.status === 'Active')).map(b => <option key={b.id} value={b.id}>{b.hostelName} / {b.roomNumber} / {b.bedNumber}</option>)}</select></label><label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} required /></label><label>Start date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required /></label><button type="submit" disabled={loading}>Allocate</button></form>}</><div className="table-wrap"><table><thead><tr><th>Student</th><th>Hostel</th><th>Room</th><th>Bed</th><th>Start</th><th>Status</th><th></th></tr></thead><tbody>{allocations.map(a => <tr key={a.id}><td>{a.studentId}</td><td>{a.hostelName}</td><td>{a.roomNumber}</td><td>{a.bedNumber}</td><td>{a.startDate}</td><td>{a.status}</td><td>{a.status === 'Active' && canManage && <button type="button" onClick={() => void vacate(a.id)} disabled={loading}>Vacate</button>}</td></tr>)}{allocations.length === 0 && <tr><td colSpan={7} className="empty">No allocations recorded.</td></tr>}</tbody></table></div></>}
-  {tab === 'reports' && <div className="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td>Total hostels</td><td>{hostels.length}</td></tr><tr><td>Total rooms</td><td>{rooms.length}</td></tr><tr><td>Total beds</td><td>{beds.length}</td></tr><tr><td>Occupied beds</td><td>{occupied}</td></tr><tr><td>Available beds</td><td>{Math.max(0, beds.length - occupied)}</td></tr><tr><td>Occupancy rate</td><td>{beds.length ? `${Math.round((occupied / beds.length) * 100)}%` : '0%'}</td></tr></tbody></table></div>}
-  </section>
+
+  function resetHostelForm() {
+    setEditingHostelId(null)
+    setName('')
+    setDescription('')
+  }
+
+  function editHostel(hostel: Hostel) {
+    setEditingHostelId(hostel.id)
+    setName(hostel.name)
+    setDescription(hostel.description ?? '')
+    setError('')
+    setTab('houses')
+  }
+
+  async function saveHostel(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      if (editingHostelId) {
+        await request(`/api/hostel/hostels/${editingHostelId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name: name.trim(), description: description.trim() || null })
+        })
+        notify('Hostel details updated successfully.', 'success', 'Hostel updated')
+      } else {
+        await request('/api/hostel/hostels', {
+          method: 'POST',
+          body: JSON.stringify({ name: name.trim(), description: description.trim() || null })
+        })
+        notify('Hostel created successfully.', 'success', 'Hostel created')
+      }
+      resetHostelForm()
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save hostel.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function deleteHostel(hostel: Hostel) {
+    const confirmed = await showConfirmDialog(
+      `Delete "${hostel.name}"? The hostel will be deactivated and retained in the system for historical records. This action is blocked while any student has an active allocation in the hostel.`,
+      { title: 'Delete hostel', confirmLabel: 'Delete hostel', destructive: true }
+    )
+    if (!confirmed) return
+    setError('')
+    setLoading(true)
+    try {
+      await request(`/api/hostel/hostels/${hostel.id}`, { method: 'DELETE' })
+      if (editingHostelId === hostel.id) resetHostelForm()
+      notify(`"${hostel.name}" was deleted successfully.`, 'success', 'Hostel deleted')
+      await load()
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unable to delete hostel.'
+      setError(message)
+      notify(message, 'error', 'Unable to delete hostel')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function createRoom(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await request('/api/hostel/rooms', { method: 'POST', body: JSON.stringify({ hostelId, roomNumber: roomNumber.trim(), capacity }) })
+      setRoomNumber('')
+      notify('Room created successfully.', 'success', 'Room created')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create room.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function createBed(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await request('/api/hostel/beds', { method: 'POST', body: JSON.stringify({ roomId, bedNumber: bedNumber.trim() }) })
+      setBedNumber('')
+      notify('Bed created successfully.', 'success', 'Bed created')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create bed.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function allocate(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await request('/api/hostel/allocations', { method: 'POST', body: JSON.stringify({ bedId, studentId: studentId.trim(), startDate }) })
+      setStudentId('')
+      notify('Student allocated successfully.', 'success', 'Student allocated')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to allocate student.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function vacate(id: string) {
+    setError('')
+    setLoading(true)
+    try {
+      await request(`/api/hostel/allocations/${id}/vacate`, { method: 'POST', body: JSON.stringify({ endDate: new Date().toISOString().slice(0, 10) }) })
+      notify('Allocation closed successfully.', 'success', 'Allocation closed')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to vacate allocation.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <section className="panel hostel-management-panel" aria-label="Hostel management">
+      <div className="panel-heading">
+        <div><span className="eyebrow">HOSTEL</span><h3>Hostel Management</h3></div>
+        <button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
+      </div>
+      <div className="library-workspace-tabs" role="tablist" aria-label="Hostel sections">
+        {(['houses', 'rooms', 'beds', 'allocations', 'reports'] as const).map(item => (
+          <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>
+            {item[0].toUpperCase() + item.slice(1)}
+          </button>
+        ))}
+      </div>
+      {error && <div className="error" role="alert">{error}</div>}
+
+      {tab === 'houses' && (
+        <>
+          {canManage && (
+            <form className="management-form" onSubmit={saveHostel}>
+              <div className="hostel-form-heading">{editingHostelId ? 'EDIT HOSTEL' : 'CREATE HOSTEL'}</div>
+              <label>Hostel name<input value={name} onChange={e => setName(e.target.value)} required /></label>
+              <label>Description<textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} maxLength={1000} placeholder="Enter hostel description or location details" /></label>
+              <div className="hostel-form-actions">
+                <button type="submit" disabled={loading}>{editingHostelId ? 'Save changes' : 'Create hostel'}</button>
+                {editingHostelId && <button type="button" className="hostel-cancel-button" onClick={resetHostelForm} disabled={loading}>Cancel</button>}
+              </div>
+            </form>
+          )}
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Hostel</th><th>Rooms</th><th>Beds</th><th>Occupancy</th>{canManage && <th>Actions</th>}</tr></thead>
+              <tbody>
+                {hostels.map(h => {
+                  const hb = h.rooms.flatMap(r => r.beds)
+                  const ho = hb.filter(b => (b.allocations ?? []).some(a => a.status === 'Active')).length
+                  return (
+                    <tr key={h.id}>
+                      <td><strong>{h.name}</strong>{h.description && <small className="hostel-description-cell">{h.description}</small>}</td>
+                      <td>{h.rooms.length}</td><td>{hb.length}</td><td>{ho}/{hb.length}</td>
+                      {canManage && <td><div className="hostel-row-actions">
+                        <button type="button" className="hostel-edit-button" onClick={() => editHostel(h)} disabled={loading}>Edit</button>
+                        <button type="button" className="hostel-delete-button" onClick={() => void deleteHostel(h)} disabled={loading}>Delete</button>
+                      </div></td>}
+                    </tr>
+                  )
+                })}
+                {hostels.length === 0 && <tr><td colSpan={canManage ? 5 : 4} className="empty">No hostels configured.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {tab === 'rooms' && (
+        <>
+          {canManage && <form className="management-form" onSubmit={createRoom}>
+            <label>Hostel<select value={hostelId} onChange={e => setHostelId(e.target.value)} required><option value="">Select hostel</option>{hostels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></label>
+            <label>Room number<input value={roomNumber} onChange={e => setRoomNumber(e.target.value)} required /></label>
+            <label>Capacity<input type="number" min={1} value={capacity} onChange={e => setCapacity(Number(e.target.value))} required /></label>
+            <button type="submit" disabled={loading}>Create room</button>
+          </form>}
+          <div className="table-wrap"><table><thead><tr><th>Hostel</th><th>Room</th><th>Capacity</th><th>Beds</th></tr></thead><tbody>
+            {rooms.map(r => <tr key={r.id}><td>{r.hostelName}</td><td>{r.roomNumber}</td><td>{r.capacity}</td><td>{r.beds.length}/{r.capacity}</td></tr>)}
+            {rooms.length === 0 && <tr><td colSpan={4} className="empty">No rooms configured.</td></tr>}
+          </tbody></table></div>
+        </>
+      )}
+
+      {tab === 'beds' && (
+        <>
+          {canManage && <form className="management-form" onSubmit={createBed}>
+            <label>Room<select value={roomId} onChange={e => setRoomId(e.target.value)} required><option value="">Select room</option>{rooms.map(r => <option key={r.id} value={r.id}>{r.hostelName} / {r.roomNumber} ({r.beds.length}/{r.capacity})</option>)}</select></label>
+            <label>Bed number<input value={bedNumber} onChange={e => setBedNumber(e.target.value)} required /></label>
+            <button type="submit" disabled={loading}>Create bed</button>
+          </form>}
+          <div className="table-wrap"><table><thead><tr><th>Hostel</th><th>Room</th><th>Bed</th><th>Status</th></tr></thead><tbody>
+            {beds.map(b => <tr key={b.id}><td>{b.hostelName}</td><td>{b.roomNumber}</td><td>{b.bedNumber}</td><td>{(b.allocations ?? []).some(a => a.status === 'Active') ? 'Occupied' : 'Available'}</td></tr>)}
+            {beds.length === 0 && <tr><td colSpan={4} className="empty">No beds configured.</td></tr>}
+          </tbody></table></div>
+        </>
+      )}
+
+      {tab === 'allocations' && (
+        <>
+          {canManage && <form className="management-form" onSubmit={allocate}>
+            <label>Available bed<select value={bedId} onChange={e => setBedId(e.target.value)} required><option value="">Select bed</option>{beds.filter(b => !(b.allocations ?? []).some(a => a.status === 'Active')).map(b => <option key={b.id} value={b.id}>{b.hostelName} / {b.roomNumber} / {b.bedNumber}</option>)}</select></label>
+            <label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} required /></label>
+            <label>Start date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required /></label>
+            <button type="submit" disabled={loading}>Allocate</button>
+          </form>}
+          <div className="table-wrap"><table><thead><tr><th>Student</th><th>Hostel</th><th>Room</th><th>Bed</th><th>Start</th><th>Status</th><th></th></tr></thead><tbody>
+            {allocations.map(a => <tr key={a.id}><td>{a.studentId}</td><td>{a.hostelName}</td><td>{a.roomNumber}</td><td>{a.bedNumber}</td><td>{a.startDate}</td><td>{a.status}</td><td>{a.status === 'Active' && canManage && <button type="button" onClick={() => void vacate(a.id)} disabled={loading}>Vacate</button>}</td></tr>)}
+            {allocations.length === 0 && <tr><td colSpan={7} className="empty">No allocations recorded.</td></tr>}
+          </tbody></table></div>
+        </>
+      )}
+
+      {tab === 'reports' && <div className="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+        <tr><td>Total hostels</td><td>{hostels.length}</td></tr><tr><td>Total rooms</td><td>{rooms.length}</td></tr><tr><td>Total beds</td><td>{beds.length}</td></tr><tr><td>Occupied beds</td><td>{occupied}</td></tr><tr><td>Available beds</td><td>{Math.max(0, beds.length - occupied)}</td></tr><tr><td>Occupancy rate</td><td>{beds.length ? `${Math.round((occupied / beds.length) * 100)}%` : '0%'}</td></tr>
+      </tbody></table></div>}
+    </section>
+  )
 }

@@ -17,11 +17,39 @@ public sealed class HostelService(IHostelRepository repository)
         return hostel;
     }
 
+    public async Task<HostelEntity> UpdateHostelAsync(Guid hostelId, string name, string? description, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Hostel name is required.", nameof(name));
+        var hostel = await repository.GetHostelAsync(hostelId, cancellationToken) ?? throw new KeyNotFoundException("Hostel not found.");
+        if (!hostel.IsActive) throw new InvalidOperationException("An inactive hostel cannot be edited.");
+        hostel.Name = name.Trim();
+        hostel.Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        await repository.SaveChangesAsync(cancellationToken);
+        return hostel;
+    }
+
+    public async Task DeleteHostelAsync(Guid hostelId, CancellationToken cancellationToken = default)
+    {
+        var hostel = await repository.GetHostelAsync(hostelId, cancellationToken) ?? throw new KeyNotFoundException("Hostel not found.");
+        if (!hostel.IsActive) throw new InvalidOperationException("Hostel has already been deleted.");
+        if (hostel.Rooms.SelectMany(room => room.Beds).SelectMany(bed => bed.Allocations).Any(allocation => allocation.Status == "Active"))
+            throw new InvalidOperationException("This hostel cannot be deleted while students have active bed allocations. Vacate those allocations first.");
+
+        hostel.IsActive = false;
+        foreach (var room in hostel.Rooms)
+        {
+            room.IsActive = false;
+            foreach (var bed in room.Beds) bed.IsActive = false;
+        }
+        await repository.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<HostelRoom> CreateRoomAsync(Guid hostelId, string roomNumber, int capacity, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(roomNumber)) throw new ArgumentException("Room number is required.", nameof(roomNumber));
         if (capacity <= 0) throw new ArgumentException("Room capacity must be greater than zero.", nameof(capacity));
-        if (await repository.GetHostelAsync(hostelId, cancellationToken) is null) throw new KeyNotFoundException("Hostel not found.");
+        var hostel = await repository.GetHostelAsync(hostelId, cancellationToken) ?? throw new KeyNotFoundException("Hostel not found.");
+        if (!hostel.IsActive) throw new InvalidOperationException("Cannot add rooms to an inactive hostel.");
         var room = new HostelRoom { HostelId = hostelId, RoomNumber = roomNumber.Trim(), Capacity = capacity };
         await repository.AddAsync(room, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -32,6 +60,7 @@ public sealed class HostelService(IHostelRepository repository)
     {
         if (string.IsNullOrWhiteSpace(bedNumber)) throw new ArgumentException("Bed number is required.", nameof(bedNumber));
         var room = await repository.GetRoomAsync(roomId, cancellationToken) ?? throw new KeyNotFoundException("Room not found.");
+        if (!room.IsActive) throw new InvalidOperationException("Cannot add beds to an inactive room.");
         if (room.Beds.Count >= room.Capacity) throw new InvalidOperationException("Room capacity has been reached.");
         var bed = new HostelBed { RoomId = roomId, BedNumber = bedNumber.Trim() };
         await repository.AddAsync(bed, cancellationToken);
@@ -41,7 +70,8 @@ public sealed class HostelService(IHostelRepository repository)
 
     public async Task<HostelAllocation> AllocateAsync(Guid bedId, Guid studentId, DateOnly startDate, CancellationToken cancellationToken = default)
     {
-        if (await repository.GetBedAsync(bedId, cancellationToken) is null) throw new KeyNotFoundException("Bed not found.");
+        var bed = await repository.GetBedAsync(bedId, cancellationToken) ?? throw new KeyNotFoundException("Bed not found.");
+        if (!bed.IsActive) throw new InvalidOperationException("Cannot allocate an inactive bed.");
         if (await repository.GetActiveAllocationByBedAsync(bedId, cancellationToken) is not null) throw new InvalidOperationException("Bed is already allocated.");
         if (await repository.GetActiveAllocationByStudentAsync(studentId, cancellationToken) is not null) throw new InvalidOperationException("Student already has an active hostel allocation.");
         var allocation = new HostelAllocation { BedId = bedId, StudentId = studentId, StartDate = startDate };
