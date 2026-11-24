@@ -50,7 +50,21 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
     if (nextTab) setTab(nextTab)
   }, [activeSubsection, canManage, canReadPayroll])
 
-  async function loadStaff() { setLoading(true); try { setStaff(await listStaff(false)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load staff.') } finally { setLoading(false) } }
+  const [staffLoadError, setStaffLoadError] = useState('');
+  async function loadStaff() {
+    setLoading(true);
+    setStaffLoadError('');
+    try {
+      const records = await listStaff(false);
+      setStaff(records);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unable to load staff.';
+      setStaffLoadError(message);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) { setLeaveRequests([]); return } try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
@@ -561,7 +575,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
             <table>
               <thead><tr><th>Staff No.</th><th>Surname, First name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
-                {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
+                {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staffLoadError ? <tr><td colSpan={canManage ? 9 : 8} className="empty"><div role="alert" style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 14 }}><strong>Staff records could not be loaded</strong><span>{staffLoadError}</span><button type="button" className="secondary-button" onClick={() => void loadStaff()}>Retry loading staff</button></div></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records are currently available in your permitted campus scope.</td></tr> : staff.map(s => (
                   <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName, s.otherNames)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
                     {editingCourseUnitsStaffId === s.id ? (
                       <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
