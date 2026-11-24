@@ -56,9 +56,10 @@ interface AdministrationManagementProps {
   institution: InstitutionSettings
   onInstitutionSaved?: (settings: InstitutionSettings) => void
   activeSubsection?: string | null
+  canManageAcademic?: boolean
 }
 
-export function AdministrationManagement({ institution, onInstitutionSaved, activeSubsection = null }: AdministrationManagementProps) {
+export function AdministrationManagement({ institution, onInstitutionSaved, activeSubsection = null, canManageAcademic = false }: AdministrationManagementProps) {
   const [users, setUsers] = useState<UserSummary[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
@@ -255,7 +256,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
       <button role="tab" aria-selected={tab === 'roles'} className={tab === 'roles' ? 'active' : ''} onClick={() => setTab('roles')}>Roles</button>
       <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => { setTab('offices'); setSelectedOffice(null) }}>Leadership & Offices</button>
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
-      <button role="tab" aria-selected={tab === 'academic-calendar'} className={tab === 'academic-calendar' ? 'active' : ''} onClick={() => setTab('academic-calendar')}>Academic Year &amp; Calendar</button>
+      {canManageAcademic && <button role="tab" aria-selected={tab === 'academic-calendar'} className={tab === 'academic-calendar' ? 'active' : ''} onClick={() => setTab('academic-calendar')}>Academic Year &amp; Calendar</button>}
     </div>
 
     {error && <div className="error" role="alert">{error}</div>}
@@ -497,7 +498,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
       )
     )}
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
-    {tab === 'academic-calendar' && <AcademicCalendarManagement />}
+    {tab === 'academic-calendar' && canManageAcademic && <AcademicCalendarManagement />}
   </section>
 }
 
