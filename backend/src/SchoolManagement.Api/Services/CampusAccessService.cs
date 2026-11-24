@@ -117,6 +117,15 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
             .ToListAsync(cancellationToken);
     }
 
-    private static Guid? GetUserId(ClaimsPrincipal principal) =>
-        Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub), out var id) ? id : null;
+    private static Guid? GetUserId(ClaimsPrincipal principal)
+    {
+        // JwtBearer's inbound claim mapping normally converts the JWT "sub" claim
+        // into ClaimTypes.NameIdentifier. Accept both mapped and raw claim names so
+        // campus scoping resolves the same user identity as PermissionAuthorizationHandler.
+        var userIdValue = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? principal.FindFirstValue("userId");
+
+        return Guid.TryParse(userIdValue, out var userId) ? userId : null;
+    }
 }
