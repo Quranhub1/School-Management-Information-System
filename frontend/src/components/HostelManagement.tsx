@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { getAccessToken } from '../api/auth'
 import { notify } from './GlobalNotifications'
 import { showConfirmDialog } from '../utils/confirmDialog'
-import { AcademicCalendarManagement } from './AcademicCalendarManagement'
-import { CurriculumManagement } from './CurriculumManagement'
 import './HostelManagement.css'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
@@ -35,9 +33,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.status === 204 ? undefined as T : await response.json() as T
 }
 
-export function HostelManagement({ canManage = true, canManageAcademic = false }: { canManage?: boolean; canManageAcademic?: boolean }) {
-  const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports' | 'setup'>('houses')
-  const [setupView, setSetupView] = useState<'calendar' | 'programmes'>('calendar')
+export function HostelManagement({ canManage = true }: { canManage?: boolean }) {
+  const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports'>('houses')
   const [hostels, setHostels] = useState<Hostel[]>([])
   const [hostelId, setHostelId] = useState('')
   const [editingHostelId, setEditingHostelId] = useState<string | null>(null)
@@ -225,9 +222,9 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
         <button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
       </div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Hostel sections">
-        {([...(['houses', 'rooms', 'beds', 'allocations', 'reports'] as const), ...(canManageAcademic ? ['setup' as const] : [])]).map(item => (
+        {(['houses', 'rooms', 'beds', 'allocations', 'reports'] as const).map(item => (
           <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>
-            {item === 'setup' ? 'Academic Setup' : item[0].toUpperCase() + item.slice(1)}
+            {item[0].toUpperCase() + item.slice(1)}
           </button>
         ))}
       </div>
@@ -317,14 +314,6 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
           </tbody></table></div>
         </>
       )}
-
-      {tab === 'setup' && canManageAcademic && <section className="hostel-academic-setup">
-        <div className="library-workspace-tabs" role="tablist" aria-label="Academic setup editors">
-          <button type="button" className={setupView === 'calendar' ? 'active' : ''} aria-selected={setupView === 'calendar'} onClick={() => setSetupView('calendar')}>Academic Calendar Editor</button>
-          <button type="button" className={setupView === 'programmes' ? 'active' : ''} aria-selected={setupView === 'programmes'} onClick={() => setSetupView('programmes')}>School Programme Editor</button>
-        </div>
-        {setupView === 'calendar' ? <AcademicCalendarManagement /> : <CurriculumManagement canManage={canManageAcademic} />}
-      </section>}
 
       {tab === 'reports' && <div className="table-wrap"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
         <tr><td>Total hostels</td><td>{hostels.length}</td></tr><tr><td>Total rooms</td><td>{rooms.length}</td></tr><tr><td>Total beds</td><td>{beds.length}</td></tr><tr><td>Occupied beds</td><td>{occupied}</td></tr><tr><td>Available beds</td><td>{Math.max(0, beds.length - occupied)}</td></tr><tr><td>Occupancy rate</td><td>{beds.length ? `${Math.round((occupied / beds.length) * 100)}%` : '0%'}</td></tr>
