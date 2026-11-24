@@ -71,7 +71,6 @@ export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean 
               <div>
                 <span className="integration-label">KOHA</span>
                 <h3>Library Management System</h3>
-                <p>Open the institution's configured Koha OPAC.</p>
               </div>
               {kohaAvailable ? (
                 <a className="library-primary" href={toolLinks.koha.baseUrl} target="_blank" rel="noopener noreferrer">Open Koha</a>
@@ -86,7 +85,6 @@ export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean 
               <div>
                 <span className="integration-label">DSPACE</span>
                 <h3>Digital Repository</h3>
-                <p>Browse the institution's digital publications, research and academic documents.</p>
               </div>
               {dspaceAvailable ? (
                 <a className="library-primary" href={toolLinks.dspace.baseUrl} target="_blank" rel="noopener noreferrer">Open DSpace</a>
