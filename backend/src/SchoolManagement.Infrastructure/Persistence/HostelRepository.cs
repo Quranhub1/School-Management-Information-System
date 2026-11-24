@@ -50,7 +50,7 @@ public sealed class HostelRepository(SchoolManagementDbContext db) : IHostelRepo
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try { await db.SaveChangesAsync(cancellationToken); }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg && (pg.ConstraintName == "UX_HostelAllocations_ActiveBedSemester" || pg.ConstraintName == "UX_HostelAllocations_ActiveStudentSemester"))
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg && (pg.ConstraintName == "UX_HostelAllocations_ActiveBedSemester" || pg.ConstraintName == "UX_HostelAllocations_ActiveStudentSemester" || pg.ConstraintName == "UX_HostelAllocations_ActiveLegacyBed" || pg.ConstraintName == "UX_HostelAllocations_ActiveLegacyStudent"))
         { throw new InvalidOperationException("The hostel allocation conflicts with an existing active allocation.", ex); }
     }
 }
