@@ -29,3 +29,12 @@
 .developer-intro-footer a{display:inline-flex;align-items:center;gap:4px;color:#166534;font-weight:700;text-decoration:none}
 .developer-intro-footer a:hover{text-decoration:underline}
 @media(max-width:680px){.developer-intro-hero,.developer-intro-profile{grid-template-columns:1fr}.developer-intro-brand{min-height:110px}.developer-intro-brand img{max-height:100px}.developer-intro-photo-wrap{height:300px;max-width:320px}.developer-intro-capability-grid{grid-template-columns:1fr}.developer-intro-project{align-items:flex-start}.developer-intro-project-mark{width:58px;height:58px;font-size:15px}}
+
+.developer-intro-contact{padding:20px;border:1px solid #e7e5e4;border-radius:8px;background:#fff}
+.developer-intro-contact .developer-intro-section-heading{margin-bottom:14px}
+.developer-intro-contact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.developer-intro-contact-grid>a,.developer-intro-contact-grid>div{display:grid;gap:7px;min-width:0;padding:14px;border:1px solid #e7e5e4;border-radius:7px;background:#fafaf9;color:#292524;text-decoration:none}
+.developer-intro-contact-grid>a:hover{border-color:#15803d;background:#f0fdf4}
+.developer-intro-contact-label{color:#78716c;font-size:10px;font-weight:800;letter-spacing:.12em}
+.developer-intro-contact-grid strong{overflow-wrap:anywhere;font-size:13px;font-weight:700}
+@media(max-width:680px){.developer-intro-contact-grid{grid-template-columns:1fr}}
