@@ -128,7 +128,7 @@ export function AcademicCalendarManagement() {
   }
 
   return <section className="academic-workspace" aria-label="Academic calendar management">
-    <div className="panel-heading"><div><p className="eyebrow">Academic Calendar</p><h2>Academic years &amp; periods</h2></div></div>
+    <div className="panel-heading" style={{ justifyContent: 'center', textAlign: 'center' }}><h2 style={{ margin: 0, textAlign: 'center' }}>Academic years &amp; periods</h2></div>
     {error && <div className="error" role="alert">{error}</div>}
     {message && <p role="status">{message}</p>}
     <form className="student-form academic-year-form" onSubmit={saveYear}>
