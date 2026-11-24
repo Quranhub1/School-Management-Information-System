@@ -542,7 +542,6 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
         <div className="card">
           <h3>Recruitment & Onboarding</h3>
           <p className="staff-create-hint">Register newly recruited personnel and configure their institutional login access.</p>
-          {canManage ? (
           {canManage && (
             <form className="grid-form staff-management-create-form" onSubmit={submit}>
               <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
@@ -724,7 +723,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               </div>
             </form>
           )}
-          ) : <p className="empty">You do not have permission to create or update staff records.</p>}
+
         </div>
       )}
     </section>
