@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Attendance;
+using SchoolManagement.Domain.People;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -30,6 +31,10 @@ public sealed class StaffAttendanceController(
         var firstDate = from ?? todayInKampala;
         var lastDate = to ?? firstDate;
         if (lastDate < firstDate) return BadRequest(new { message = "The end date must be on or after the start date." });
+        if (lastDate.DayNumber - firstDate.DayNumber > 365)
+            return BadRequest(new { message = "Attendance reports are limited to 366 days per request." });
+        if (lastDate > todayInKampala)
+            return BadRequest(new { message = "Future dates cannot be included in an attendance register." });
         var start = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(firstDate.ToDateTime(TimeOnly.MinValue), kampala));
         var end = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(lastDate.AddDays(1).ToDateTime(TimeOnly.MinValue), kampala));
 
@@ -44,22 +49,22 @@ public sealed class StaffAttendanceController(
         {
             var term = search.Trim().ToLower();
             staffQuery = staffQuery.Where(s => s.StaffNumber.ToLower().Contains(term)
-                || s.FirstName.ToLower().Contains(term) || s.LastName.ToLower().Contains(term));
+                || s.FirstName.ToLower().Contains(term) || s.LastName.ToLower().Contains(term)
+                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term)));
         }
 
-        var staff = await staffQuery.Select(s => new
-        {
-            s.Id, s.StaffNumber, s.FirstName, s.LastName, s.OtherNames, s.DepartmentId
-        }).ToListAsync(cancellationToken);
+        var staff = await staffQuery
+            .OrderBy(s => s.LastName).ThenBy(s => s.FirstName).ThenBy(s => s.StaffNumber)
+            .Select(s => new
+            {
+                s.Id, s.StaffNumber, s.FirstName, s.LastName, s.OtherNames, s.DepartmentId
+            }).ToListAsync(cancellationToken);
         var staffIds = staff.Select(s => s.Id).ToArray();
         var events = await db.StaffAttendanceEvents.AsNoTracking()
             .Where(e => staffIds.Contains(e.StaffMemberId) && e.RecordedAtUtc >= start && e.RecordedAtUtc < end)
             .OrderBy(e => e.RecordedAtUtc)
             .Select(e => new { e.StaffMemberId, e.EventType, e.RecordedAtUtc })
             .ToListAsync(cancellationToken);
-
-        if (lastDate.DayNumber - firstDate.DayNumber > 365)
-            return BadRequest(new { message = "Attendance reports are limited to 366 days per request." });
 
         var rows = new List<object>();
         for (var date = firstDate; date <= lastDate; date = date.AddDays(1))
@@ -79,7 +84,7 @@ public sealed class StaffAttendanceController(
                 {
                     staffMemberId = member.Id,
                     member.StaffNumber,
-                    name = string.Join(" ", new[] { member.LastName, member.FirstName, member.OtherNames }.Where(value => !string.IsNullOrWhiteSpace(value))).ToUpper(),
+                    name = PersonName.Format(member.LastName, member.FirstName, member.OtherNames),
                     member.DepartmentId,
                     date,
                     checkIn,
@@ -272,7 +277,7 @@ public sealed class StaffAttendanceController(
         {
             attendanceEvent.Id,
             staffMemberId = staff.Id,
-            staffName = $"{staff.LastName} {staff.FirstName} {staff.OtherNames}".Trim().ToUpperInvariant(),
+            staffName = PersonName.Format(staff.LastName, staff.FirstName, staff.OtherNames),
             staff.StaffNumber,
             eventType,
             recordedAtUtc = now,
