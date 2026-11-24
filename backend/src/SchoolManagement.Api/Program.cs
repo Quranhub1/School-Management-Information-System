@@ -254,7 +254,7 @@ if (File.Exists(spaIndexPath))
 
         context.Response.ContentType = "text/html; charset=utf-8";
         await context.Response.SendFileAsync(spaIndexPath);
-    });
+    }).AllowAnonymous();
 }
 app.Run();
 public partial class Program { }
