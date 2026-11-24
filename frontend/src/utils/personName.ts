@@ -11,8 +11,8 @@ export function formatPersonName(
   otherNames?: string | null,
 ): string {
   return [surname, firstName, otherNames]
-    .map(value => value?.trim())
+    .map(value => value?.trim().replace(/\\s+/g, ' '))
     .filter((value): value is string => Boolean(value))
     .join(' ')
-    .toUpperCase()
+    .toLocaleUpperCase('en')
 }
