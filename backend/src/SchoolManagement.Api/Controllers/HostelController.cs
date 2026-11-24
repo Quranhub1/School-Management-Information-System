@@ -50,7 +50,7 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
                     .Select(enrollment => db.Programmes.Where(programme => programme.Id == enrollment.ProgrammeId)
                         .Select(programme => programme.Name).FirstOrDefault()).FirstOrDefault(),
                 semester != null && db.HostelAllocations.Any(allocation =>
-                    allocation.StudentId == student.Id && allocation.SemesterId == semester.Id && allocation.Status == "Active")))
+                    allocation.StudentId == student.Id && (allocation.SemesterId == semester.Id || allocation.SemesterId == null) && allocation.Status == "Active")))
             .ToListAsync(cancellationToken);
 
         return Ok(new HostelAllocationContextDto(
