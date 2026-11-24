@@ -19,7 +19,7 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
     [HttpGet("allocation-context")]
     public async Task<IActionResult> GetAllocationContext(CancellationToken cancellationToken)
     {
-        await service.GetAsync(cancellationToken); // Also closes allocations whose configured semester has ended.
+        await service.RefreshSemesterAllocationsAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(3)).DateTime);
         var semester = await (from period in db.Semesters.AsNoTracking()
             join year in db.AcademicYears.AsNoTracking() on period.AcademicYearId equals year.Id
@@ -31,7 +31,7 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
-        var studentsQuery = db.Students.AsNoTracking().Where(student => !student.IsArchived && student.Status == "Active");
+        var studentsQuery = db.Students.AsNoTracking().Where(student => !student.IsArchived);
         if (accessibleCampuses is not null)
             studentsQuery = studentsQuery.Where(student => student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value));
 
