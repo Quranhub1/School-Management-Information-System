@@ -35,7 +35,6 @@ public sealed class HostelService(IHostelRepository repository)
         if (hostel.Rooms.SelectMany(room => room.Beds).SelectMany(bed => bed.Allocations).Any(allocation => allocation.Status == "Active"))
             throw new InvalidOperationException("This hostel cannot be deleted while students have active bed allocations. Vacate those allocations first.");
 
-        // Keep hostel, room, bed and allocation records for audit/history; hide the deactivated hierarchy from active lists.
         hostel.IsActive = false;
         foreach (var room in hostel.Rooms)
         {
@@ -71,7 +70,8 @@ public sealed class HostelService(IHostelRepository repository)
 
     public async Task<HostelAllocation> AllocateAsync(Guid bedId, Guid studentId, DateOnly startDate, CancellationToken cancellationToken = default)
     {
-        if (await repository.GetBedAsync(bedId, cancellationToken) is null) throw new KeyNotFoundException("Bed not found.");
+        var bed = await repository.GetBedAsync(bedId, cancellationToken) ?? throw new KeyNotFoundException("Bed not found.");
+        if (!bed.IsActive) throw new InvalidOperationException("Cannot allocate an inactive bed.");
         if (await repository.GetActiveAllocationByBedAsync(bedId, cancellationToken) is not null) throw new InvalidOperationException("Bed is already allocated.");
         if (await repository.GetActiveAllocationByStudentAsync(studentId, cancellationToken) is not null) throw new InvalidOperationException("Student already has an active hostel allocation.");
         var allocation = new HostelAllocation { BedId = bedId, StudentId = studentId, StartDate = startDate };
