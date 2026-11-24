@@ -548,14 +548,23 @@ public sealed class LibraryController(
 
     [HttpGet("integrations")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public IActionResult Integrations()
+    public async Task<IActionResult> Integrations(CancellationToken ct)
     {
-        var kohaUrl = configuration["LibraryIntegrations:Koha:BaseUrl"]?.Trim() ?? string.Empty;
-        var dspaceUrl = configuration["LibraryIntegrations:DSpace:BaseUrl"]?.Trim() ?? string.Empty;
+        var settings = await db.Set<SchoolManagement.Domain.Library.LibraryPluginSettings>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct);
+        var kohaUrl = settings?.KohaOpacUrl?.Trim() ?? string.Empty;
+        var dspaceUrl = settings?.DSpaceBaseUrl?.Trim() ?? string.Empty;
+        var kohaEnabled = settings?.KohaEnabled == true &&
+            Uri.TryCreate(kohaUrl, UriKind.Absolute, out var kohaUri) &&
+            (kohaUri.Scheme == Uri.UriSchemeHttp || kohaUri.Scheme == Uri.UriSchemeHttps);
+        var dspaceEnabled = settings?.DSpaceEnabled == true &&
+            Uri.TryCreate(dspaceUrl, UriKind.Absolute, out var dspaceUri) &&
+            (dspaceUri.Scheme == Uri.UriSchemeHttp || dspaceUri.Scheme == Uri.UriSchemeHttps);
         return Ok(new
         {
-            koha = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:Koha:Enabled") && Uri.TryCreate(kohaUrl, UriKind.Absolute, out _), baseUrl = kohaUrl },
-            dspace = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:DSpace:Enabled") && Uri.TryCreate(dspaceUrl, UriKind.Absolute, out _), baseUrl = dspaceUrl }
+            koha = new { enabled = kohaEnabled, baseUrl = kohaEnabled ? kohaUrl : string.Empty },
+            dspace = new { enabled = dspaceEnabled, baseUrl = dspaceEnabled ? dspaceUrl : string.Empty }
         });
     }
 
