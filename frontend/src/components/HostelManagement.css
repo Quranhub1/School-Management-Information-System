@@ -183,3 +183,42 @@
 @media (max-width: 720px) {
   .hostel-management-panel .hostel-row-actions { min-width: 130px; }
 }
+
+.hostel-management-panel .hostel-semester-context {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 12px 14px;
+  border: 1px solid #9aada0;
+  border-radius: 6px;
+  background: #edf5ef;
+  color: #203c2b;
+}
+.hostel-management-panel .hostel-semester-context span {
+  color: #52665a;
+  font-size: .84rem;
+}
+.hostel-management-panel .hostel-academic-setup {
+  margin: 18px 22px;
+  min-width: 0;
+}
+.hostel-management-panel .hostel-academic-setup > .library-workspace-tabs {
+  margin: 0 0 18px;
+}
+.hostel-management-panel .hostel-academic-setup .academic-workspace {
+  min-width: 0;
+}
+[data-theme="dark"] .hostel-management-panel .hostel-semester-context {
+  border-color: #496151;
+  background: #1b3325;
+  color: #e3f1e7;
+}
+[data-theme="dark"] .hostel-management-panel .hostel-semester-context span {
+  color: #bdcfc2;
+}
+@media (max-width: 720px) {
+  .hostel-management-panel .hostel-academic-setup { margin: 14px 10px; }
+}
