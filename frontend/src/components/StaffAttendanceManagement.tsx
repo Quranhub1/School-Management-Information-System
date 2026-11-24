@@ -56,18 +56,21 @@ export function StaffAttendanceManagement() {
   }, [])
   useEffect(() => { void load() }, [load])
 
-  async function openStaffHistory(row: StaffDailyAttendanceRow) {
+  useEffect(() => {
+    if (!selectedStaff) return
+    let cancelled = false
+    setHistoryLoading(true)
+    getStaffAttendanceHistory(selectedStaff.staffMemberId, { from, to })
+      .then(history => { if (!cancelled) setStaffHistory(history) })
+      .catch(cause => { if (!cancelled) setError(cause instanceof Error ? cause.message : 'Unable to load this staff member’s attendance history.') })
+      .finally(() => { if (!cancelled) setHistoryLoading(false) })
+    return () => { cancelled = true }
+  }, [selectedStaff?.staffMemberId, from, to])
+
+  function openStaffHistory(row: StaffDailyAttendanceRow) {
     setSelectedStaff(row)
     setStaffHistory(null)
-    setHistoryLoading(true)
     setError('')
-    try {
-      setStaffHistory(await getStaffAttendanceHistory(row.staffMemberId, { from, to }))
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Unable to load this staff member’s attendance history.')
-    } finally {
-      setHistoryLoading(false)
-    }
   }
 
   async function recordStaffEvent(row: StaffDailyAttendanceRow, eventType: 'IN' | 'OUT') {
