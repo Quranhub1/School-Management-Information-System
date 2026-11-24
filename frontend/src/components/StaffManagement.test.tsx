@@ -68,6 +68,14 @@ describe('StaffManagement', () => {
     expect(screen.getByText('0 Selected')).toBeTruthy()
   })
 
+  it('places surname before first name in the staff registration form', () => {
+    render(<StaffManagement canManage />)
+    const nameFields = screen.getAllByPlaceholderText(/Surname|First name/)
+    expect(nameFields[0].getAttribute('aria-label')).toBe('Surname')
+    expect(nameFields[1].getAttribute('aria-label')).toBe('First name')
+    expect(screen.getByRole('columnheader', { name: 'Surname, First name' })).toBeTruthy()
+  })
+
   it('captures the complete staff recruitment profile including a photograph', () => {
     render(<StaffManagement canManage />)
     expect(screen.getByLabelText('Gender')).toBeTruthy()
