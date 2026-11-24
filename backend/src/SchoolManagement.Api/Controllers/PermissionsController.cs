@@ -22,6 +22,21 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
             ?? User.FindFirstValue("userId");
         if (!Guid.TryParse(userIdValue, out var userId)) return Unauthorized();
 
+        var isSystemAdministrator = await (
+            from userRole in db.UserRoles
+            join role in db.Roles on userRole.RoleId equals role.Id
+            where userRole.UserId == userId && role.Name == InstitutionalRoles.SystemAdministrator
+            select userRole.UserId
+        ).AnyAsync(cancellationToken);
+        if (isSystemAdministrator)
+        {
+            var allPermissionCodes = await db.Permissions.AsNoTracking()
+                .Select(permission => permission.Code).ToListAsync(cancellationToken);
+            return Ok(new { permissions = allPermissionCodes
+                .Concat(SchoolManagement.Infrastructure.Identity.PermissionCatalog.All.Select(permission => permission.Code))
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(code => code).ToArray() });
+        }
+
         var roleCodes = await (from userRole in db.UserRoles
                                join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
                                join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
