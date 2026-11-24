@@ -79,8 +79,8 @@ export function AlumniManagement() {
   }
 
   function saveExtension(next: AlumniExtension) {
-    setExtension(next);
     if (selectedId) localStorage.setItem(storageKey(selectedId), JSON.stringify(next));
+    setExtension(next);
   }
 
   function saveAlumniNotes(field: 'careerProgress' | 'clearanceNotes') {
