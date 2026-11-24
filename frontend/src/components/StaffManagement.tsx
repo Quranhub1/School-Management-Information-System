@@ -470,13 +470,12 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   </div>}
               </fieldset>}
 
-              <div className="staff-create-bottom-grid">
-                <section className="staff-create-card">
+              <section className="staff-create-card staff-permissions-card">
                   <div className="staff-create-card-heading">
                     <div>
                       <h3 className="staff-create-card-title">Permissions by module</h3>
                       {!canManageAccounts && <p className="staff-create-hint">Only a System Administrator can assign staff login roles and permissions. You can view the catalogue here, but the controls are read-only.</p>}
-                  <p className="staff-create-hint">Role permissions are inherited automatically. Checked inherited items are read-only; select additional permissions to grant them directly to this account.</p>
+                      <p className="staff-create-hint">Role permissions are inherited automatically. Checked inherited items are read-only; select additional permissions to grant them directly to this account.</p>
                     </div>
                     <strong className="staff-permission-count">{selectedPermissions.length + inheritedPermissions.filter(id => !selectedPermissions.includes(id)).length} / {allPermissionIds.length} effective</strong>
                   </div>
@@ -507,14 +506,9 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   </div>
                   <p className="staff-create-hint staff-permission-notice">Direct grants are saved to the linked login account. Inherited permissions come from assigned roles and cannot be changed here.</p>
                 </section>
-                <section className="staff-create-card">
-                  <h3 className="staff-create-card-title">Account & Status</h3>
-                  <p className="staff-create-hint">Set the staff member's employment status below. Login credentials are managed by the secure SMIS identity service.</p>
-                  <span className="staff-create-status">{editingStaffId ? 'Editing existing staff record' : 'New staff record'}</span>
-                </section>
-              </div>
+              </section>
 
-              <div className="staff-create-bottom-grid">
+              <div className="staff-create-bottom-grid staff-account-grid">
                 <section className="staff-create-card">
                   <div className="staff-create-card-heading">
                     <h3 className="staff-create-card-title" id="staff-login-card-title">{accountMode === 'existing' ? 'Change Credentials' : 'Login Details'}</h3>
@@ -532,12 +526,16 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   </label>
                   {credentialFeedback && <div className="staff-create-credential-feedback" role="status" aria-live="polite">{credentialFeedback}</div>}
                   {accountMode === 'new' && <>
-                    <label className="staff-create-field" style={{ marginTop: 12 }}>Login roles (select one or more)
-                      <select multiple size={4} value={selectedAccountRoles} onChange={event => setSelectedAccountRoles(Array.from(event.target.selectedOptions, option => option.value))} disabled={permissionsLoading || !canManageAccounts}>
-                        {availableRoles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
-                      </select>
-                    </label>
-                    <p className="staff-create-hint" style={{ marginTop: 10 }}>The new account is created with this role. The selected permissions below are saved as additional individual grants.</p>
+                    <fieldset className="staff-role-picker" disabled={permissionsLoading || !canManageAccounts}>
+                      <legend>Login roles <span>(select one or more)</span></legend>
+                      <div className="staff-role-options">
+                        {availableRoles.map(role => <label className="staff-role-option" key={role.id}>
+                          <input type="checkbox" checked={selectedAccountRoles.includes(role.name)} onChange={event => setSelectedAccountRoles(current => event.target.checked ? [...current, role.name] : current.filter(name => name !== role.name))} />
+                          <span>{role.name}</span>
+                        </label>)}
+                      </div>
+                      <p className="staff-create-hint">{selectedAccountRoles.length} role(s) selected. Role permissions are inherited automatically; individual grants are additional.</p>
+                    </fieldset>
                   </>}
                   {accountMode === 'existing' && <p className="staff-create-hint" style={{ marginTop: 10 }}>The existing account will be linked to this staff profile. Enter a new password only if you also want to reset it. The selected permissions are saved as individual grants.</p>}
                 </section>
