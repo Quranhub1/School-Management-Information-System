@@ -7,6 +7,7 @@ import { CurriculumManagement } from './CurriculumManagement'
 import './HostelManagement.css'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+const localDateString = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` }
 
 type Bed = { id: string; roomId: string; bedNumber: string; isActive: boolean; allocations?: Allocation[] }
 type Room = { id: string; hostelId: string; roomNumber: string; capacity: number; isActive: boolean; beds: Bed[] }
@@ -50,7 +51,7 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
   const [roomNumber, setRoomNumber] = useState('')
   const [capacity, setCapacity] = useState(4)
   const [bedNumber, setBedNumber] = useState('')
-  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [startDate, setStartDate] = useState(localDateString)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -73,7 +74,7 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
       setCurrentSemester(context.currentSemester)
       setRegistryStudents(context.registryStudents)
       if (context.currentSemester) {
-        const today = new Date().toISOString().slice(0, 10)
+        const today = localDateString()
         if (startDate < context.currentSemester.startDate || startDate > context.currentSemester.endDate)
           setStartDate(today < context.currentSemester.startDate ? context.currentSemester.startDate : today > context.currentSemester.endDate ? context.currentSemester.endDate : today)
       }
