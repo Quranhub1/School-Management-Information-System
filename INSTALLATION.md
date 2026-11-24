@@ -151,7 +151,7 @@ The development API is normally exposed on the ports defined by the project laun
 Health check:
 
 ```text
-/api/health
+/health
 ```
 
 ## 8. Create the first administrator
@@ -233,6 +233,34 @@ dotnet publish -c Release -o /opt/schoolmanagement/api
 Set `ASPNETCORE_ENVIRONMENT=Production`, a strong `Authentication__JwtKey`, the production PostgreSQL connection string, `SEED_ADMIN_PASSWORD`, and the attendance QR secret through the service environment or secret manager. Never put real secrets in the repository. The default listener is `http://0.0.0.0:5000`; use `http://127.0.0.1:5000` on the host PC and `http://HOST-PC-LAN-IP:5000` from other trusted school computers.
 
 The web root serves static frontend files without authentication; API endpoints retain their configured authentication and authorization. SPA deep links fall back to `index.html`, while unknown `/api` routes remain API 404 responses. Same-origin hosting does not require CORS. If a separately hosted client must call the API, configure its exact origin in `AllowedOrigins__0` (and subsequent indexed entries).
+
+### Windows LAN host quick start
+
+On the Windows host PC, from the repository root after dependencies are installed:
+
+```powershell
+cd .\frontend
+npm ci
+npm run build:lan
+
+cd ..\backend
+dotnet publish .\src\SchoolManagement.Api\SchoolManagement.Api.csproj -c Release -o ..\publish\api
+```
+
+Set the production environment in the PowerShell session that starts the published API. Supply the real existing PostgreSQL password and strong secrets locally; do not paste them into Git or share them in chat:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Production"
+$env:ASPNETCORE_URLS = "http://0.0.0.0:5000"
+$env:ConnectionStrings__SchoolManagement = "Host=localhost;Port=5432;Database=school_management;Username=school_management;Password=<YOUR_LOCAL_DB_PASSWORD>"
+$env:Authentication__JwtKey = "<YOUR_RANDOM_SECRET_AT_LEAST_32_CHARACTERS>"
+$env:SEED_ADMIN_PASSWORD = "<YOUR_STRONG_ADMIN_BOOTSTRAP_PASSWORD>"
+$env:Security__AttendanceQrSecret = "<YOUR_LONG_RANDOM_ATTENDANCE_SECRET>"
+cd ..\publish\api
+dotnet .\SchoolManagement.Api.dll
+```
+
+Keep this PowerShell window/service running. Open `http://127.0.0.1:5000` on the host PC and `http://HOST-PC-LAN-IP:5000` on school clients. The first Production startup applies pending EF migrations and seeds required records; take a verified database backup before the first production startup. Do not use placeholder values literally.
 
 Create a systemd service similar to:
 
@@ -324,7 +352,7 @@ The production desktop client must point to the institution's trusted HTTPS SMIS
 1. Server is reachable from the client LAN.
 2. DNS resolves correctly.
 3. HTTPS certificate is valid.
-4. `/api/health` responds successfully.
+4. `/health` responds successfully.
 5. Login succeeds.
 6. Administrator authorization loads the administration workspace.
 7. Non-administrator users receive only their authorized modules.
