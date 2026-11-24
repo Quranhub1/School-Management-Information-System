@@ -6236,3 +6236,23 @@ table { font-variant-numeric: tabular-nums; }
     width: 100% !important;
   }
 }
+
+
+/* Library workspace title */
+.library-heading {
+  justify-content: center;
+  text-align: center;
+}
+.library-heading > div {
+  width: 100%;
+  text-align: center;
+}
+.library-heading .library-services-title {
+  margin: 0;
+  color: #1c1917;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-align: center;
+  text-transform: uppercase;
+}
