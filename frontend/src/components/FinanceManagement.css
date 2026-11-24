@@ -602,8 +602,8 @@
 
 /* Finance actions: accessible, stable colours and readable typography. */
 .finance-workspace {
-  --finance-action-bg: #166534;
-  --finance-action-hover: #14532d;
+  --finance-action-bg: var(--brand-primary, var(--smis-primary));
+  --finance-action-hover: color-mix(in srgb, var(--finance-action-bg) 86%, #000);
   --finance-action-text: #ffffff;
   --finance-secondary-bg: #f8faf9;
   --finance-secondary-hover: #eef3f0;
@@ -696,7 +696,7 @@
 }
 
 .finance-workspace button:focus-visible {
-  outline: 2px solid #166534;
+  outline: 2px solid var(--brand-primary, var(--smis-primary));
   outline-offset: 2px;
 }
 
@@ -728,8 +728,8 @@
 }
 
 .finance-workspace .finance-tab-strip button.active {
-  border-color: #166534;
-  background: #166534;
+  border-color: var(--brand-primary, var(--smis-primary));
+  background: var(--brand-primary, var(--smis-primary));
   color: #fff;
   box-shadow: none;
 }
@@ -891,7 +891,7 @@
 }
 
 .finance-workspace button.finance-control-kpi:focus-visible {
-  outline: 2px solid #166534;
+  outline: 2px solid var(--brand-primary, var(--smis-primary));
   outline-offset: 2px;
 }
 
