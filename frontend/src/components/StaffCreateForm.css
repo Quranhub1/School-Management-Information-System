@@ -5,7 +5,7 @@
 .staff-permission-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
 .staff-permission-toolbar input{flex:1 1 220px;min-width:160px;min-height:36px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:5px;color:#1f2937;font-size:13px}
 .staff-permission-toolbar .secondary-button{min-height:36px;padding:7px 11px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#374151;font-size:12px;font-weight:600;cursor:pointer}
-.staff-permission-groups{display:grid;grid-template-columns:1fr;gap:7px;max-height:560px;overflow:auto;padding:2px}
+.staff-permission-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:8px;max-height:420px;overflow:auto;padding:2px}
 .staff-permission-group{border:1px solid #dbe3ed;border-radius:6px;background:#fff}
 .staff-permission-group>summary{display:flex;align-items:center;gap:10px;min-height:42px;padding:8px 11px;cursor:pointer;list-style:none}
 .staff-permission-group>summary::-webkit-details-marker{display:none}
@@ -22,3 +22,23 @@
 .staff-permission-item small{display:block;margin-top:2px;color:#94a3b8;font-size:10px;font-weight:400;overflow-wrap:anywhere}
 .staff-permission-notice{margin-top:10px;padding:9px 10px;border-left:3px solid #d97706;background:#fffbeb;color:#92400e}
 @media(max-width:768px){.staff-permission-items{grid-template-columns:1fr}.staff-permission-toolbar input{flex-basis:100%}}
+
+/* Staff access editor: compact, full-width permission workspace. */
+.staff-create-bottom-grid:has(.staff-permission-groups){grid-template-columns:minmax(0,1fr);gap:12px}
+.staff-create-bottom-grid:has(.staff-permission-groups)>.staff-create-card{padding:16px 18px}
+.staff-create-bottom-grid:has(.staff-permission-groups)>.staff-create-card:last-child{padding:12px 16px}
+.staff-create-bottom-grid:has(.staff-permission-groups) .staff-create-card-title{margin-bottom:8px}
+.staff-create-bottom-grid:has(.staff-permission-groups) .staff-create-hint{line-height:1.45}
+.staff-create-bottom-grid:has(.staff-permission-groups) .staff-permission-toolbar{margin:9px 0}
+.staff-permission-group>summary{min-height:38px;padding:7px 9px;gap:8px}
+.staff-permission-group-title{text-transform:capitalize}
+.staff-permission-group-count{font-variant-numeric:tabular-nums}
+.staff-permission-items{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px;padding:8px}
+.staff-permission-item{padding:5px;font-size:11px;line-height:1.35}
+.staff-permission-item small{font-size:9px}
+.staff-permission-notice{margin-top:8px;padding:7px 9px;font-size:11px}
+.staff-create-bottom-grid:not(:has(.staff-permission-groups)) .staff-create-card{padding:16px 18px}
+.staff-create-bottom-grid:not(:has(.staff-permission-groups)) .staff-create-card-title{margin-bottom:10px}
+.staff-create-bottom-grid:not(:has(.staff-permission-groups)) .staff-create-field select[multiple]{min-height:124px}
+@media(max-width:1100px){.staff-permission-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:768px){.staff-permission-groups{grid-template-columns:1fr;max-height:360px}.staff-permission-items{grid-template-columns:1fr}.staff-permission-toolbar input{flex-basis:100%}}
