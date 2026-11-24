@@ -8,8 +8,18 @@ namespace SchoolManagement.Infrastructure.Persistence;
 public sealed class HostelRepository(SchoolManagementDbContext db) : IHostelRepository
 {
     public async Task<IReadOnlyList<Hostel>> GetHostelsAsync(CancellationToken cancellationToken = default) =>
-        await db.Set<Hostel>().Include(h => h.Rooms).ThenInclude(r => r.Beds).ThenInclude(b => b.Allocations).AsSplitQuery().AsNoTracking().ToListAsync(cancellationToken);
-    public Task<Hostel?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => db.Set<Hostel>().Include(h => h.Rooms).ThenInclude(r => r.Beds).FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
+        await db.Set<Hostel>()
+            .Where(h => h.IsActive)
+            .Include(h => h.Rooms.Where(r => r.IsActive))
+            .ThenInclude(r => r.Beds.Where(b => b.IsActive))
+            .ThenInclude(b => b.Allocations)
+            .AsSplitQuery()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+    public Task<Hostel?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) =>
+        db.Set<Hostel>().Include(h => h.Rooms).ThenInclude(r => r.Beds).ThenInclude(b => b.Allocations)
+            .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
     public Task<HostelRoom?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default) => db.Set<HostelRoom>().Include(r => r.Beds).FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     public Task<HostelBed?> GetBedAsync(Guid id, CancellationToken cancellationToken = default) => db.Set<HostelBed>().FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
     public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) => db.Set<HostelAllocation>().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
