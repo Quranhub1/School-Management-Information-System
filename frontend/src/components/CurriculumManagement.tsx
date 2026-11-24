@@ -918,7 +918,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       </div>
       {workspaceView === 'setup' && (
         <section className="academic-setup-workspace" aria-label="Academic setup">
-          <div className="panel-heading"><div><h3>Academic Year &amp; Calendar</h3><p>Configure the institution's academic years and calendar periods</p></div></div>
           <AcademicCalendarManagement />
           <p className="empty">School programmes and curriculum versions are maintained in the Programmes &amp; Curricula tab.</p>
         </section>
