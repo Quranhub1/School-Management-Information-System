@@ -296,7 +296,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             </button>
           </div>
           <section className="finance-dashboard-latest">
-            <div className="finance-surface-heading"><div><span className="eyebrow">LATEST ACTIVITY</span><h3>Recent transactions</h3></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>View all payments</button></div>
+            <div className="finance-surface-heading"><div><span className="eyebrow">LATEST ACTIVITY</span><h3>Recent transactions</h3></div><button type="button" className="finance-btn-primary" onClick={() => setTab('collections')}>View all payments</button></div>
             <AgGridTable rows={payments.slice(0, 5)} columns={recentPaymentColumns} height={230} pageSize={5} />
           </section>
         </section>
