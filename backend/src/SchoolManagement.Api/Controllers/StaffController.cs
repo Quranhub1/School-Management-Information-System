@@ -447,6 +447,16 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 
     private async Task<HashSet<string>> GetEffectivePermissionCodesAsync(Guid userId, CancellationToken cancellationToken)
     {
+        var isSystemAdministrator = await (
+            from userRole in db.UserRoles
+            join role in db.Roles on userRole.RoleId equals role.Id
+            where userRole.UserId == userId && role.Name == InstitutionalRoles.SystemAdministrator
+            select userRole.UserId
+        ).AnyAsync(cancellationToken);
+        if (isSystemAdministrator)
+            return PermissionCatalog.All.Select(permission => permission.Code)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var roleCodes = await (from userRole in db.UserRoles
                                join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
                                join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
