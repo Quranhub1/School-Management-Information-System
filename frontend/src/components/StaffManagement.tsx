@@ -505,7 +505,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                       </details>
                     })}
                   </div>
-                  <p className="staff-create-hint staff-permission-notice">Direct grants are saved with the linked login account, while inherited permissions come from its assigned roles. Staff and leave API actions now enforce granular permission claims; other module APIs still use their existing role policies and require the same permission-policy migration.</p>
+                  <p className="staff-create-hint staff-permission-notice">Direct grants are saved to the linked login account. Inherited permissions come from assigned roles and cannot be changed here.</p>
                 </section>
                 <section className="staff-create-card">
                   <h3 className="staff-create-card-title">Account & Status</h3>
