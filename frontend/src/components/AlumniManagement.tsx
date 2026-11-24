@@ -54,6 +54,8 @@ export function AlumniManagement() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'licensure' | 'services' | 'clearance'>('profile');
   const [extension, setExtension] = useState<AlumniExtension>(emptyExtension);
+  const [careerProgressDraft, setCareerProgressDraft] = useState('');
+  const [clearanceNotesDraft, setClearanceNotesDraft] = useState('');
 
   async function load() {
     setLoading(true); setError('');
@@ -69,13 +71,30 @@ export function AlumniManagement() {
     setActiveTab('profile');
     try {
       const saved = localStorage.getItem(storageKey(id));
-      setExtension(saved ? { ...emptyExtension, ...JSON.parse(saved), clearance: { ...emptyExtension.clearance, ...(JSON.parse(saved).clearance || {}) } } : emptyExtension);
-    } catch { setExtension(emptyExtension); }
+      const next = saved ? { ...emptyExtension, ...JSON.parse(saved), clearance: { ...emptyExtension.clearance, ...(JSON.parse(saved).clearance || {}) } } : emptyExtension;
+      setExtension(next);
+      setCareerProgressDraft(next.careerProgress);
+      setClearanceNotesDraft(next.clearance.notes);
+    } catch { setExtension(emptyExtension); setCareerProgressDraft(''); setClearanceNotesDraft(''); }
   }
 
   function saveExtension(next: AlumniExtension) {
     setExtension(next);
     if (selectedId) localStorage.setItem(storageKey(selectedId), JSON.stringify(next));
+  }
+
+  function saveAlumniNotes(field: 'careerProgress' | 'clearanceNotes') {
+    if (!selectedId) return;
+    const next: AlumniExtension = field === 'careerProgress'
+      ? { ...extension, careerProgress: careerProgressDraft }
+      : { ...extension, clearance: { ...extension.clearance, notes: clearanceNotesDraft } };
+    try {
+      saveExtension(next);
+      if (field === 'careerProgress') setCareerProgressDraft('');
+      else setClearanceNotesDraft('');
+    } catch {
+      setError('Unable to save alumni notes. Your text has been retained.');
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -163,7 +182,7 @@ export function AlumniManagement() {
         <label>Employer<input value={selected.employer || ''} onChange={e => { const v = e.target.value; void updateAlumni(selected.id, { employer: v }).then(load).catch(() => setError('Unable to save employer.')); }} /></label>
         <label>Postgraduate programme<input value={extension.postgraduateProgramme} onChange={e => saveExtension({ ...extension, postgraduateProgramme: e.target.value })} placeholder="MSc, PGDip, PhD…" /></label>
         <label>Institution<input value={extension.postgraduateInstitution} onChange={e => saveExtension({ ...extension, postgraduateInstitution: e.target.value })} /></label>
-        <label className="wide">Career progress<textarea value={extension.careerProgress} onChange={e => saveExtension({ ...extension, careerProgress: e.target.value })} placeholder="Professional role, promotion, further training, specialization…" /></label>
+        <label className="wide">Career progress<textarea value={careerProgressDraft} onChange={e => setCareerProgressDraft(e.target.value)} placeholder="Professional role, promotion, further training, specialization…" /><button type="button" className="secondary-button" onClick={() => saveAlumniNotes('careerProgress')}>Save career progress</button></label>
       </div>}
 
       {activeTab === 'licensure' && <div className="alumni-detail-grid">
@@ -189,7 +208,7 @@ export function AlumniManagement() {
         <div className="clearance-grid">
           {(['library','bursar','warden'] as const).map(office => <div className="clearance-card" key={office}><span>{office === 'library' ? 'Library' : office === 'bursar' ? 'Bursar / Finance' : 'Warden / Hostel'}</span><strong className={extension.clearance[office] === 'Cleared' ? 'clearance-ok' : 'clearance-wait'}>{extension.clearance[office]}</strong><select value={extension.clearance[office]} onChange={e => saveExtension({ ...extension, clearance: { ...extension.clearance, [office]: e.target.value as ClearanceState } })}><option>Pending</option><option>Cleared</option><option>Blocked</option></select></div>)}
         </div>
-        <label className="wide">Clearance notes<textarea value={extension.clearance.notes} onChange={e => saveExtension({ ...extension, clearance: { ...extension.clearance, notes: e.target.value } })} placeholder="Outstanding books, fee balances, hostel obligations, approvals…" /></label>
+        <label className="wide">Clearance notes<textarea value={clearanceNotesDraft} onChange={e => setClearanceNotesDraft(e.target.value)} placeholder="Outstanding books, fee balances, hostel obligations, approvals…" /><button type="button" className="secondary-button" onClick={() => saveAlumniNotes('clearanceNotes')}>Save clearance notes</button></label>
       </div>}
     </section>}
   </section>;
