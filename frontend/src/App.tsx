@@ -549,7 +549,7 @@ return <main className="app-shell">
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} canViewStaffAttendance={canReadStaff(r)} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&moduleAllowed('health')&&<HealthRecordsManagement activeSubsection={activeSubsection}/>}
-{activeModule==='laboratories'&&(hostel||hostelRead)&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
+{activeModule==='laboratories'&&(hostel||hostelRead)&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel} canManageAcademic={ac}/>)}
 {activeModule==='inventory'&&(inv||inventoryRead)&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&moduleAllowed('communication')&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&moduleAllowed('guild')&&<GuildManagement canOpenCalendar={ac} canOpenNotices={moduleAllowed('communication')} canOpenFinance={fi && !isAdminSecretary}/>}
