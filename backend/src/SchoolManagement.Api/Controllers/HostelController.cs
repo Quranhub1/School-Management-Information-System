@@ -35,12 +35,6 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
         if (accessibleCampuses is not null)
             studentsQuery = studentsQuery.Where(student => student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value));
 
-        if (semester is not null)
-            studentsQuery = studentsQuery.Where(student => !db.HostelAllocations.Any(allocation =>
-                allocation.StudentId == student.Id && allocation.SemesterId == semester.Id && allocation.Status == "Active"));
-        else
-            studentsQuery = studentsQuery.Where(_ => false);
-
         var students = await studentsQuery.OrderBy(student => student.StudentNumber)
             .Select(student => new HostelAllocationStudentDto(
                 student.Id,
@@ -54,7 +48,9 @@ public sealed class HostelController(HostelService service, SchoolManagementDbCo
                     .Where(enrollment => enrollment.StudentId == student.Id && enrollment.Status == "Active")
                     .OrderByDescending(enrollment => enrollment.AdmissionDate)
                     .Select(enrollment => db.Programmes.Where(programme => programme.Id == enrollment.ProgrammeId)
-                        .Select(programme => programme.Name).FirstOrDefault()).FirstOrDefault()))
+                        .Select(programme => programme.Name).FirstOrDefault()).FirstOrDefault(),
+                semester != null && db.HostelAllocations.Any(allocation =>
+                    allocation.StudentId == student.Id && allocation.SemesterId == semester.Id && allocation.Status == "Active")))
             .ToListAsync(cancellationToken);
 
         return Ok(new HostelAllocationContextDto(
@@ -150,7 +146,7 @@ public sealed record HostelAllocationResponseDto(Guid Id, Guid BedId, Guid Stude
 }
 
 public sealed record HostelSemesterDto(Guid Id, string Name, string AcademicYearName, DateOnly StartDate, DateOnly EndDate);
-public sealed record HostelAllocationStudentDto(Guid Id, string StudentNumber, string FullName, Guid? ProgrammeId, string? ProgrammeName);
+public sealed record HostelAllocationStudentDto(Guid Id, string StudentNumber, string FullName, Guid? ProgrammeId, string? ProgrammeName, bool IsAllocatedForCurrentSemester);
 public sealed record HostelAllocationContextDto(HostelSemesterDto? CurrentSemester, IReadOnlyCollection<HostelAllocationStudentDto> EligibleStudents);
 
 public sealed record CreateHostelRequest(string Name, string? Description);
