@@ -12,7 +12,9 @@
     "build:login-css": "npx --yes tailwindcss@3.4.17 -c tailwind.login.config.cjs -i institution-login-tailwind.css -o public/assets/css/institution-login.css",
     "predev": "npm run copy-fonts && npm run copy-pdfmake-assets && npm run build:login-css",
     "copy-fonts": "node scripts/copy-local-fonts.mjs",
-    "copy-pdfmake-assets": "node scripts/copy-pdfmake-assets.mjs"
+    "copy-pdfmake-assets": "node scripts/copy-pdfmake-assets.mjs",
+    "copy:api": "node scripts/copy-production-to-api.mjs",
+    "build:lan": "npm run build && vite build --base=/ && npm run copy:api"
   },
   "dependencies": {
     "react": "^19.1.1",
