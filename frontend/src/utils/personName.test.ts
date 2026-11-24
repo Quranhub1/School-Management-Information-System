@@ -3,11 +3,13 @@ import { formatPersonName } from './personName'
 
 describe('formatPersonName', () => {
   it('displays surname, first name and other names in uppercase', () => {
-    expect(formatPersonName('Nakibuule', 'Alice', 'Maria')).toBe('NAKIBUULE ALICE MARIA')
+    expect(formatPersonName('Nakibuule', 'Alice', 'Maria')).toBe('NAKIBUULE, ALICE MARIA')
   })
 
-  it('omits blank name components without adding extra spaces', () => {
-    expect(formatPersonName('  Nakibuule ', ' Alice ', '  ')).toBe('NAKIBUULE ALICE')
+  it('omits blank name components without adding extra spaces or punctuation', () => {
+    expect(formatPersonName('  Nakibuule ', ' Alice ', '  ')).toBe('NAKIBUULE, ALICE')
+    expect(formatPersonName('Nakibuule', null, 'Maria')).toBe('NAKIBUULE, MARIA')
+    expect(formatPersonName(null, 'Alice', 'Maria')).toBe('ALICE MARIA')
   })
 
   it('returns an empty string when every name component is missing', () => {
