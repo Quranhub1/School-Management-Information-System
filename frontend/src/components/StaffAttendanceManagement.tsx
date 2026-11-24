@@ -164,7 +164,7 @@ export function StaffAttendanceManagement() {
           <tbody>
             {loading ? <tr><td colSpan={9}><LoadingSpinner /></td></tr>
               : rows.length === 0 ? <tr><td colSpan={9}>No staff attendance records found for the selected filters.</td></tr>
-              : rows.map(row => <tr key={row.staffMemberId + row.date} onClick={() => void openStaffHistory(row)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openStaffHistory(row) } }} tabIndex={0} aria-label={`Open full attendance history for ${row.name}`} style={{ cursor: 'pointer' }}>
+              : rows.map(row => <tr key={row.staffMemberId + row.date} onClick={() => void openStaffHistory(row)} onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openStaffHistory(row) } }} tabIndex={0} role="button" aria-label={`Open full attendance history for ${row.name}`} style={{ cursor: 'pointer' }}>
                 <td>{row.staffNumber}</td>
                 <td>{row.name}</td>
                 <td>{row.date}</td>
