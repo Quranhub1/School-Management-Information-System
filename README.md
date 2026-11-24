@@ -220,6 +220,7 @@ The installer is intended to be distributed through GitHub Releases and can then
 - [`docs/API.md`](docs/API.md) — API architecture
 - [`docs/SECURITY.md`](docs/SECURITY.md) — security baseline
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deployment architecture
+- [`docs/LAN_HOST_SETUP.md`](docs/LAN_HOST_SETUP.md) — LAN host, firewall and pending DHCP reservation runbook
 - [`docs/adr/`](docs/adr/) — architecture decisions
 
 ## Verification policy
