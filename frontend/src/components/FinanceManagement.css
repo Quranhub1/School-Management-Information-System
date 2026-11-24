@@ -981,3 +981,131 @@
     transform: none;
   }
 }
+
+
+/* Finance dashboard workspace cards: white surfaces with compact green identity badges. */
+.finance-workspace button.finance-dashboard-workspace {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 82px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.finance-workspace button.finance-dashboard-workspace:hover:not(:disabled) {
+  border-color: #15803d;
+  background: #f0fdf4;
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.08);
+}
+.finance-workspace .finance-dashboard-workspace-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 800;
+}
+.finance-workspace .finance-dashboard-workspace-copy strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+}
+.finance-workspace .finance-dashboard-workspace-copy small {
+  color: #475569;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.finance-workspace .finance-dashboard-workspace-arrow {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-weight: 700;
+  transition: transform .16s ease, color .16s ease;
+}
+.finance-workspace button.finance-dashboard-workspace:hover .finance-dashboard-workspace-arrow {
+  color: #15803d;
+  transform: translateX(3px);
+}
+
+/* Finance action hierarchy: primary, utility, and compact table-export controls. */
+.finance-workspace button.finance-btn-primary {
+  min-height: 36px;
+  padding: 8px 16px;
+  border: 1px solid #15803d;
+  border-radius: 8px;
+  background: #15803d;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  -webkit-text-stroke: 0;
+}
+.finance-workspace button.finance-btn-primary:hover:not(:disabled) {
+  border-color: #166534;
+  background: #166534;
+  color: #ffffff;
+  -webkit-text-stroke: 0;
+}
+.finance-workspace button.secondary-button {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  -webkit-text-stroke: 0;
+}
+.finance-workspace button.secondary-button:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #1e293b;
+  -webkit-text-stroke: 0;
+}
+.finance-workspace .smis-ag-grid-toolbar > button.secondary-button,
+.finance-workspace .smis-ag-grid-toolbar .smis-ag-grid-columns > summary {
+  min-height: 28px;
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  -webkit-text-stroke: 0;
+}
+.finance-workspace .smis-ag-grid-toolbar > button.secondary-button:hover:not(:disabled),
+.finance-workspace .smis-ag-grid-toolbar .smis-ag-grid-columns > summary:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.finance-workspace .smis-ag-grid-toolbar .smis-ag-grid-columns > summary {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+.finance-workspace .smis-ag-grid-toolbar .smis-ag-grid-columns > summary::-webkit-details-marker {
+  display: none;
+}
+@media (max-width: 620px) {
+  .finance-workspace button.finance-dashboard-workspace {
+    min-height: 76px;
+    padding: 12px;
+  }
+}
