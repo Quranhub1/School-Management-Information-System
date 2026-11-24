@@ -460,7 +460,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             select userRole.UserId
         ).AnyAsync(cancellationToken);
         if (isSystemAdministrator)
-            return PermissionCatalog.All.Select(permission => permission.Code)
+            return SchoolManagement.Infrastructure.Identity.PermissionCatalog.All.Select(permission => permission.Code)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var roleCodes = await (from userRole in db.UserRoles
