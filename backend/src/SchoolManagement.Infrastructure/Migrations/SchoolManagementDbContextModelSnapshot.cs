@@ -4451,6 +4451,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("StudentId", "Status");
 
+                    b.HasIndex("SemesterId");
+
                     b.ToTable("HostelAllocations");
                 });
 
