@@ -147,7 +147,7 @@ public sealed record HostelAllocationResponseDto(Guid Id, Guid BedId, Guid Stude
 
 public sealed record HostelSemesterDto(Guid Id, string Name, string AcademicYearName, DateOnly StartDate, DateOnly EndDate);
 public sealed record HostelAllocationStudentDto(Guid Id, string StudentNumber, string FullName, Guid? ProgrammeId, string? ProgrammeName, bool IsAllocatedForCurrentSemester);
-public sealed record HostelAllocationContextDto(HostelSemesterDto? CurrentSemester, IReadOnlyCollection<HostelAllocationStudentDto> EligibleStudents);
+public sealed record HostelAllocationContextDto(HostelSemesterDto? CurrentSemester, IReadOnlyCollection<HostelAllocationStudentDto> RegistryStudents);
 
 public sealed record CreateHostelRequest(string Name, string? Description);
 public sealed record UpdateHostelRequest(string Name, string? Description);
