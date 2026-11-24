@@ -49,3 +49,27 @@ export function recordManualStaffAttendance(staffMemberId: string, eventType: 'I
     { method: 'POST', body: JSON.stringify({ eventType }) }
   )
 }
+
+export type StaffAttendanceHistory = {
+  staffMemberId: string
+  staffNumber: string
+  staffName: string
+  departmentId: string | null
+  from: string
+  to: string
+  events: Array<{
+    id: string
+    eventType: 'IN' | 'OUT' | string
+    recordedAtUtc: string
+    source: string | null
+    deviceId: string | null
+    captureId: string | null
+  }>
+}
+
+export function getStaffAttendanceHistory(staffMemberId: string, filters: { from: string; to: string }) {
+  const params = new URLSearchParams({ from: filters.from, to: filters.to })
+  return request<StaffAttendanceHistory>(
+    `/api/staff-attendance/${encodeURIComponent(staffMemberId)}/history?${params.toString()}`
+  )
+}
