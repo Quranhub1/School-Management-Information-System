@@ -377,7 +377,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
       {tab === 'staff' && (
         <>
           {canManage && (
-            <form className="grid-form" onSubmit={submit}>
+            <form className="grid-form staff-management-create-form" onSubmit={submit}>
               <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
               <input placeholder="Surname" aria-label="Surname" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
               <input placeholder="First name" aria-label="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
