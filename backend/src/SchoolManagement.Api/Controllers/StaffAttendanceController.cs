@@ -98,6 +98,59 @@ public sealed class StaffAttendanceController(
         return Ok(rows);
     }
 
+    [HttpGet("{staffMemberId:guid}/history")]
+    [Authorize(Policy = StaffPolicies.Read)]
+    public async Task<IActionResult> History(
+        Guid staffMemberId,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        CancellationToken cancellationToken)
+    {
+        var kampala = TimeZoneInfo.FindSystemTimeZoneById("Africa/Kampala");
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, kampala).DateTime);
+        var firstDate = from ?? today.AddDays(-30);
+        var lastDate = to ?? today;
+        if (lastDate < firstDate)
+            return BadRequest(new { message = "The end date must be on or after the start date." });
+        if (lastDate.DayNumber - firstDate.DayNumber > 365)
+            return BadRequest(new { message = "Attendance history is limited to 366 days per request." });
+        if (lastDate > today)
+            return BadRequest(new { message = "Future dates cannot be included in attendance history." });
+
+        var staff = await db.StaffMembers.AsNoTracking()
+            .SingleOrDefaultAsync(member => member.Id == staffMemberId, cancellationToken);
+        if (staff is null) return NotFound(new { message = "Staff member was not found." });
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken))
+            return Forbid();
+
+        var start = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(firstDate.ToDateTime(TimeOnly.MinValue), kampala));
+        var end = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(lastDate.AddDays(1).ToDateTime(TimeOnly.MinValue), kampala));
+        var events = await db.StaffAttendanceEvents.AsNoTracking()
+            .Where(item => item.StaffMemberId == staffMemberId && item.RecordedAtUtc >= start && item.RecordedAtUtc < end)
+            .OrderByDescending(item => item.RecordedAtUtc)
+            .Select(item => new
+            {
+                item.Id,
+                item.EventType,
+                item.RecordedAtUtc,
+                item.Source,
+                item.DeviceId,
+                item.CaptureId
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(new
+        {
+            staffMemberId = staff.Id,
+            staff.StaffNumber,
+            staffName = PersonName.Format(staff.LastName, staff.FirstName, staff.OtherNames),
+            staff.DepartmentId,
+            from = firstDate,
+            to = lastDate,
+            events
+        });
+    }
+
     [HttpPost("{staffMemberId:guid}/manual-event")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> RecordManualEvent(
