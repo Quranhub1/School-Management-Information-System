@@ -131,7 +131,7 @@ export function AcademicCalendarManagement() {
     <div className="panel-heading"><div><p className="eyebrow">Academic Calendar</p><h2>Academic years &amp; periods</h2></div></div>
     {error && <div className="error" role="alert">{error}</div>}
     {message && <p role="status">{message}</p>}
-    <form className="student-form" onSubmit={saveYear}>
+    <form className="student-form academic-year-form" onSubmit={saveYear}>
       <h3>{editingYear ? 'Edit academic year' : 'Add academic year'}</h3>
       <div className="form-row">
         <input className="academic-year-name-input" required value={yearForm.name} onChange={e => setYearForm({ ...yearForm, name: e.target.value })} placeholder="Academic year name" />
