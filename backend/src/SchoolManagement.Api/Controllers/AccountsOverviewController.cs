@@ -5,6 +5,7 @@ using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
+using SchoolManagement.Domain.People;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -246,7 +247,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             {
                 x.payroll.Id,
                 x.payroll.StaffMemberId,
-                staffName = x.staff.FirstName + " " + x.staff.LastName,
+                staffName = PersonName.Format(x.staff.LastName, x.staff.FirstName, x.staff.OtherNames),
                 x.staff.StaffNumber,
                 x.payroll.Month,
                 x.payroll.Year,
