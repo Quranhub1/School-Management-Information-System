@@ -593,3 +593,36 @@ PR #290 is superseded; its payment-account resolver and clearing-account changes
 - [ ] Verify the complete live-data cascade, teaching-group selection, tutor filtering, template loading, save/reload and official PDF layout in the running application.
 
 **Verification boundary:** the catalogue migrations and local database relationships/data are verified. The timetable UI is not yet fully accepted: the latest component test run still reports 8 failures, and browser/PDF end-to-end verification remains outstanding. Do not mark timetable regression checks complete until the failures are diagnosed and the full checks pass.
+
+
+## LAN production hosting and DHCP reservation — 2026-11-24
+
+### Implemented on `main` (verification pending)
+
+- [x] Set the ASP.NET Core default listener to `http://0.0.0.0:5000`, while retaining the explicit `ASPNETCORE_URLS` override.
+- [x] Add production static-file hosting for the compiled React frontend from the API `wwwroot` directory.
+- [x] Add an anonymous SPA route fallback for browser navigation, while preserving 404 responses for unknown `/api` routes.
+- [x] Add `npm run build:lan`: run frontend checks/build, generate root-relative production assets, and copy the web bundle into the API project.
+- [x] Keep the existing Vite development server and Tauri build command available for development/desktop packaging.
+- [x] Document same-origin LAN hosting, port 5000, firewall boundaries and the host-local/LAN URLs.
+- [x] Add `docs/LAN_HOST_SETUP.md` with the Windows adapter/MAC discovery command, firewall guidance and router reservation procedure.
+
+### Not yet verified
+
+- [ ] Run the frontend production checks and `npm run build:lan` on the target workstation.
+- [ ] Run the .NET Release build and verify the API serves `/`, static assets, SPA deep links and `/health`.
+- [ ] Verify that unknown `/api` routes return API 404 responses rather than the frontend document.
+- [ ] Verify the production host from a second school LAN computer and confirm login/API workflows.
+- [ ] Confirm the production deployment's secrets, PostgreSQL connection, backup and transport-security configuration.
+
+### Router DHCP reservation — intentionally left undone
+
+- [ ] Identify the active host PC network adapter, MAC address, current IPv4 address and gateway.
+- [ ] Access the school's router administration interface with the authorized operator.
+- [ ] Reserve a stable LAN IPv4 address for the host PC's active adapter.
+- [ ] Renew/restart the DHCP lease and verify the reserved address persists.
+- [ ] Verify port 5000 reachability from a second school computer.
+
+**Why it remains pending:** a DHCP reservation is stored in the physical router, not in this repository or the Windows application. It requires the actual router model/interface, the host PC's active adapter MAC address, and authorized router administration access. No router settings have been changed and no address has been guessed. Follow `docs/LAN_HOST_SETUP.md` when those details are available.
+
+**Verification boundary:** source/documentation commits are not evidence of a successful production build or working LAN deployment. Do not mark this production gate complete until the target-host and second-client checks pass.
