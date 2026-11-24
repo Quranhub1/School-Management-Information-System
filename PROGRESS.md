@@ -626,3 +626,59 @@ PR #290 is superseded; its payment-account resolver and clearing-account changes
 **Why it remains pending:** a DHCP reservation is stored in the physical router, not in this repository or the Windows application. It requires the actual router model/interface, the host PC's active adapter MAC address, and authorized router administration access. No router settings have been changed and no address has been guessed. Follow `docs/LAN_HOST_SETUP.md` when those details are available.
 
 **Verification boundary:** source/documentation commits are not evidence of a successful production build or working LAN deployment. Do not mark this production gate complete until the target-host and second-client checks pass.
+
+## Latest system progress — 2026-11-24
+
+**Tracking branch:** `main`  
+**Scope:** Recent staff/HR, attendance, permissions, library database, and finance workspace updates.
+
+### Implemented on `main`
+
+#### Staff names and attendance history
+- [x] Add a shared frontend person-name formatter that displays names as **SURNAME FIRST NAME OTHER NAMES**, in uppercase, while preserving the underlying name fields and API semantics.
+- [x] Normalize repeated whitespace in frontend and backend person-name formatting.
+- [x] Add `GET /api/staff-attendance/{staffMemberId}/history` with date-range validation, staff/campus access checks, daily summaries, and underlying attendance events.
+- [x] Make an attendance-register row open the selected staff member's attendance history; retain keyboard access and existing row-action behavior.
+- [x] Display daily attendance status, check-in/check-out details, hours worked, event counts and expandable event logs; request a 365-day history by default and reload when the date range changes.
+- [ ] Audit all staff-name display surfaces, exports, PDFs, notifications and API projections; the current changes do not prove that every screen follows the convention.
+- [ ] Verify the attendance history endpoint and UI against the running API/database, including absent days, incomplete shifts, date boundaries and campus restrictions.
+
+**Latest related source commit:** `9e86ca27300d247623193961da39446a675f93cd`.
+
+#### System Administrator permissions
+- [x] Grant the System Administrator institution-wide access to the application permission catalogue and protected application areas, including finance.
+- [x] Include the full application and infrastructure permission catalogues in the permissions response for System Administrator.
+- [x] Include staff and leave permissions and institution-wide campus access in the relevant authorization paths.
+- [ ] Run role-based API integration tests and verify with a real System Administrator account that every module and finance action is accessible.
+- [ ] Verify that restricted roles remain independently restricted and that signing out/in refreshes the effective permission set.
+
+**Related source commits:** `c12a7c0`, `bae108b`, `54a3b29`, `bf1861f`, `72911df`.
+
+#### Library database compatibility
+- [x] Add the nullable `StaffMembers.UserId` relationship, unique index and user foreign key required by library staff/member workflows.
+- [x] The user subsequently reported that the new column exists in the local database.
+- [ ] Verify the Library Loans endpoint and full loan/return workflow against the migrated local database; column existence alone does not confirm endpoint correctness.
+
+**Source commit:** `8385ecc371c215ba271de4d28ce4ac0459bf83fb`.
+
+#### Finance workspace presentation
+- [x] Set **View all payments** as the primary finance workspace action.
+- [x] Restyle finance workspace cards as compact white cards with green accents and a clear primary/secondary action hierarchy.
+- [x] Remove workspace helper descriptions and uppercase workspace action titles.
+- [ ] Verify the rendered finance workspace at supported screen sizes and confirm all navigation/actions still work.
+
+**Related source commits:** `81ef64a50e4d9f46f2161b2233d854f2db4dcdcb`, `52d1d7940536c01031436395349f172c393389d5`, `958346f911baf5a8aa6b089c1da56ea2a2d3d042`, `7b5992b1ae07413f537d453adda94b1f7f650c87`.
+
+### Current reported issues requiring follow-up
+
+- [ ] Investigate the reported `403 Forbidden` response from `GET /api/staff`; confirm the authenticated user's role/claims, policy requirements and campus scope before changing authorization.
+- [ ] Reconcile the HR directory's reported **3 active staff** with the actual staff records and attendance register. Do not create duplicate staff records to make the counts match.
+- [ ] Enforce duplicate prevention on all create-entry workflows, using server-side validation and database uniqueness where the business key is genuinely unique; include clear field-level feedback in the UI.
+- [ ] Trace and correct any remaining first-name-first or mixed-case staff names in HR and attendance screens.
+- [ ] Review the complete attendance screen for non-responsive controls, incorrect data, loading/empty/error states, filters, date handling, row actions and individual-history navigation.
+- [ ] Re-run the relevant frontend tests, backend tests, production builds and GitHub Actions workflows; record exact results here.
+
+### Verification status and release discipline
+
+The items above describe source changes and user-reported local database state. They are **not** a declaration that the latest changes have passed full CI or target-machine acceptance. At this update, no successful end-to-end verification of the latest staff/HR/attendance changes has been established. Keep the related verification boxes open until the commands, test output and live workflow results are captured.
+
