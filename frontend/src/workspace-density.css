@@ -781,19 +781,41 @@
 }
 
 
-/* Keep the Add Academic Year name field compact and proportionate. */
-.app-shell .academic-workspace .academic-year-name-input {
-  flex: 0 1 220px;
-  width: 220px;
-  max-width: 100%;
-  min-height: 35px;
+/* Align Add Academic Year fields on one row with matching field widths. */
+.app-shell .academic-workspace form.student-form:has(.academic-year-name-input) > .form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 10px !important;
+}
+.app-shell .academic-workspace .academic-year-name-input,
+.app-shell .academic-workspace form.student-form:has(.academic-year-name-input) > .form-row > label input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   height: 35px;
+  min-height: 35px;
   padding: 6px 9px !important;
   font-size: 13px;
 }
-@media (max-width: 640px) {
-  .app-shell .academic-workspace .academic-year-name-input {
-    flex-basis: 100%;
-    width: 100%;
+.app-shell .academic-workspace form.student-form:has(.academic-year-name-input) > .form-row > label {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+}
+.app-shell .academic-workspace form.student-form:has(.academic-year-name-input) > .form-row > button {
+  min-height: 35px;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .app-shell .academic-workspace form.student-form:has(.academic-year-name-input) > .form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .app-shell .academic-workspace form.student-form:has(.academic-year-name-input) > .form-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
