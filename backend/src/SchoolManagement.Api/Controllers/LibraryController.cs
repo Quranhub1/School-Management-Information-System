@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
@@ -16,7 +15,6 @@ namespace SchoolManagement.Api.Controllers;
 [Route("api/library")]
 public sealed class LibraryController(
     LibraryWorkflowService library,
-    IConfiguration configuration,
     SchoolManagementDbContext db,
     CampusAccessService campusAccess,
     InstitutionSettingsService institutionSettings) : ControllerBase
