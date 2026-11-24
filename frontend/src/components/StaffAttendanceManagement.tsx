@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { listStaffDailyAttendance, recordManualStaffAttendance, type StaffDailyAttendanceRow } from '../api/staffAttendance'
+import { getStaffAttendanceHistory, listStaffDailyAttendance, recordManualStaffAttendance, type StaffAttendanceHistory, type StaffDailyAttendanceRow } from '../api/staffAttendance'
 import { listStaffDepartments, type StaffDepartment } from '../api/staff'
 import LoadingSpinner from './LoadingSpinner'
 
@@ -35,6 +35,9 @@ export function StaffAttendanceManagement() {
   const [loading, setLoading] = useState(true)
   const [savingStaffId, setSavingStaffId] = useState('')
   const [error, setError] = useState('')
+  const [selectedStaff, setSelectedStaff] = useState<StaffDailyAttendanceRow | null>(null)
+  const [staffHistory, setStaffHistory] = useState<StaffAttendanceHistory | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -52,6 +55,20 @@ export function StaffAttendanceManagement() {
     void listStaffDepartments().then(setDepartments).catch(() => setDepartments([]))
   }, [])
   useEffect(() => { void load() }, [load])
+
+  async function openStaffHistory(row: StaffDailyAttendanceRow) {
+    setSelectedStaff(row)
+    setStaffHistory(null)
+    setHistoryLoading(true)
+    setError('')
+    try {
+      setStaffHistory(await getStaffAttendanceHistory(row.staffMemberId, { from, to }))
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to load this staff member’s attendance history.')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
 
   async function recordStaffEvent(row: StaffDailyAttendanceRow, eventType: 'IN' | 'OUT') {
     setSavingStaffId(row.staffMemberId)
@@ -108,6 +125,37 @@ export function StaffAttendanceManagement() {
       </div>
 
       {error && <div className="error-message" role="alert">{error}</div>}
+      {selectedStaff && (
+        <section className="panel" aria-label="Individual staff attendance history">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">{staffHistory?.staffName ?? selectedStaff.name}</h3>
+              <p className="text-sm text-slate-500">Staff No. {selectedStaff.staffNumber} · Full attendance history for {from} to {to}</p>
+            </div>
+            <button type="button" className="btn btn-secondary" onClick={() => { setSelectedStaff(null); setStaffHistory(null) }}>Back to attendance register</button>
+          </div>
+          {historyLoading ? <LoadingSpinner /> : staffHistory && (
+            <div className="table-responsive" style={{ marginTop: 14 }}>
+              <table className="data-table">
+                <thead><tr><th>Date</th><th>Time</th><th>Attendance event</th><th>Source</th><th>Device</th><th>Capture reference</th></tr></thead>
+                <tbody>
+                  {staffHistory.events.length === 0
+                    ? <tr><td colSpan={6}>No attendance events were recorded for this staff member in the selected period.</td></tr>
+                    : staffHistory.events.map(event => <tr key={event.id}>
+                      <td>{new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kampala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(event.recordedAtUtc))}</td>
+                      <td>{localDate(event.recordedAtUtc)}</td>
+                      <td><span className={event.eventType === 'IN' ? 'status status-success' : 'status status-warning'}>{event.eventType === 'IN' ? 'Check-in' : 'Check-out'}</span></td>
+                      <td>{event.source || '—'}</td>
+                      <td>{event.deviceId || '—'}</td>
+                      <td>{event.captureId || '—'}</td>
+                    </tr>)}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="table-responsive">
         <table className="data-table">
           <thead><tr>
@@ -116,7 +164,7 @@ export function StaffAttendanceManagement() {
           <tbody>
             {loading ? <tr><td colSpan={9}><LoadingSpinner /></td></tr>
               : rows.length === 0 ? <tr><td colSpan={9}>No staff attendance records found for the selected filters.</td></tr>
-              : rows.map(row => <tr key={row.staffMemberId + row.date}>
+              : rows.map(row => <tr key={row.staffMemberId + row.date} onClick={() => void openStaffHistory(row)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void openStaffHistory(row) } }} tabIndex={0} aria-label={`Open full attendance history for ${row.name}`} style={{ cursor: 'pointer' }}>
                 <td>{row.staffNumber}</td>
                 <td>{row.name}</td>
                 <td>{row.date}</td>
@@ -126,9 +174,9 @@ export function StaffAttendanceManagement() {
                 <td><div aria-label={`Last seven days attendance for ${row.name}`} style={{ display: 'flex', gap: 3 }}>{lastSevenDates.map(date => { const day = rows.find(item => item.staffMemberId === row.staffMemberId && item.date === date); return <span key={date} title={`${date}: ${day?.status ?? (date < from || date > to ? 'Outside selected date range' : 'No attendance row')}`} style={{ width: 10, height: 18, borderRadius: 3, background: day?.checkOut ? '#16a34a' : day?.checkIn ? '#f59e0b' : day ? '#fee2e2' : '#e2e8f0' }} /> })}</div></td>
                 <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' || isLateCheckIn(row.checkIn, checkInDeadline) || (row.date === today && deadlinePassed) ? 'status status-warning' : 'status'}>{row.date === today && row.status === 'Absent' && deadlinePassed ? 'Not checked in by ' + checkInDeadline : isLateCheckIn(row.checkIn, checkInDeadline) ? 'Late' : row.status}</span></td>
                 <td>{row.date === today && row.status === 'Absent'
-                  ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'IN')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check in'}</button>
+                  ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={event => { event.stopPropagation(); void recordStaffEvent(row, 'IN') }}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check in'}</button>
                   : row.date === today && row.status === 'Checked in'
-                    ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'OUT')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check out'}</button>
+                    ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={event => { event.stopPropagation(); void recordStaffEvent(row, 'OUT') }}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check out'}</button>
                     : '—'}</td>
               </tr>)}
           </tbody>
