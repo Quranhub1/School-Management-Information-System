@@ -15,6 +15,7 @@ type Hostel = { id: string; name: string; description?: string | null; isActive:
 type Allocation = { id: string; bedId: string; studentId: string; semesterId?: string | null; semesterName?: string | null; startDate: string; endDate?: string | null; status: string; notes?: string | null }
 type RegistryStudent = { id: string; studentNumber: string; fullName: string; programmeId?: string | null; programmeName?: string | null; isAllocatedForCurrentSemester: boolean }
 type CurrentSemester = { id: string; name: string; academicYearName: string; startDate: string; endDate: string }
+type ProgrammeOption = { id: string; name: string }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAccessToken()
@@ -44,6 +45,7 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
   const [bedId, setBedId] = useState('')
   const [studentId, setStudentId] = useState('')
   const [registryStudents, setRegistryStudents] = useState<RegistryStudent[]>([])
+  const [programmeOptions, setProgrammeOptions] = useState<ProgrammeOption[]>([])
   const [currentSemester, setCurrentSemester] = useState<CurrentSemester | null>(null)
   const [programmeFilter, setProgrammeFilter] = useState('')
   const [name, setName] = useState('')
@@ -58,7 +60,6 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
   const rooms = useMemo(() => hostels.flatMap(h => h.rooms.map(r => ({ ...r, hostelName: h.name }))), [hostels])
   const beds = useMemo(() => rooms.flatMap(r => r.beds.map(b => ({ ...b, roomNumber: r.roomNumber, hostelName: r.hostelName }))), [rooms])
   const allocations = useMemo(() => beds.flatMap(b => (b.allocations ?? []).map(a => ({ ...a, bedNumber: b.bedNumber, roomNumber: b.roomNumber, hostelName: b.hostelName, student: registryStudents.find(student => student.id === a.studentId) }))), [beds, registryStudents])
-  const programmeOptions = useMemo(() => Array.from(new Map(registryStudents.filter(student => student.programmeId && student.programmeName).map(student => [student.programmeId!, student.programmeName!])).entries(), ([id, name]) => ({ id, name })), [registryStudents])
   const eligibleStudents = registryStudents.filter(student => !student.isAllocatedForCurrentSemester && (!programmeFilter || student.programmeId === programmeFilter))
   const occupied = allocations.filter(a => a.status === 'Active').length
 
@@ -68,11 +69,16 @@ export function HostelManagement({ canManage = true, canManageAcademic = false }
     try {
       const [hostelRows, context] = await Promise.all([
         request<Hostel[]>('/api/hostel'),
-        request<{ currentSemester: CurrentSemester | null; registryStudents: RegistryStudent[] }>('/api/hostel/allocation-context')
+        request<{ currentSemester: CurrentSemester | null; registryStudents: RegistryStudent[]; programmes: ProgrammeOption[] }>('/api/hostel/allocation-context')
       ])
       setHostels(hostelRows)
       setCurrentSemester(context.currentSemester)
       setRegistryStudents(context.registryStudents)
+      setProgrammeOptions(context.programmes ?? [])
+      if (programmeFilter && !(context.programmes ?? []).some(programme => programme.id === programmeFilter)) {
+        setProgrammeFilter('')
+        setStudentId('')
+      }
       if (context.currentSemester) {
         const today = localDateString()
         if (startDate < context.currentSemester.startDate || startDate > context.currentSemester.endDate)
