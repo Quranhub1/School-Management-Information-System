@@ -271,28 +271,28 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             <article className="finance-dashboard-metric"><span>Student invoices</span><strong>{dashboard?.invoiceCount?.toLocaleString() ?? '—'}</strong><small>Total invoices issued</small></article>
             <article className="finance-dashboard-metric"><span>Transactions</span><strong>{dashboard?.paymentCount?.toLocaleString() ?? '—'}</strong><small>Recorded payment transactions</small></article>
           </div>
-          <div className="finance-dashboard-section-title"><h3>Finance workspaces</h3><span>Choose a workspace to continue</span></div>
+          <div className="finance-dashboard-section-title"><h3>Finance workspaces</h3></div>
           <div className="finance-dashboard-workspaces">
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('collections')}>
-              <span className="finance-dashboard-workspace-icon">PR</span><span className="finance-dashboard-workspace-copy"><strong>Payments & Receipts</strong><small>Review SchoolPay and verified manual payments, receipts and references</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">PR</span><span className="finance-dashboard-workspace-copy"><strong>Payments & Receipts</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('student-accounts')}>
-              <span className="finance-dashboard-workspace-icon">SI</span><span className="finance-dashboard-workspace-copy"><strong>Student Fees & Invoices</strong><small>View student fee statements, balances, invoices and payment allocations</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">SI</span><span className="finance-dashboard-workspace-copy"><strong>Student Fees & Invoices</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>
             {!isAssistantAccountant && <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('fees')}>
-              <span className="finance-dashboard-workspace-icon">FS</span><span className="finance-dashboard-workspace-copy"><strong>Fee Structures</strong><small>Configure fee schedules and apply approved charges to students</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">FS</span><span className="finance-dashboard-workspace-copy"><strong>Fee Structures</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>}
             {!isAssistantAccountant && <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('accounting')}>
-              <span className="finance-dashboard-workspace-icon">AL</span><span className="finance-dashboard-workspace-copy"><strong>Accounts & Ledgers</strong><small>Manage chart of accounts, journals, ledgers and payroll controls</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">AL</span><span className="finance-dashboard-workspace-copy"><strong>Accounts & Ledgers</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>}
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('reports')}>
-              <span className="finance-dashboard-workspace-icon">BR</span><span className="finance-dashboard-workspace-copy"><strong>Cash & Bank Position</strong><small>Review cash, bank and mobile-money balances and reconciliation status</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">BR</span><span className="finance-dashboard-workspace-copy"><strong>Cash & Bank Position</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('reports')}>
-              <span className="finance-dashboard-workspace-icon">FR</span><span className="finance-dashboard-workspace-copy"><strong>Financial Reports</strong><small>Open period-based reports and financial position statements</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">FR</span><span className="finance-dashboard-workspace-copy"><strong>Financial Reports</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>
             <button type="button" className="finance-dashboard-workspace" onClick={() => setTab('allowances')}>
-              <span className="finance-dashboard-workspace-icon">SA</span><span className="finance-dashboard-workspace-copy"><strong>Staff Allowances</strong><small>Process and track staff advances and allowances</small></span><span className="finance-dashboard-workspace-arrow">→</span>
+              <span className="finance-dashboard-workspace-icon">SA</span><span className="finance-dashboard-workspace-copy"><strong>Staff Allowances</strong></span><span className="finance-dashboard-workspace-arrow">→</span>
             </button>
           </div>
           <section className="finance-dashboard-latest">
