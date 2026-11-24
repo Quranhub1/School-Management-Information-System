@@ -89,6 +89,7 @@ public sealed class HostelServiceTests
         public Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, Guid semesterId, CancellationToken cancellationToken = default) => Task.FromResult<HostelAllocation?>(null);
         public Task<HostelAllocation?> GetActiveAllocationByStudentAsync(Guid studentId, Guid semesterId, CancellationToken cancellationToken = default) => Task.FromResult(ActiveStudentAllocation);
         public Task<SchoolManagement.Domain.Academic.Semester?> GetSemesterForDateAsync(DateOnly date, CancellationToken cancellationToken = default) => Task.FromResult(CurrentSemester);
+        public Task<bool> IsActiveStudentAsync(Guid studentId, CancellationToken cancellationToken = default) => Task.FromResult(true);
         public Task ExpireEndedSemesterAllocationsAsync(DateOnly today, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
