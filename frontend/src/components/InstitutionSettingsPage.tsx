@@ -189,7 +189,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       }
 
       setActive(finalResult)
-      setForm(prev => ({ ...prev, logoPath: finalResult.logoPath ?? '' }))
+      // Clear multiline input fields only after the settings (and any remote logo) are persisted.
+      setForm(prev => ({ ...prev, motto: '', logoPath: finalResult.logoPath ?? '' }))
       setInstitution(finalResult)
       onSaved(finalResult)
       setLogoRefreshKey(k => k + 1)
