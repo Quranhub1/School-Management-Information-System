@@ -35,10 +35,12 @@ public sealed class HostelAllocation
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid BedId { get; set; }
     public Guid StudentId { get; set; }
+    public Guid? SemesterId { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public HostelBed Bed { get; set; } = null!;
+    public SchoolManagement.Domain.Academic.Semester? Semester { get; set; }
 }

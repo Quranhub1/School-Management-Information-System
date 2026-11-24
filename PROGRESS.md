@@ -682,3 +682,14 @@ PR #290 is superseded; its payment-account resolver and clearing-account changes
 
 The items above describe source changes and user-reported local database state. They are **not** a declaration that the latest changes have passed full CI or target-machine acceptance. At this update, no successful end-to-end verification of the latest staff/HR/attendance changes has been established. Keep the related verification boxes open until the commands, test output and live workflow results are captured.
 
+### Hostel allocations and academic-period integration — PR #478
+
+- Replaced manual Student ID entry in hostel allocations with a student-registry selector showing student number, full name and current enrolled programme.
+- Added programme filtering and an automatic exclusion flag for students already allocated in the active academic semester. The API validates the student against the non-archived registry and independently rejects duplicate student/bed allocations.
+- Linked each new hostel allocation to the academic semester whose configured date range contains its start date.
+- Added semester-scoped unique database indexes for active bed and student allocations, plus separate uniqueness protection for legacy active allocations that could not be backfilled to a semester.
+- Hostel reads and allocation requests close active allocations after their linked semester end date, preserve the historical records and make beds available for a later semester.
+- Added an Academic Setup tab for users with academic-management access. It embeds the existing Academic Calendar editor and School Programme/Curriculum editor rather than introducing duplicate catalogues.
+- Added a migration to backfill semester links where possible and preserve unmatched legacy records.
+
+**Verification boundary:** PR #478 is open. The Vercel status currently reports a build-rate-limit/upgrade failure, and no GitHub Actions workflow runs were returned for the head commit. The backend build, frontend build, database migration and end-to-end semester rollover scenarios have not yet been verified. Do not merge until these are checked.

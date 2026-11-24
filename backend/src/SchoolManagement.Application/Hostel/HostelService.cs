@@ -6,7 +6,14 @@ namespace SchoolManagement.Application.Hostel;
 
 public sealed class HostelService(IHostelRepository repository)
 {
-    public Task<IReadOnlyList<HostelEntity>> GetAsync(CancellationToken cancellationToken = default) => repository.GetHostelsAsync(cancellationToken);
+    public async Task<IReadOnlyList<HostelEntity>> GetAsync(CancellationToken cancellationToken = default)
+    {
+        await RefreshSemesterAllocationsAsync(cancellationToken);
+        return await repository.GetHostelsAsync(cancellationToken);
+    }
+
+    public Task RefreshSemesterAllocationsAsync(CancellationToken cancellationToken = default) =>
+        repository.ExpireEndedSemesterAllocationsAsync(DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(3)).DateTime), cancellationToken);
 
     public async Task<HostelEntity> CreateHostelAsync(string name, string? description, CancellationToken cancellationToken = default)
     {
@@ -70,11 +77,15 @@ public sealed class HostelService(IHostelRepository repository)
 
     public async Task<HostelAllocation> AllocateAsync(Guid bedId, Guid studentId, DateOnly startDate, CancellationToken cancellationToken = default)
     {
+        await RefreshSemesterAllocationsAsync(cancellationToken);
+        if (!await repository.IsActiveStudentAsync(studentId, cancellationToken)) throw new KeyNotFoundException("Student is not present in the active student registry.");
         var bed = await repository.GetBedAsync(bedId, cancellationToken) ?? throw new KeyNotFoundException("Bed not found.");
         if (!bed.IsActive) throw new InvalidOperationException("Cannot allocate an inactive bed.");
-        if (await repository.GetActiveAllocationByBedAsync(bedId, cancellationToken) is not null) throw new InvalidOperationException("Bed is already allocated.");
-        if (await repository.GetActiveAllocationByStudentAsync(studentId, cancellationToken) is not null) throw new InvalidOperationException("Student already has an active hostel allocation.");
-        var allocation = new HostelAllocation { BedId = bedId, StudentId = studentId, StartDate = startDate };
+        var semester = await repository.GetSemesterForDateAsync(startDate, cancellationToken)
+            ?? throw new InvalidOperationException("No active academic semester covers the allocation start date. Configure the academic calendar first.");
+        if (await repository.GetActiveAllocationByBedAsync(bedId, semester.Id, cancellationToken) is not null) throw new InvalidOperationException("Bed is already allocated for this semester.");
+        if (await repository.GetActiveAllocationByStudentAsync(studentId, semester.Id, cancellationToken) is not null) throw new InvalidOperationException("Student already has a bed allocation for this semester.");
+        var allocation = new HostelAllocation { BedId = bedId, StudentId = studentId, SemesterId = semester.Id, StartDate = startDate };
         await repository.AddAsync(allocation, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return allocation;

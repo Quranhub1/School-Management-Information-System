@@ -4438,11 +4438,20 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("StudentId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("SemesterId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("BedId", "SemesterId", "Status");
 
                     b.HasIndex("BedId", "Status");
 
+                    b.HasIndex("StudentId", "SemesterId", "Status");
+
                     b.HasIndex("StudentId", "Status");
+
+                    b.HasIndex("SemesterId");
 
                     b.ToTable("HostelAllocations");
                 });
@@ -6517,7 +6526,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("SchoolManagement.Domain.Academic.Semester", "Semester")
+                        .WithMany()
+                        .HasForeignKey("SemesterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Bed");
+
+                    b.Navigation("Semester");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelBed", b =>
