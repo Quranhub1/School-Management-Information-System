@@ -18,8 +18,7 @@ public sealed class AddSemesterAwareHostelAllocations : Migration
 
         migrationBuilder.Sql("""
             UPDATE "HostelAllocations" AS allocation
-            SET "SemesterId" = matched."Id"
-            FROM LATERAL (
+            SET "SemesterId" = (
                 SELECT semester."Id"
                 FROM "Semesters" AS semester
                 INNER JOIN "AcademicYears" AS academicYear ON academicYear."Id" = semester."AcademicYearId"
@@ -29,8 +28,14 @@ public sealed class AddSemesterAwareHostelAllocations : Migration
                   AND allocation."StartDate" <= semester."EndDate"
                 ORDER BY semester."StartDate" DESC
                 LIMIT 1
-            ) AS matched
-            WHERE allocation."SemesterId" IS NULL;
+            )
+            WHERE allocation."SemesterId" IS NULL
+              AND EXISTS (
+                SELECT 1 FROM "Semesters" AS semester
+                INNER JOIN "AcademicYears" AS academicYear ON academicYear."Id" = semester."AcademicYearId"
+                WHERE semester."IsActive" = TRUE AND academicYear."IsActive" = TRUE
+                  AND allocation."StartDate" >= semester."StartDate" AND allocation."StartDate" <= semester."EndDate"
+              );
             """);
 
         migrationBuilder.CreateIndex(
