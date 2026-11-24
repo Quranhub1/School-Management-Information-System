@@ -137,20 +137,31 @@ export function StaffAttendanceManagement() {
           {historyLoading ? <LoadingSpinner /> : staffHistory && (
             <div className="table-responsive" style={{ marginTop: 14 }}>
               <table className="data-table">
-                <thead><tr><th>Date</th><th>Time</th><th>Attendance event</th><th>Source</th><th>Device</th><th>Capture reference</th></tr></thead>
+                <thead><tr><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours worked</th><th>Status</th><th>Events recorded</th></tr></thead>
                 <tbody>
-                  {staffHistory.events.length === 0
-                    ? <tr><td colSpan={6}>No attendance events were recorded for this staff member in the selected period.</td></tr>
-                    : staffHistory.events.map(event => <tr key={event.id}>
-                      <td>{new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kampala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(event.recordedAtUtc))}</td>
-                      <td>{localDate(event.recordedAtUtc)}</td>
-                      <td><span className={event.eventType === 'IN' ? 'status status-success' : 'status status-warning'}>{event.eventType === 'IN' ? 'Check-in' : 'Check-out'}</span></td>
-                      <td>{event.source || '—'}</td>
-                      <td>{event.deviceId || '—'}</td>
-                      <td>{event.captureId || '—'}</td>
-                    </tr>)}
+                  {staffHistory.attendanceDays.map(day => <tr key={day.date}>
+                    <td>{day.date}</td>
+                    <td>{localDate(day.checkIn)}</td>
+                    <td>{localDate(day.checkOut)}</td>
+                    <td>{day.hoursWorked == null ? '—' : day.hoursWorked.toFixed(2)}</td>
+                    <td><span className={day.status === 'Complete' ? 'status status-success' : day.status === 'Checked in' ? 'status status-warning' : 'status'}>{day.status}</span></td>
+                    <td>{day.eventCount}</td>
+                  </tr>)}
                 </tbody>
               </table>
+              {staffHistory.events.length > 0 && <details style={{ marginTop: 12 }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600 }}>View raw attendance events ({staffHistory.events.length})</summary>
+                <table className="data-table" style={{ marginTop: 8 }}>
+                  <thead><tr><th>Time</th><th>Event</th><th>Source</th><th>Device</th><th>Capture reference</th></tr></thead>
+                  <tbody>{staffHistory.events.map(event => <tr key={event.id}>
+                    <td>{localDate(event.recordedAtUtc)}</td>
+                    <td>{event.eventType === 'IN' ? 'Check-in' : 'Check-out'}</td>
+                    <td>{event.source || '—'}</td>
+                    <td>{event.deviceId || '—'}</td>
+                    <td>{event.captureId || '—'}</td>
+                  </tr>)}</tbody>
+                </table>
+              </details>}
             </div>
           )}
         </section>
