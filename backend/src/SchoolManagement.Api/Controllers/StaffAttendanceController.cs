@@ -139,6 +139,28 @@ public sealed class StaffAttendanceController(
             })
             .ToListAsync(cancellationToken);
 
+        var attendanceDays = new List<object>();
+        for (var date = firstDate; date <= lastDate; date = date.AddDays(1))
+        {
+            var dayStart = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(date.ToDateTime(TimeOnly.MinValue), kampala));
+            var dayEnd = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(date.AddDays(1).ToDateTime(TimeOnly.MinValue), kampala));
+            var dayEvents = events.Where(item => item.RecordedAtUtc >= dayStart && item.RecordedAtUtc < dayEnd)
+                .OrderBy(item => item.RecordedAtUtc).ToArray();
+            var checkIn = dayEvents.FirstOrDefault(item => item.EventType == "IN")?.RecordedAtUtc;
+            var checkOut = dayEvents.LastOrDefault(item => item.EventType == "OUT")?.RecordedAtUtc;
+            var hoursWorked = checkIn.HasValue && checkOut.HasValue && checkOut.Value > checkIn.Value
+                ? (double?) (checkOut.Value - checkIn.Value).TotalHours : null;
+            attendanceDays.Add(new
+            {
+                date,
+                checkIn,
+                checkOut,
+                hoursWorked,
+                status = checkIn is null ? "Absent" : checkOut is null ? "Checked in" : "Complete",
+                eventCount = dayEvents.Length
+            });
+        }
+
         return Ok(new
         {
             staffMemberId = staff.Id,
@@ -147,6 +169,7 @@ public sealed class StaffAttendanceController(
             staff.DepartmentId,
             from = firstDate,
             to = lastDate,
+            attendanceDays,
             events
         });
     }
