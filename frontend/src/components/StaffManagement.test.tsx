@@ -60,7 +60,7 @@ describe('StaffManagement', () => {
 
   it('shows the staff access checklist and supports marking module permissions', async () => {
     render(<StaffManagement canManage canManageAccounts />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Recruitment' }))
+    fireEvent.click(screen.getByRole('tab', { name: /Recruitment/ }))
     expect(screen.getByRole('heading', { name: 'Permissions by module' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Select all' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Clear all' })).toBeEnabled()
@@ -68,7 +68,7 @@ describe('StaffManagement', () => {
 
   it('places surname before first name in the staff registration form', () => {
     render(<StaffManagement canManage />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Recruitment' }))
+    fireEvent.click(screen.getByRole('tab', { name: /Recruitment/ }))
     const nameFields = screen.getAllByPlaceholderText(/Surname|First name/)
     expect(nameFields[0].getAttribute('aria-label')).toBe('Surname')
     expect(nameFields[1].getAttribute('aria-label')).toBe('First name')
@@ -77,7 +77,7 @@ describe('StaffManagement', () => {
 
   it('captures the complete staff recruitment profile including a photograph', () => {
     render(<StaffManagement canManage />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Recruitment' }))
+    fireEvent.click(screen.getByRole('tab', { name: /Recruitment/ }))
     expect(screen.getByLabelText('Gender')).toBeTruthy()
     expect(screen.getByLabelText('Date of birth')).toBeTruthy()
     expect(screen.getByLabelText('Residential address')).toBeTruthy()
