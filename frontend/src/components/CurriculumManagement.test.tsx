@@ -103,7 +103,7 @@ describe('CurriculumManagement selectors', () => {
     render(<CurriculumManagement canManage />)
     fireEvent.click(screen.getByRole('tab', { name: 'Programmes & Curricula' }))
 
-    const authoritySelect = await screen.findByLabelText('Academic authority')
+    const authoritySelect = await screen.findByLabelText('Authority')
     await waitFor(() => expect(within(authoritySelect).getByRole('option', { name: 'UHPAB' })).toBeInTheDocument())
 
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
@@ -149,7 +149,7 @@ describe('CurriculumManagement selectors', () => {
 
     render(<CurriculumManagement canManage />)
     fireEvent.click(screen.getByRole('tab', { name: 'Programmes & Curricula' }))
-    const authoritySelect = await screen.findByLabelText('Academic authority')
+    const authoritySelect = await screen.findByLabelText('Authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
@@ -174,7 +174,7 @@ describe('CurriculumManagement selectors', () => {
 
     render(<CurriculumManagement canManage />)
     fireEvent.click(screen.getByRole('tab', { name: 'Programmes & Curricula' }))
-    const authoritySelect = await screen.findByLabelText('Academic authority')
+    const authoritySelect = await screen.findByLabelText('Authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
 
     const curriculumSelect = screen.getByLabelText('Select curriculum')
@@ -206,7 +206,7 @@ describe('CurriculumManagement selectors', () => {
 
     render(<CurriculumManagement canManage />)
     fireEvent.click(screen.getByRole('tab', { name: 'Programmes & Curricula' }))
-    const authoritySelect = await screen.findByLabelText('Academic authority')
+    const authoritySelect = await screen.findByLabelText('Authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UVTAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UVTAB'))
@@ -238,7 +238,7 @@ describe('CurriculumManagement selectors', () => {
 
     render(<CurriculumManagement canManage />)
     fireEvent.click(screen.getByRole('tab', { name: 'Programmes & Curricula' }))
-    const authoritySelect = await screen.findByLabelText('Academic authority')
+    const authoritySelect = await screen.findByLabelText('Authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
