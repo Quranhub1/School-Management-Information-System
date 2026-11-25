@@ -5,6 +5,7 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Library;
@@ -13,7 +14,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/administration/library-plugins")]
+[Route("api/v{version:apiVersion}/administration/library-plugins")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed class LibraryPluginSettingsController(
     SchoolManagementDbContext db,

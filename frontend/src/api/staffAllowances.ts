@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -50,18 +51,18 @@ export type AuthorizeStaffAllowanceRequest = {
 
 export function listStaffAllowances(status?: string) {
   const query = status ? `?status=${encodeURIComponent(status)}` : ''
-  return request<StaffAllowance[]>(`/api/finance/staff-allowances${query}`)
+  return request<StaffAllowance[]>(versionedPath(`/api/finance/staff-allowances${query}`))
 }
 
 export function authorizeStaffAllowance(payload: AuthorizeStaffAllowanceRequest) {
-  return request<StaffAllowance>('/api/finance/staff-allowances/authorize', {
+  return request<StaffAllowance>(versionedPath('/api/finance/staff-allowances/authorize'), {
     method: 'POST',
     body: JSON.stringify(payload)
   })
 }
 
 export function recordStaffAllowance(id: string) {
-  return request<StaffAllowance>(`/api/finance/staff-allowances/${id}/record`, {
+  return request<StaffAllowance>(versionedPath(`/api/finance/staff-allowances/${id}/record`), {
     method: 'POST'
   })
 }

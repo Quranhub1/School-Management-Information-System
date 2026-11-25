@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface StudentReportCard {
   studentNumber: string
@@ -42,5 +43,5 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getStudentReportCard = (studentId: string) => request<StudentReportCard>(`/api/reports/student/${encodeURIComponent(studentId)}/report-card`)
-export const getPaymentReceipt = (paymentId: string) => request<FeeReceipt>(`/api/reports/payment/${encodeURIComponent(paymentId)}/receipt`)
+export const getStudentReportCard = (studentId: string) => request<StudentReportCard>(versionedPath(`/api/reports/student/${encodeURIComponent(studentId)}/report-card`))
+export const getPaymentReceipt = (paymentId: string) => request<FeeReceipt>(versionedPath(`/api/reports/payment/${encodeURIComponent(paymentId)}/receipt`))

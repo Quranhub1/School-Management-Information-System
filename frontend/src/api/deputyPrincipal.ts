@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface DeputyPrincipalDashboard {
   totalStudents: number
@@ -85,7 +86,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getDeputyPrincipalDashboard = () => request<DeputyPrincipalDashboard>('/api/deputy-principal/dashboard')
-export const getAcademicPerformance = () => request<AcademicPerformance[]>('/api/deputy-principal/academic-performance')
-export const getExaminationSummary = () => request<ExaminationSummary[]>('/api/deputy-principal/examination-summary')
-export const getTimetableOverview = () => request<TimetableEntry[]>('/api/deputy-principal/timetable-overview')
+export const getDeputyPrincipalDashboard = () => request<DeputyPrincipalDashboard>(versionedPath('/api/deputy-principal/dashboard'))
+export const getAcademicPerformance = () => request<AcademicPerformance[]>(versionedPath('/api/deputy-principal/academic-performance'))
+export const getExaminationSummary = () => request<ExaminationSummary[]>(versionedPath('/api/deputy-principal/examination-summary'))
+export const getTimetableOverview = () => request<TimetableEntry[]>(versionedPath('/api/deputy-principal/timetable-overview'))

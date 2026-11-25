@@ -1,4 +1,5 @@
 import { parseApiInput } from '../lib/validation';
+import { versionedPath } from '../lib/apiVersion';
 import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -29,34 +30,34 @@ export type LibraryBook = { id:string; isbn:string; barcodeValue?:string | null;
 export type LibraryMember = { id:string; memberType:'Student'|'Staff'; memberNumber:string; studentNumber:string; name:string };
 export type LibraryLoan = { id:string; bookId:string; bookTitle:string; bookIsbn:string; memberId:string; memberType:'Student'|'Staff'; memberNumber:string; memberName:string; studentId?:string|null; studentNumber:string; studentName:string; issuedAtUtc:string; dueAtUtc:string; returnedAtUtc?:string|null; fineAmount:number };
 
-export const listBooks = (search = '') => request<LibraryBook[]>(`/api/library/books${search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''}`);
-export const listMembers = (search = '', memberType?: 'Student'|'Staff') => { const params = new URLSearchParams(); if (search.trim()) params.set('search', search.trim()); if (memberType) params.set('memberType', memberType); const query = params.toString(); return request<LibraryMember[]>(`/api/library/members${query ? `?${query}` : ''}`); };
-export const listLoans = (activeOnly = true) => request<LibraryLoan[]>(`/api/library/loans?activeOnly=${activeOnly}`);
+export const listBooks = (search = '') => request<LibraryBook[]>(my $p = `/api/library/books${search.trim() ? `)?search=${encodeURIComponent(search.trim())}` : ''}`; versionedPath($p);
+export const listMembers = (search = '', memberType?: 'Student'|'Staff') => { const params = new URLSearchParams(); if (search.trim()) params.set('search', search.trim()); if (memberType) params.set('memberType', memberType); const query = params.toString(); return request<LibraryMember[]>(my $p = `/api/library/members${query ? `)?${query}` : ''}`; versionedPath($p); };
+export const listLoans = (activeOnly = true) => request<LibraryLoan[]>(versionedPath(`/api/library/loans?activeOnly=${activeOnly}`));
 
 export const addBook = (input: Omit<LibraryBook,'id'|'availableCopies'|'isActive'|'createdAtUtc'>) => {
   const validated = parseApiInput(libraryBookCreateRequestSchema, input, 'add library book');
-  return request<LibraryBook>('/api/library/books', { method:'POST', body:JSON.stringify(validated) });
+  return request<LibraryBook>(versionedPath('/api/library/books'), { method:'POST', body:JSON.stringify(validated) });
 };
 
 export const updateBook = (id: string, input: Omit<LibraryBook, 'id'|'availableCopies'|'isActive'|'barcodeValue'|'createdAtUtc'>) => {
   if (!id.trim()) throw new Error('Book id is required.');
   const validated = parseApiInput(libraryBookCreateRequestSchema, input, 'update library book');
-  return request<LibraryBook>(`/api/library/books/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) });
+  return request<LibraryBook>(versionedPath(`/api/library/books/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(validated) });
 };
 
 export const archiveBook = (id: string) => {
   if (!id.trim()) throw new Error('Book id is required.');
-  return request<void>(`/api/library/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  return request<void>(versionedPath(`/api/library/books/${encodeURIComponent(id)}`), { method: 'DELETE' });
 };
 
 export const issueBook = (input:{bookId:string;memberId:string;memberType:'Student'|'Staff';issuedAtUtc:string;dueAtUtc:string}) => {
   const validated = parseApiInput(libraryLoanCreateRequestSchema, input, 'issue library book');
-  return request<LibraryLoan>('/api/library/loans', { method:'POST', body:JSON.stringify(validated) });
+  return request<LibraryLoan>(versionedPath('/api/library/loans'), { method:'POST', body:JSON.stringify(validated) });
 };
 
 export const returnBook = (id:string) => {
   if (!id) throw new Error('Loan id is required.');
-  return request<LibraryLoan>(`/api/library/loans/${id}/return`, { method:'PATCH' });
+  return request<LibraryLoan>(versionedPath(`/api/library/loans/${id}/return`), { method:'PATCH' });
 };
 
 export const getBookBarcode = (id: string) => `${BASE}/api/library/books/${id}/barcode`
@@ -70,14 +71,14 @@ export type LibraryProgrammeRequirement = {
   isActive: boolean
 }
 export const listProgrammeRequirements = () =>
-  request<LibraryProgrammeRequirement[]>('/api/library/programme-requirements')
+  request<LibraryProgrammeRequirement[]>(versionedPath('/api/library/programme-requirements'))
 export const setProgrammeRequirement = (input: { programmeId: string; name: string; amount: number; currency: string }) =>
-  request<LibraryProgrammeRequirement>('/api/library/programme-requirements', { method: 'POST', body: JSON.stringify(input) })
+  request<LibraryProgrammeRequirement>(versionedPath('/api/library/programme-requirements'), { method: 'POST', body: JSON.stringify(input) })
 export const setProgrammeRequirementActive = (id: string, active: boolean) =>
-  request<{ id: string; isActive: boolean }>(`/api/library/programme-requirements/${id}/active?active=${active}`, { method: 'PATCH' })
+  request<{ id: string; isActive: boolean }>(versionedPath(`/api/library/programme-requirements/${id}/active?active=${active}`), { method: 'PATCH' })
 export const recordLibraryStudentPayment = (studentId: string, input: { amount: number }) =>
   request<{ id: string; studentId: string; amount: number; currency: string; recordedAtUtc: string }>(
-    `/api/library/students/${studentId}/payments`,
+    versionedPath(`/api/library/students/${studentId}/payments`),
     { method: 'POST', body: JSON.stringify(input) },
   )
 
@@ -101,7 +102,7 @@ export type PaidLibraryClearanceStudent = {
   currency: string
 }
 export const listPaidLibraryClearanceStudents = () =>
-  request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students', { cache: 'no-store' })
+  request<PaidLibraryClearanceStudent[]>(versionedPath('/api/library/clearance/paid-students'), { cache: 'no-store' })
 
 export type LibraryClearanceAcademicOptions = {
   courses: { courseId: string; courseName: string }[]
@@ -112,4 +113,4 @@ export type LibraryClearanceAcademicOptions = {
   mappings: { programmeId: string; programmeName: string; courseId: string; courseName: string; yearOfStudy: number; semesterNumber: number }[]
 }
 export const getLibraryClearanceAcademicOptions = () =>
-  request<LibraryClearanceAcademicOptions>('/api/library/clearance/academic-options')
+  request<LibraryClearanceAcademicOptions>(versionedPath('/api/library/clearance/academic-options'))

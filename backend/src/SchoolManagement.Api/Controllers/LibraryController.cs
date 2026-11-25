@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
@@ -12,7 +13,7 @@ using SchoolManagement.Domain.Workflows;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/library")]
+[Route("api/v{version:apiVersion}/library")]
 public sealed class LibraryController(
     LibraryWorkflowService library,
     SchoolManagementDbContext db,

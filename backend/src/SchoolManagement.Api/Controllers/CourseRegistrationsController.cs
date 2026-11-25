@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Api.Services;
@@ -9,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/course-registrations")]
+[Route("api/v{version:apiVersion}/course-registrations")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CourseRegistrationsController(CourseRegistrationService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

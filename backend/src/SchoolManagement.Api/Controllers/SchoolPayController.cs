@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SchoolManagement.Application.Authorization;
@@ -12,7 +13,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/schoolpay")]
+[Route("api/v{version:apiVersion}/schoolpay")]
 [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
 public sealed class SchoolPayController(
     ISchoolPayService schoolPay,

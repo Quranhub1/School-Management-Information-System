@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface CertificateDto {
   id: string
@@ -49,8 +50,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const generateCertificate = (studentId: string, body: GenerateCertificateRequest) => request<CertificateDto>(`/api/certificates/generate/${studentId}`, { method: 'POST', body: JSON.stringify({ ...body, studentId }) })
-export const getCertificate = (id: string) => request<CertificateDto>(`/api/certificates/${id}`)
-export const printCertificate = (id: string) => request<CertificatePrintView>(`/api/certificates/${id}/print`)
-export const revokeCertificate = (id: string, body: RevokeCertificateRequest) => request<void>(`/api/certificates/${id}/revoke`, { method: 'POST', body: JSON.stringify(body) })
-export const verifyCertificate = (serialNumber: string) => request<CertificateDto>(`/api/certificates/verify/${encodeURIComponent(serialNumber)}`)
+export const generateCertificate = (studentId: string, body: GenerateCertificateRequest) => request<CertificateDto>(versionedPath(`/api/certificates/generate/${studentId}`), { method: 'POST', body: JSON.stringify({ ...body, studentId }) })
+export const getCertificate = (id: string) => request<CertificateDto>(versionedPath(`/api/certificates/${id}`))
+export const printCertificate = (id: string) => request<CertificatePrintView>(versionedPath(`/api/certificates/${id}/print`))
+export const revokeCertificate = (id: string, body: RevokeCertificateRequest) => request<void>(versionedPath(`/api/certificates/${id}/revoke`), { method: 'POST', body: JSON.stringify(body) })
+export const verifyCertificate = (serialNumber: string) => request<CertificateDto>(versionedPath(`/api/certificates/verify/${encodeURIComponent(serialNumber)}`))

@@ -1,4 +1,5 @@
 import { readApiErrorMessage } from './errors'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 function token() { return sessionStorage.getItem('smis.accessToken') }
@@ -40,12 +41,12 @@ export function listStaffDailyAttendance(filters: {
   const params = new URLSearchParams({ from: filters.from, to: filters.to })
   if (filters.search?.trim()) params.set('search', filters.search.trim())
   if (filters.departmentId) params.set('departmentId', filters.departmentId)
-  return request<StaffDailyAttendanceRow[]>(`/api/staff-attendance/daily?${params.toString()}`)
+  return request<StaffDailyAttendanceRow[]>(versionedPath(`/api/staff-attendance/daily?${params.toString()}`))
 }
 
 export function recordManualStaffAttendance(staffMemberId: string, eventType: 'IN' | 'OUT') {
   return request<{ id: string; staffMemberId: string; eventType: string; recordedAtUtc: string }>(
-    `/api/staff-attendance/${encodeURIComponent(staffMemberId)}/manual-event`,
+    versionedPath(`/api/staff-attendance/${encodeURIComponent(staffMemberId)}/manual-event`),
     { method: 'POST', body: JSON.stringify({ eventType }) }
   )
 }
@@ -78,6 +79,6 @@ export type StaffAttendanceHistory = {
 export function getStaffAttendanceHistory(staffMemberId: string, filters: { from: string; to: string }) {
   const params = new URLSearchParams({ from: filters.from, to: filters.to })
   return request<StaffAttendanceHistory>(
-    `/api/staff-attendance/${encodeURIComponent(staffMemberId)}/history?${params.toString()}`
+    versionedPath(`/api/staff-attendance/${encodeURIComponent(staffMemberId)}/history?${params.toString()}`)
   )
 }

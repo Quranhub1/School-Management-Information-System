@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
@@ -11,7 +12,8 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/students")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/students")]
 [Authorize(Policy = AuthorizationPolicies.StudentRead)]
 public sealed class StudentsController(StudentService service, SchoolManagementDbContext db, StudentRecordsWorkflowService studentRecords, CampusAccessService campusAccess) : ControllerBase
 {

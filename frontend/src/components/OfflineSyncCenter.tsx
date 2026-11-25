@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './OfflineSyncCenter.css'
-import { Download, RefreshCw, ShieldAlert, Wifi, WifiOff } from 'lucide-react'
+import { Download, RefreshCw, ShieldAlert, Wifi, WifiOff, RotateCcw, AlertCircle, CheckCircle } from 'lucide-react'
 import { getSession } from '../api/auth'
 import { getOnlineStatus } from '../lib/offline/api'
 import { offlineScopeFor, type SyncConflict, type SyncOperation } from '../lib/offline/db'
-import { getSyncConflicts, getSyncQueue, resolveSyncConflict } from '../lib/offline/sync'
+import { getSyncConflicts, getSyncQueue, resolveSyncConflict, processQueue, autoSyncOnReconnect } from '../lib/offline/sync'
 
 function formatTime(value: number) {
   return new Date(value).toLocaleString()
@@ -24,8 +24,10 @@ export function OfflineSyncCenter() {
   const [conflicts, setConflicts] = useState<SyncConflict[]>([])
   const [online, setOnline] = useState(getOnlineStatus())
   const [loading, setLoading] = useState(false)
+  const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resolving, setResolving] = useState<string | null>(null)
+  const [lastSyncResult, setLastSyncResult] = useState<{ processed: number; blocked: number; failed: number; conflicts: number } | null>(null)
 
   const refresh = useCallback(async () => {
     if (!scope) return
@@ -43,11 +45,48 @@ export function OfflineSyncCenter() {
     }
   }, [scope])
 
+  const processQueueAction = useCallback(async () => {
+    if (!scope || processing) return
+    setProcessing(true)
+    setError(null)
+    try {
+      const result = await processQueue(scope)
+      setLastSyncResult(result)
+      await refresh()
+      if (result.conflicts > 0) {
+        setError(`${result.conflicts} conflict(s) detected. Please review and resolve.`)
+      } else if (result.failed > 0) {
+        setError(`${result.failed} operation(s) failed. Check the queue for details.`)
+      } else if (result.processed > 0) {
+        setError(`Successfully synchronized ${result.processed} operation(s).`)
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to process sync queue.')
+    } finally {
+      setProcessing(false)
+    }
+  }, [scope, processing, refresh])
+
   useEffect(() => {
     void refresh()
-    const updateNetwork = () => {
-      setOnline(getOnlineStatus())
-      void refresh()
+    const updateNetwork = async () => {
+      const wasOnline = online
+      const nowOnline = getOnlineStatus()
+      setOnline(nowOnline)
+      await refresh()
+      
+      // Auto-sync when coming back online
+      if (!wasOnline && nowOnline && scope) {
+        try {
+          const result = await autoSyncOnReconnect(scope)
+          if (result && result.processed > 0) {
+            setLastSyncResult(result)
+            await refresh()
+          }
+        } catch {
+          // Auto-sync failed, user can manually retry
+        }
+      }
     }
     window.addEventListener('online', updateNetwork)
     window.addEventListener('offline', updateNetwork)
@@ -55,7 +94,7 @@ export function OfflineSyncCenter() {
       window.removeEventListener('online', updateNetwork)
       window.removeEventListener('offline', updateNetwork)
     }
-  }, [refresh])
+  }, [refresh, scope, online])
 
   const unresolvedConflicts = conflicts.filter(item => item.resolutionStatus === 'unresolved')
   const counts = useMemo(() => operations.reduce<Record<string, number>>((result, item) => {
@@ -121,6 +160,14 @@ export function OfflineSyncCenter() {
         <button className="secondary-button" type="button" onClick={() => void refresh()} disabled={loading}>
           <RefreshCw size={15} /> {loading ? 'Refreshing…' : 'Refresh'}
         </button>
+        <button 
+          className="primary-button" 
+          type="button" 
+          onClick={processQueueAction} 
+          disabled={processing || !online || operations.length === 0}
+        >
+          <RotateCcw size={15} /> {processing ? 'Processing…' : 'Process Queue'}
+        </button>
         <button className="primary-button" type="button" onClick={exportAudit} disabled={!operations.length && !conflicts.length}>
           <Download size={15} /> Export audit
         </button>
@@ -128,6 +175,15 @@ export function OfflineSyncCenter() {
     </div>
 
     {error && <div className="offline-sync-error" role="alert">{error}</div>}
+
+    {lastSyncResult && (
+      <div className="offline-sync-result" role="status">
+        {lastSyncResult.processed > 0 && <span className="sync-result-success"><CheckCircle size={14} /> Synced {lastSyncResult.processed}</span>}
+        {lastSyncResult.conflicts > 0 && <span className="sync-result-conflict"><AlertCircle size={14} /> {lastSyncResult.conflicts} conflict(s)</span>}
+        {lastSyncResult.failed > 0 && <span className="sync-result-failed"><AlertCircle size={14} /> {lastSyncResult.failed} failed</span>}
+        {lastSyncResult.blocked > 0 && <span className="sync-result-blocked"> {lastSyncResult.blocked} blocked</span>}
+      </div>
+    )}
 
     <div className="offline-sync-metrics">
       <article className="summary-card"><span>Total operations</span><strong>{operations.length}</strong></article>
@@ -138,7 +194,7 @@ export function OfflineSyncCenter() {
 
     <div className="offline-sync-safety-note">
       <ShieldAlert size={18} />
-      <div><strong>Automatic replay is disabled</strong><p>Student, attendance and library operations are retained for review only. Discarded operations remain in the audit journal but are excluded from the active queue. Financial operations are rejected from the offline journal. Do not treat a local operation as saved on the server.</p></div>
+      <div><strong>Offline sync enabled</strong><p>Mutations are queued when offline and synchronized when connectivity is restored. Financial operations are rejected from the offline journal. Review conflicts before considering data saved on the server.</p></div>
     </div>
 
     <section className="panel offline-sync-section">

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Hostel;
@@ -9,7 +10,7 @@ using System.Security.Claims;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/warden/records")]
+[Route("api/v{version:apiVersion}/warden/records")]
 [Authorize(Policy = AuthorizationPolicies.HostelManagement)]
 public sealed class SchoolWardenRecordsController(SchoolManagementDbContext db) : ControllerBase
 {

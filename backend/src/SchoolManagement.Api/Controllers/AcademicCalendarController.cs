@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using AcademicYearRequest = SchoolManagement.Application.Academic.CreateAcademicYearRequest;
@@ -10,7 +11,7 @@ using UpdatePeriodRequest = SchoolManagement.Application.Academic.UpdateSemester
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/academic-calendar")]
+[Route("api/v{version:apiVersion}/academic-calendar")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class AcademicCalendarController(AcademicCalendarService service) : ControllerBase
 {

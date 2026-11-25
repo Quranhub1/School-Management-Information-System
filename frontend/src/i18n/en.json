@@ -25,6 +25,44 @@
     "edit": "Edit",
     "search": "Search",
     "actions": "Actions",
-    "empty": "No records found."
+    "empty": "No records found.",
+    "confirmDelete": "Are you sure you want to delete {name}?",
+    "itemsSelected": "{count, plural, one{1 item selected} other{# items selected}}",
+    "studentCount": "{count, plural, one{1 student} other{# students}}",
+    "staffCount": "{count, plural, one{1 staff member} other{# staff members}}",
+    "recordCount": "{count, plural, one{1 record} other{# records}}",
+    "pageInfo": "Page {current} of {total}",
+    "dateFormat": "{date, date, full}",
+    "timeFormat": "{date, time, short}",
+    "currencyFormat": "{amount, number, style:\"currency\", currency:\"UGX\"}",
+    "percentage": "{value, number, style:\"percent\"}",
+    "fileSize": "{bytes, number, style:\"unit\", unit:\"byte\", unitDisplay:\"short\"}"
+  },
+  "students": {
+    "title": "Students",
+    "add": "Add Student",
+    "edit": "Edit Student",
+    "view": "View Student",
+    "archive": "Archive",
+    "restore": "Restore",
+    "guardians": "Guardians",
+    "enrollment": "Enrollment",
+    "attendance": "Attendance",
+    "finance": "Finance",
+    "documents": "Documents"
+  },
+  "validation": {
+    "required": "{field} is required",
+    "email": "Please enter a valid email address",
+    "phone": "Please enter a valid phone number",
+    "minLength": "{field} must be at least {min} characters",
+    "maxLength": "{field} must not exceed {max} characters",
+    "pattern": "{field} format is invalid"
+  },
+  "notifications": {
+    "saved": "{entity} saved successfully",
+    "deleted": "{entity} deleted successfully",
+    "updated": "{entity} updated successfully",
+    "error": "Failed to {action} {entity}"
   }
 }

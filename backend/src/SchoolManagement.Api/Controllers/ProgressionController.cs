@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Progression;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/progression")]
+[Route("api/v{version:apiVersion}/progression")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class ProgressionController : ControllerBase
 {

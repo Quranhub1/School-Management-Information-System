@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
@@ -7,7 +8,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/calendar")]
+[Route("api/v{version:apiVersion}/calendar")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CalendarController(SchoolManagementDbContext db) : ControllerBase
 {

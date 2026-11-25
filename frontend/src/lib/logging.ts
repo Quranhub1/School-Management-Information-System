@@ -1,4 +1,5 @@
 import { getAccessToken } from '../api/auth'
+import { versionedPath } from './apiVersion'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 export type LogContext = Record<string, string | number | boolean | null | undefined>
@@ -53,7 +54,7 @@ export async function reportClientError(
 
   reportingClientError = true
   try {
-    await fetch('/api/diagnostics/client-errors', {
+    await fetch(versionedPath('/api/diagnostics/client-errors'), {
       method: 'POST',
       credentials: 'same-origin',
       headers: {

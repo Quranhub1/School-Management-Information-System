@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 import { parseApiInput } from '../lib/validation'
 import { createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema } from '../schemas'
 
@@ -17,20 +18,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getUsers = () => request<UserSummary[]>('/api/administration/users')
-export const createUser = (body: CreateUserRequest) => { const validated = parseApiInput(createUserRequestSchema, body, 'create user'); return request<UserSummary>('/api/administration/users', { method: 'POST', body: JSON.stringify(validated) }) }
-export const setUserActive = (id: string, active: boolean) => { const validated = parseApiInput(setUserActiveRequestSchema, { active }, 'update user status'); if (!id.trim()) throw new Error('User ID is required.'); return request<UserSummary>(`/api/administration/users/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify(validated) }) }
+export const getUsers = () => request<UserSummary[]>(versionedPath('/api/administration/users'))
+export const createUser = (body: CreateUserRequest) => { const validated = parseApiInput(createUserRequestSchema, body, 'create user'); return request<UserSummary>(versionedPath('/api/administration/users'), { method: 'POST', body: JSON.stringify(validated) }) }
+export const setUserActive = (id: string, active: boolean) => { const validated = parseApiInput(setUserActiveRequestSchema, { active }, 'update user status'); if (!id.trim()) throw new Error('User ID is required.'); return request<UserSummary>(versionedPath(`/api/administration/users/${encodeURIComponent(id)}/active`), { method: 'PATCH', body: JSON.stringify(validated) }) }
 
-export const updateUser = (id: string, body: UpdateUserRequest) => { const validated = parseApiInput(updateUserRequestSchema, body, 'update user'); if (!id.trim()) throw new Error('User ID is required.'); return request<UserSummary>(`/api/administration/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) }) }
-export const resetUserPassword = (id: string, newPassword: string) => { const validated = parseApiInput(resetUserPasswordRequestSchema, { newPassword }, 'reset user password'); if (!id.trim()) throw new Error('User ID is required.'); return request<void>(`/api/administration/users/${encodeURIComponent(id)}/password`, { method: 'PATCH', body: JSON.stringify(validated) }) }
+export const updateUser = (id: string, body: UpdateUserRequest) => { const validated = parseApiInput(updateUserRequestSchema, body, 'update user'); if (!id.trim()) throw new Error('User ID is required.'); return request<UserSummary>(versionedPath(`/api/administration/users/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(validated) }) }
+export const resetUserPassword = (id: string, newPassword: string) => { const validated = parseApiInput(resetUserPasswordRequestSchema, { newPassword }, 'reset user password'); if (!id.trim()) throw new Error('User ID is required.'); return request<void>(versionedPath(`/api/administration/users/${encodeURIComponent(id)}/password`), { method: 'PATCH', body: JSON.stringify(validated) }) }
 
 export interface PermissionItem { id: string; label: string; description?: string | null }
 export interface PermissionGroup { id: string; label: string; permissions: PermissionItem[] }
 export interface PermissionRole { id: string; name: string; description?: string | null; isSystemRole: boolean }
 export interface UserPermissionSummary { userId: string; directPermissionCodes: string[]; inheritedPermissionCodes: string[]; effectivePermissionCodes: string[] }
-export const getPermissionCatalogue = () => request<PermissionGroup[]>('/api/permissions/catalogue')
-export const getPermissionRoles = () => request<PermissionRole[]>('/api/permissions/roles')
-export const getRolePermissionCodes = (roleId: string) => request<{ roleId: string; permissionCodes: string[] }>(`/api/permissions/roles/${roleId}`)
-export const setRolePermissionCodes = (roleId: string, permissionCodes: string[]) => { const validated = parseApiInput(permissionCodesRequestSchema, { permissionCodes }, 'update role permissions'); if (!roleId.trim()) throw new Error('Role ID is required.'); return request<{ roleId: string; assignedCount: number }>(`/api/permissions/roles/${encodeURIComponent(roleId)}`, { method: 'PUT', body: JSON.stringify(validated) }) }
-export const getUserPermissionSummary = (userId: string) => request<UserPermissionSummary>(`/api/permissions/users/${userId}`)
-export const setUserPermissionCodes = (userId: string, permissionCodes: string[]) => { const validated = parseApiInput(permissionCodesRequestSchema, { permissionCodes }, 'update user permissions'); if (!userId.trim()) throw new Error('User ID is required.'); return request<{ userId: string; directPermissionCount: number }>(`/api/permissions/users/${encodeURIComponent(userId)}`, { method: 'PUT', body: JSON.stringify(validated) }) }
+export const getPermissionCatalogue = () => request<PermissionGroup[]>(versionedPath('/api/permissions/catalogue'))
+export const getPermissionRoles = () => request<PermissionRole[]>(versionedPath('/api/permissions/roles'))
+export const getRolePermissionCodes = (roleId: string) => request<{ roleId: string; permissionCodes: string[] }>(versionedPath(`/api/permissions/roles/${roleId}`))
+export const setRolePermissionCodes = (roleId: string, permissionCodes: string[]) => { const validated = parseApiInput(permissionCodesRequestSchema, { permissionCodes }, 'update role permissions'); if (!roleId.trim()) throw new Error('Role ID is required.'); return request<{ roleId: string; assignedCount: number }>(versionedPath(`/api/permissions/roles/${encodeURIComponent(roleId)}`), { method: 'PUT', body: JSON.stringify(validated) }) }
+export const getUserPermissionSummary = (userId: string) => request<UserPermissionSummary>(versionedPath(`/api/permissions/users/${userId}`))
+export const setUserPermissionCodes = (userId: string, permissionCodes: string[]) => { const validated = parseApiInput(permissionCodesRequestSchema, { permissionCodes }, 'update user permissions'); if (!userId.trim()) throw new Error('User ID is required.'); return request<{ userId: string; directPermissionCount: number }>(versionedPath(`/api/permissions/users/${encodeURIComponent(userId)}`), { method: 'PUT', body: JSON.stringify(validated) }) }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
@@ -8,7 +9,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/curriculum-management")]
+[Route("api/v{version:apiVersion}/curriculum-management")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CurriculumManagementController(CurriculumManagementService service, SchoolManagementDbContext db) : ControllerBase
 {

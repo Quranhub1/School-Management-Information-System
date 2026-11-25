@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/health")]
+[Route("api/v{version:apiVersion}/health")]
 public sealed class HealthController : ControllerBase
 {
     [AllowAnonymous]

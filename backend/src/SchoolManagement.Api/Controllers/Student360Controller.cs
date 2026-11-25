@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Student360;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/student360")]
+[Route("api/v{version:apiVersion}/student360")]
 [Authorize(Policy = AuthorizationPolicies.Student360)]
 public sealed class Student360Controller(Student360Service service) : ControllerBase
 {

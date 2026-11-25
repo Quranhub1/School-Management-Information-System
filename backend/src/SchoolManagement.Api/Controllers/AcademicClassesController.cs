@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using AcademicClass = SchoolManagement.Domain.Academic.AcademicClass;
@@ -8,7 +9,7 @@ using ClassStatus = SchoolManagement.Domain.Academic.ClassStatus;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/academic-classes")]
+[Route("api/v{version:apiVersion}/academic-classes")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class AcademicClassesController(AcademicClassService service) : ControllerBase
 {

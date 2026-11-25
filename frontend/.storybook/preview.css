@@ -1,0 +1,80 @@
+/* Storybook preview styles */
+.storybook-wrapper {
+  padding: 16px;
+  min-width: 320px;
+}
+
+/* Ensure consistent font rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode support */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .storybook-wrapper {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+/* Component spacing */
+.sb-component {
+  margin-bottom: 24px;
+}
+
+/* Form elements in stories */
+.storybook-wrapper input,
+.storybook-wrapper select,
+.storybook-wrapper textarea,
+.storybook-wrapper button {
+  font-family: inherit;
+}
+
+/* Table styles for data grid stories */
+.storybook-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.storybook-wrapper th,
+.storybook-wrapper td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.dark .storybook-wrapper th,
+.dark .storybook-wrapper td {
+  border-color: #334155;
+}
+
+/* Card styles */
+.sb-card {
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--surface, #fff);
+}
+
+.dark .sb-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* Button variants for testing */
+.sb-button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+/* Responsive container */
+.sb-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}

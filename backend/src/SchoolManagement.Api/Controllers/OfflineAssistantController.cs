@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Application.Administration;
@@ -10,7 +11,7 @@ using SchoolManagement.Domain.Attendance;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/assistant")]
+[Route("api/v{version:apiVersion}/assistant")]
 [Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class OfflineAssistantController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {

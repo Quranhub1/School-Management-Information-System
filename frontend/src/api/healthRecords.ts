@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface MedicalRecord {
   id: string
@@ -46,9 +47,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getStudentMedicalRecords = (studentId: string) => request<MedicalRecord[]>(`/api/health-records/student/${encodeURIComponent(studentId)}`)
-export const getRecentClinicVisits = (days?: number) => request<RecentClinicVisit[]>(`/api/health-records/recent${days ? `?days=${days}` : ''}`)
-export const addMedicalRecord = (studentId: string, data: AddMedicalRecordRequest) => request<{ id: string }>(`/api/health-records/student/${encodeURIComponent(studentId)}`, {
+export const getStudentMedicalRecords = (studentId: string) => request<MedicalRecord[]>(versionedPath(`/api/health-records/student/${encodeURIComponent(studentId)}`))
+export const getRecentClinicVisits = (days?: number) => request<RecentClinicVisit[]>(my $p = `/api/health-records/recent${days ? `)?days=${days}` : ''}`; versionedPath($p)
+export const addMedicalRecord = (studentId: string, data: AddMedicalRecordRequest) => request<{ id: string }>(versionedPath(`/api/health-records/student/${encodeURIComponent(studentId)}`), {
   method: 'POST',
   body: JSON.stringify(data),
 })

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { versionedPath } from '../lib/apiVersion';
 import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
@@ -33,17 +34,17 @@ export interface CreateStreamRequest {
 
 export async function getStreamsByClass(classId: string) {
   if (!classId.trim()) throw new Error('Class ID is required.')
-  const rows = await request<unknown>(`/api/streams/by-class/${encodeURIComponent(classId)}`)
+  const rows = await request<unknown>(versionedPath(`/api/streams/by-class/${encodeURIComponent(classId)}`))
   return parseApiResponse(z.array(streamResponseSchema), rows, 'streams by class') as Stream[]
 }
 export async function createStream(input: CreateStreamRequest) {
   const data = parseApiInput(streamCreateRequestSchema, input, 'create stream')
-  const created = await request<unknown>('/api/streams', { method: 'POST', body: JSON.stringify(data) })
+  const created = await request<unknown>(versionedPath('/api/streams'), { method: 'POST', body: JSON.stringify(data) })
   return parseApiResponse(streamResponseSchema, created, 'created stream') as Stream
 }
 
 export interface UpdateStreamRequest { code: string; name?: string; isActive: boolean }
 export async function updateStream(id: string, input: UpdateStreamRequest) {
   if (!id.trim() || !input.code.trim()) throw new Error('Stream ID and code are required.')
-  await request<void>(`/api/streams/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+  await request<void>(versionedPath(`/api/streams/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(input) })
 }

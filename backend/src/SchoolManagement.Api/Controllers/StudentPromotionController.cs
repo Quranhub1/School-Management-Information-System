@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
@@ -7,7 +8,7 @@ using SchoolManagement.Application.Students;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/students/{studentId:guid}/promotions")]
+[Route("api/v{version:apiVersion}/students/{studentId:guid}/promotions")]
 [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
 public sealed class StudentPromotionController(
     StudentPromotionService promotionService,

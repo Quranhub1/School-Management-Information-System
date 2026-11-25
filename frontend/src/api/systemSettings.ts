@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -35,19 +36,19 @@ async function request<T>(path: string, init?: RequestInit, authenticated = true
 // initialize its display defaults before an administrator session is available.
 export const getSystemCurrencySettings = async () => {
   try {
-    return await request<SystemCurrencySettings>('/api/public/institution-settings/currency', undefined, false)
+    return await request<SystemCurrencySettings>(versionedPath('/api/public/institution-settings/currency'), undefined, false)
   } catch (error) {
     // Some deployments may still enforce the previous authenticated policy on
     // this read route. Retry through the administrator endpoint with the
     // current session token rather than failing the System settings screen.
     if (!(error instanceof ApiRequestError) || error.status !== 401) throw error
-    return request<SystemCurrencySettings>('/api/administration/institution-settings/system-currency')
+    return request<SystemCurrencySettings>(versionedPath('/api/administration/institution-settings/system-currency'))
   }
 }
 
 // Changing the system default remains restricted to authorized administrators.
 export const saveSystemCurrencySettings = (code: string) =>
-  request<SystemCurrencySettings>('/api/administration/institution-settings/system-currency', {
+  request<SystemCurrencySettings>(versionedPath('/api/administration/institution-settings/system-currency'), {
     method: 'PUT',
     body: JSON.stringify({ code }),
   })

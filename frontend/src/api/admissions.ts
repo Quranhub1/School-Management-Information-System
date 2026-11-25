@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { versionedPath } from '../lib/apiVersion';
 import { getAccessToken } from './auth'
 import {
   admissionDecisionRequestSchema,
@@ -25,24 +26,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function getAdmissions() {
-  return parseApiResponse(z.array(admissionResponseSchema), await request<unknown>('/api/admissions'), 'admissions list') as Admission[]
+  return parseApiResponse(z.array(admissionResponseSchema), await request<unknown>(versionedPath('/api/admissions')), 'admissions list') as Admission[]
 }
 export async function getAdmission(id: string) {
-  return parseApiResponse(admissionResponseSchema, await request<unknown>(`/api/admissions/${encodeURIComponent(id)}`), 'admission') as Admission
+  return parseApiResponse(admissionResponseSchema, await request<unknown>(versionedPath(`/api/admissions/${encodeURIComponent(id)}`)), 'admission') as Admission
 }
 export async function createAdmission(input: { applicantId: string; programmeId: string; academicYearId: string; intakeId: string }) {
   const data = parseApiInput(createAdmissionRequestSchema, input, 'create admission')
-  return parseApiResponse(admissionResponseSchema, await request<unknown>('/api/admissions', { method: 'POST', body: JSON.stringify(data) }), 'created admission') as Admission
+  return parseApiResponse(admissionResponseSchema, await request<unknown>(versionedPath('/api/admissions'), { method: 'POST', body: JSON.stringify(data) }), 'created admission') as Admission
 }
 export async function updateAdmission(id: string, input: { id: string; status?: string }) {
   const data = parseApiInput(updateAdmissionRequestSchema, input, 'update admission')
-  return parseApiResponse(admissionResponseSchema, await request<unknown>(`/api/admissions/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }), 'updated admission') as Admission
+  return parseApiResponse(admissionResponseSchema, await request<unknown>(versionedPath(`/api/admissions/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(data) }), 'updated admission') as Admission
 }
 export function deleteAdmission(id: string) {
   if (!id.trim()) throw new Error('Admission ID is required.')
-  return request<void>(`/api/admissions/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  return request<void>(versionedPath(`/api/admissions/${encodeURIComponent(id)}`), { method: 'DELETE' })
 }
 export async function decideAdmission(id: string, decision: string, reason?: string, decidedBy?: string) {
   const data = parseApiInput(admissionDecisionRequestSchema, { decision, reason, decidedBy }, 'admission decision')
-  return parseApiResponse(admissionDecisionResponseSchema, await request<unknown>(`/api/admissions/${encodeURIComponent(id)}/decision`, { method: 'POST', body: JSON.stringify(data) }), 'admission decision') as AdmissionDecision
+  return parseApiResponse(admissionDecisionResponseSchema, await request<unknown>(versionedPath(`/api/admissions/${encodeURIComponent(id)}/decision`), { method: 'POST', body: JSON.stringify(data) }), 'admission decision') as AdmissionDecision
 }

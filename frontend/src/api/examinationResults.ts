@@ -1,4 +1,5 @@
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
+import { versionedPath } from '../lib/apiVersion';
 import { getAccessToken } from './auth'
 import { parseApiInput } from '../lib/validation'
 import { assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema } from '../schemas'
@@ -65,16 +66,16 @@ async function sendJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export function getExaminationTranscript(studentId: string): Promise<TranscriptEntry[]> {
-  return getJson<TranscriptEntry[]>(`/api/examinations/results/students/${studentId}/transcript`)
+  return getJson<TranscriptEntry[]>(versionedPath(`/api/examinations/results/students/${studentId}/transcript`))
 }
 
 export function getExaminationSummaries(studentId: string): Promise<AcademicResultSummary[]> {
-  return getJson<AcademicResultSummary[]>(`/api/examinations/results/students/${studentId}/summaries`)
+  return getJson<AcademicResultSummary[]>(versionedPath(`/api/examinations/results/students/${studentId}/summaries`))
 }
 
 export function getAssessmentPlans(courseId?: string): Promise<AssessmentPlan[]> {
   const query = courseId ? `?courseId=${encodeURIComponent(courseId)}` : ''
-  return getJson<AssessmentPlan[]>(`/api/assessments/plans${query}`)
+  return getJson<AssessmentPlan[]>(versionedPath(`/api/assessments/plans${query}`))
 }
 
 
@@ -86,11 +87,11 @@ export function createAssessmentPlan(input: {
   isCompetencyBased: boolean
 }): Promise<AssessmentPlan> {
   const validated = parseApiInput(assessmentPlanCreateRequestSchema, input, 'create assessment plan')
-  return sendJson<AssessmentPlan>('/api/assessments/plans', validated)
+  return sendJson<AssessmentPlan>(versionedPath('/api/assessments/plans'), validated)
 }
 
 export function getStudentAssessments(courseRegistrationId: string): Promise<StudentAssessment[]> {
-  return getJson<StudentAssessment[]>(`/api/assessments/registrations/${courseRegistrationId}`)
+  return getJson<StudentAssessment[]>(versionedPath(`/api/assessments/registrations/${courseRegistrationId}`))
 }
 
 export function recordAssessment(input: {
@@ -102,7 +103,7 @@ export function recordAssessment(input: {
   competencyLevel?: string
 }): Promise<StudentAssessment> {
   const validated = parseApiInput(recordAssessmentRequestSchema, input, 'record student assessment')
-  return sendJson<StudentAssessment>('/api/assessments', validated)
+  return sendJson<StudentAssessment>(versionedPath('/api/assessments'), validated)
 }
 
 export async function finalizeAssessment(id: string): Promise<StudentAssessment> {

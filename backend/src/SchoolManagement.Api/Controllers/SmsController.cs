@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Communication;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/sms")]
+[Route("api/v{version:apiVersion}/sms")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class SmsController(SchoolManagementDbContext db) : ControllerBase
 {

@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/finance/fiscal-periods")]
+[Route("api/v{version:apiVersion}/finance/fiscal-periods")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
 public sealed class FiscalPeriodsController(FiscalPeriodService periods) : ControllerBase
 {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
@@ -10,7 +11,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/finance/staff-allowances")]
+[Route("api/v{version:apiVersion}/finance/staff-allowances")]
 [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
 public sealed class StaffAllowancesController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {

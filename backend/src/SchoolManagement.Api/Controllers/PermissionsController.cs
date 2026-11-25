@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Identity;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/permissions")]
+[Route("api/v{version:apiVersion}/permissions")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class PermissionsController(SchoolManagementDbContext db) : ControllerBase
 {

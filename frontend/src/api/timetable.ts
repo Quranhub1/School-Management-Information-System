@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export type TimetableEntry = {
   id: string
@@ -55,12 +56,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json() as Promise<T>
 }
 
-export const getTimetableOptions = () => request<TimetableOptions>('/api/timetable/options')
-export const listTimetable = (teachingGroupId?: string) => request<TimetableEntry[]>(`/api/timetable${teachingGroupId ? `?teachingGroupId=${encodeURIComponent(teachingGroupId)}` : ''}`)
-export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>('/api/timetable', { method: 'POST', body: JSON.stringify(input) })
-export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) => request<TimetableEntry>(`/api/timetable/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
-export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
-export const generateTimetable = (semesterId: string, teachingGroupIds: string[], curriculumId: string, yearOfStudy: number, curriculumSemesterNumber: number, programmeId: string) => request<GenerateTimetableResult>('/api/timetable/generate', {
+export const getTimetableOptions = () => request<TimetableOptions>(versionedPath('/api/timetable/options'))
+export const listTimetable = (teachingGroupId?: string) => request<TimetableEntry[]>(my $p = `/api/timetable${teachingGroupId ? `)?teachingGroupId=${encodeURIComponent(teachingGroupId)}` : ''}`; versionedPath($p)
+export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>(versionedPath('/api/timetable'), { method: 'POST', body: JSON.stringify(input) })
+export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) => request<TimetableEntry>(versionedPath(`/api/timetable/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(input) })
+export const deactivateTimetableEntry = (id: string) => request<void>(versionedPath(`/api/timetable/${id}`), { method: 'DELETE' })
+export const generateTimetable = (semesterId: string, teachingGroupIds: string[], curriculumId: string, yearOfStudy: number, curriculumSemesterNumber: number, programmeId: string) => request<GenerateTimetableResult>(versionedPath('/api/timetable/generate'), {
   method: 'POST',
   body: JSON.stringify({
     semesterId,
@@ -91,10 +92,10 @@ export type TimetableTemplateLayout = {
   layoutJson: string | null
   updatedAtUtc: string | null
 }
-export const listSavedTimetableTemplates = () => request<SavedTimetableTemplate[]>('/api/timetable/templates')
-export const getTimetableTemplate = (teachingGroupId: string) => request<TimetableTemplateLayout>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`)
+export const listSavedTimetableTemplates = () => request<SavedTimetableTemplate[]>(versionedPath('/api/timetable/templates'))
+export const getTimetableTemplate = (teachingGroupId: string) => request<TimetableTemplateLayout>(versionedPath(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`))
 export const saveTimetableTemplate = (teachingGroupId: string, entries: CreateTimetableEntry[], layout: unknown) =>
-  request<TimetableEntry[]>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`, {
+  request<TimetableEntry[]>(versionedPath(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`), {
     method: 'PUT',
     body: JSON.stringify({ teachingGroupId, entries, layoutJson: JSON.stringify(layout) }),
   })

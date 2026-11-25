@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Regulatory;
@@ -8,7 +9,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/regulatory")]
+[Route("api/v{version:apiVersion}/regulatory")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
 public sealed class RegulatoryController(SchoolManagementDbContext db) : ControllerBase
 {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Authorization;
@@ -14,7 +15,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/admissions")]
+[Route("api/v{version:apiVersion}/admissions")]
 [Authorize(Policy = AdmissionsPolicies.Read)]
 public sealed class AdmissionsController(AdmissionsWorkflowService workflow, FinanceWorkflowService finance, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

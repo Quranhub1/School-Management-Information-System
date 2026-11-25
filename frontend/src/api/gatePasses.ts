@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface GatePass {
   id: string
@@ -55,13 +56,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getPendingGatePasses = () => request<GatePass[]>('/api/gate-passes/pending')
-export const getStudentGatePasses = (studentId: string) => request<GatePassDetail[]>(`/api/gate-passes/student/${encodeURIComponent(studentId)}`)
-export const requestGatePass = (data: RequestGatePassRequest) => request<{ id: string }>('/api/gate-passes/request', {
+export const getPendingGatePasses = () => request<GatePass[]>(versionedPath('/api/gate-passes/pending'))
+export const getStudentGatePasses = (studentId: string) => request<GatePassDetail[]>(versionedPath(`/api/gate-passes/student/${encodeURIComponent(studentId)}`))
+export const requestGatePass = (data: RequestGatePassRequest) => request<{ id: string }>(versionedPath('/api/gate-passes/request'), {
   method: 'POST',
   body: JSON.stringify(data),
 })
-export const approveGatePass = (id: string) => request<{ message: string }>(`/api/gate-passes/${encodeURIComponent(id)}/approve`, { method: 'POST' })
-export const rejectGatePass = (id: string) => request<{ message: string }>(`/api/gate-passes/${encodeURIComponent(id)}/reject`, { method: 'POST' })
-export const markGatePassUsed = (id: string) => request<{ message: string }>(`/api/gate-passes/${encodeURIComponent(id)}/use`, { method: 'POST' })
-export const markGatePassReturned = (id: string) => request<{ message: string }>(`/api/gate-passes/${encodeURIComponent(id)}/return`, { method: 'POST' })
+export const approveGatePass = (id: string) => request<{ message: string }>(versionedPath(`/api/gate-passes/${encodeURIComponent(id)}/approve`), { method: 'POST' })
+export const rejectGatePass = (id: string) => request<{ message: string }>(versionedPath(`/api/gate-passes/${encodeURIComponent(id)}/reject`), { method: 'POST' })
+export const markGatePassUsed = (id: string) => request<{ message: string }>(versionedPath(`/api/gate-passes/${encodeURIComponent(id)}/use`), { method: 'POST' })
+export const markGatePassReturned = (id: string) => request<{ message: string }>(versionedPath(`/api/gate-passes/${encodeURIComponent(id)}/return`), { method: 'POST' })

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
@@ -10,7 +11,7 @@ using SchoolManagement.Api.Services;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/finance")]
+[Route("api/v{version:apiVersion}/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
 public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db, CampusAccessService campusAccess, InstitutionSettingsService institutionSettings) : ControllerBase
 {

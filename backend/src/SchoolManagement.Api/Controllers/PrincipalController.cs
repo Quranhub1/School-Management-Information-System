@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/principal")]
+[Route("api/v{version:apiVersion}/principal")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
 public sealed class PrincipalController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {

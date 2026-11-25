@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Academic;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/academic-departments")]
+[Route("api/v{version:apiVersion}/academic-departments")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) : ControllerBase
 {

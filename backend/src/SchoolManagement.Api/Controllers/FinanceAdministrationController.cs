@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Finance;
@@ -7,7 +8,7 @@ using SchoolManagement.Application.Finance;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/finance/administration")]
+[Route("api/v{version:apiVersion}/finance/administration")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
 public sealed class FinanceAdministrationController(BudgetService budgets, BankReconciliationService bankReconciliations, InstitutionSettingsService institutionSettings) : ControllerBase
 {

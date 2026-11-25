@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Infrastructure.Persistence;
@@ -10,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/attendance-qr")]
+[Route("api/v{version:apiVersion}/attendance-qr")]
 [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
 public sealed class AttendanceQrController(AttendanceQrService qrService, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

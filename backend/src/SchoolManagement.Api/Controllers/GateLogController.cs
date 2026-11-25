@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
@@ -7,7 +8,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/gate")]
+[Route("api/v{version:apiVersion}/gate")]
 [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
 public sealed class GateLogController(SchoolManagementDbContext db) : ControllerBase
 {

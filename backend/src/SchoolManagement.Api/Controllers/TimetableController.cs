@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using SchoolManagement.Domain.Staff;
@@ -11,7 +12,7 @@ using SchoolManagement.Infrastructure.Timetable;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/timetable")]
+[Route("api/v{version:apiVersion}/timetable")]
 [Authorize(Policy = TimetablePolicies.Read)]
 public sealed class TimetableController(SchoolManagementDbContext db, TimetableGeneratorService generator, ITimetableRepository repository) : ControllerBase
 {

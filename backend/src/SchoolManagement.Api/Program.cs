@@ -2,9 +2,16 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
@@ -71,6 +78,51 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
             shared: true,
             flushToDiskInterval: TimeSpan.FromSeconds(2));
 });
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService("SMIS.Api", serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0.0")
+        .AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName,
+        }))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation(options =>
+        {
+            options.RecordException = true;
+            options.Filter = httpContext => 
+                !httpContext.Request.Path.StartsWithSegments("/health") &&
+                !httpContext.Request.Path.StartsWithSegments("/metrics");
+        })
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation(options =>
+        {
+            options.SetDbStatementForText = true;
+            options.SetDbStatementForStoredProcedure = true;
+        })
+        .AddSource("SMIS.Api")
+        .AddConsoleExporter()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317");
+        }))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddProcessInstrumentation()
+        .AddMeter("SMIS.Api")
+        .AddPrometheusExporter()
+        .AddConsoleExporter()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317");
+        }));
+
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database")
+    .AddPrometheusMetrics();
+
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
@@ -84,7 +136,51 @@ builder.Services.AddControllers().AddJsonOptions(o =>
     o.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+}).AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "SMIS API",
+        Version = "v1",
+        Description = "School Management Information System API"
+    });
+    
+    options.OperationFilter<SwaggerDefaultValues>();
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddHttpClient("Superset");
 builder.Services.AddHttpClient("LibraryPlugins", client => client.Timeout = TimeSpan.FromSeconds(15));
@@ -188,7 +284,18 @@ app.UseSerilogRequestLogging(options =>
         diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
     };
 });
-if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+        foreach (var description in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+        }
+    });
+}
 app.UseHttpsRedirection();
 
 // Serve the compiled React application from wwwroot when a production frontend
@@ -202,6 +309,60 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health").AllowAnonymous();
+
+// Prometheus metrics endpoint
+app.MapPrometheusScrapingEndpoint("/metrics").AllowAnonymous();
+
+// Test data seeding endpoint (only in Development/Testing)
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+{
+    app.MapPost("/api/test/seed-data", async (
+        SchoolManagementDbContext db,
+        AdminSeeder adminSeeder,
+        FinanceAccountSeeder financeSeeder,
+        PermissionCatalogSeeder permissionSeeder,
+        ILogger<Program> logger) =>
+    {
+        try
+        {
+            logger.LogInformation("Seeding test data...");
+            await adminSeeder.SeedAsync();
+            await financeSeeder.SeedAsync();
+            await permissionSeeder.SeedAsync();
+            
+            // Add some test institutions, campuses, etc.
+            var testInstitution = new SchoolManagement.Domain.Administration.Institution
+            {
+                Id = Guid.NewGuid(),
+                Code = "TEST",
+                Name = "Test Institution",
+                InstitutionType = "University",
+                Status = "Active"
+            };
+            db.Institutions.Add(testInstitution);
+            
+            var testCampus = new SchoolManagement.Domain.Administration.Campus
+            {
+                Id = Guid.NewGuid(),
+                InstitutionId = testInstitution.Id,
+                Code = "MAIN",
+                Name = "Main Campus",
+                Status = "Active"
+            };
+            db.Campuses.Add(testCampus);
+            
+            await db.SaveChangesAsync();
+            logger.LogInformation("Test data seeded successfully");
+            return Results.Ok(new { message = "Test data seeded", institutionId = testInstitution.Id });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to seed test data");
+            return Results.Problem("Failed to seed test data");
+        }
+    }).AllowAnonymous();
+}
+
 app.MapPost("/api/diagnostics/client-errors", (
     ClientErrorReport report,
     HttpContext httpContext,

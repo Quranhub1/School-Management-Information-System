@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using Stream = SchoolManagement.Domain.Academic.Stream;
@@ -7,7 +8,7 @@ using Stream = SchoolManagement.Domain.Academic.Stream;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/streams")]
+[Route("api/v{version:apiVersion}/streams")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class StreamsController(StreamService service) : ControllerBase
 {

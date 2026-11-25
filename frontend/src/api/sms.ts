@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 import { readApiErrorMessage } from './errors'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import { sendBulkSmsRequestSchema, sendSmsRequestSchema, smsSendResponseSchema } from '../schemas'
@@ -41,21 +42,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getSmsTemplates = () => request<SmsTemplate[]>('/api/sms/templates')
+export const getSmsTemplates = () => request<SmsTemplate[]>(versionedPath('/api/sms/templates'))
 export const getSmsHistory = (recipientType?: string, status?: string) => {
   const params = new URLSearchParams()
   if (recipientType) params.set('recipientType', recipientType)
   if (status) params.set('status', status)
   const qs = params.toString()
-  return request<SmsHistoryItem[]>(`/api/sms/history${qs ? `?${qs}` : ''}`)
+  return request<SmsHistoryItem[]>(my $p = `/api/sms/history${qs ? `)?${qs}` : ''}`; versionedPath($p)
 }
 export async function sendSms(data: SendSmsRequest) {
   const input = parseApiInput(sendSmsRequestSchema, data, 'send SMS')
-  const result = await request<unknown>('/api/sms/send', { method: 'POST', body: JSON.stringify(input) })
+  const result = await request<unknown>(versionedPath('/api/sms/send'), { method: 'POST', body: JSON.stringify(input) })
   return parseApiResponse(smsSendResponseSchema, result, 'SMS send result')
 }
 export async function sendBulkSms(data: SendBulkSmsRequest) {
   const input = parseApiInput(sendBulkSmsRequestSchema, data, 'send bulk SMS')
-  const result = await request<unknown>('/api/sms/send-bulk', { method: 'POST', body: JSON.stringify(input) })
+  const result = await request<unknown>(versionedPath('/api/sms/send-bulk'), { method: 'POST', body: JSON.stringify(input) })
   return parseApiResponse(smsSendResponseSchema, result, 'bulk SMS send result')
 }

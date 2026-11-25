@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Assessment;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/examinations/results")]
+[Route("api/v{version:apiVersion}/examinations/results")]
 [Authorize(Policy = AuthorizationPolicies.ExaminationManagement)]
 public sealed class ExaminationResultsController(AcademicRecordService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

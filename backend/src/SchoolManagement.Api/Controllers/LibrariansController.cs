@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SchoolManagement.Application.Authorization;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/library/librarians")]
+[Route("api/v{version:apiVersion}/library/librarians")]
 [Authorize(Policy = LibraryPolicies.Management)]
 public sealed class LibrariansController(
     SchoolManagementDbContext db,

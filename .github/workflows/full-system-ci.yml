@@ -140,6 +140,12 @@ jobs:
           cat /tmp/smis-api.log
           exit 1
 
+      - name: Generate OpenAPI spec
+        shell: bash
+        run: |
+          curl --fail --silent http://127.0.0.1:5080/swagger/v1/swagger.json -o backend/src/SchoolManagement.Api/swagger.json
+          echo "OpenAPI spec saved"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -170,6 +176,10 @@ jobs:
       - name: Build frontend against running API
         working-directory: frontend
         run: npm run build
+
+      - name: Validate API contract
+        working-directory: frontend
+        run: npm run validate:api-contract
 
       - name: Audit complete E2E dependency tree
         working-directory: frontend

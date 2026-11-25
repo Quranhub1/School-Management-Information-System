@@ -53,5 +53,21 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Analyze bundle sizes
+        run: npm run build:analyze
+
+      - name: Upload bundle stats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: frontend/dist/stats.html
+
+      - name: Install Playwright for accessibility tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run accessibility tests
+        run: npx playwright test --config=playwright-a11y.config.ts --reporter=line
+
       - name: Audit dependency vulnerabilities
         run: npm audit --audit-level=low

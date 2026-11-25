@@ -8,11 +8,13 @@ using SchoolManagement.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Authorization;
+using Asp.Versioning;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/attendance")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/attendance")]
 [Authorize]
 public sealed class AttendanceController(AttendanceService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

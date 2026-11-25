@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Payroll;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/staff/payroll")]
+[Route("api/v{version:apiVersion}/staff/payroll")]
 [Authorize(Policy = AuthorizationPolicies.PayrollRead)]
 public sealed class PayrollController(SchoolManagementDbContext db, IConfiguration configuration, InstitutionSettingsService institutionSettings) : ControllerBase
 {

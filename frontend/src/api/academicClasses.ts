@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -39,18 +40,18 @@ export interface CreateAcademicClassRequest {
 
 export const getClassesByProgramme = (programmeId: string) => {
   if (!programmeId.trim()) throw new Error('Programme ID is required.')
-  return request<AcademicClass[]>(`/api/academic-classes/by-programme/${encodeURIComponent(programmeId)}`)
+  return request<AcademicClass[]>(versionedPath(`/api/academic-classes/by-programme/${encodeURIComponent(programmeId)}`))
 }
 
 export const getClassesByPeriod = (periodId: string) => {
   if (!periodId.trim()) throw new Error('Period ID is required.')
-  return request<AcademicClass[]>(`/api/academic-classes/by-period/${encodeURIComponent(periodId)}`)
+  return request<AcademicClass[]>(versionedPath(`/api/academic-classes/by-period/${encodeURIComponent(periodId)}`))
 }
 
 export const createAcademicClass = (input: CreateAcademicClassRequest) => {
   if (!input.code.trim()) throw new Error('Class code is required.')
   if (!input.programmeId.trim() || !input.academicPeriodId.trim()) throw new Error('Programme and period IDs are required.')
-  return request<AcademicClass>('/api/academic-classes', { method: 'POST', body: JSON.stringify(input) })
+  return request<AcademicClass>(versionedPath('/api/academic-classes'), { method: 'POST', body: JSON.stringify(input) })
 }
 
 export interface UpdateAcademicClassRequest {
@@ -66,11 +67,11 @@ export const updateAcademicClass = (id: string, input: UpdateAcademicClassReques
   if (!id.trim() || input.id !== id) throw new Error('A matching class ID is required.')
   if (!input.code.trim()) throw new Error('Class code is required.')
   if (input.yearOfStudy < 1) throw new Error('Year of study must be at least 1.')
-  return request<void>(`/api/academic-classes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+  return request<void>(versionedPath(`/api/academic-classes/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(input) })
 }
 
 export const setAcademicClassStatus = (id: string, status: number) => {
   if (!id.trim()) throw new Error('Class ID is required.')
   if (![0, 1, 2].includes(status)) throw new Error('Invalid class status.')
-  return request<void>(`/api/academic-classes/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
+  return request<void>(versionedPath(`/api/academic-classes/${encodeURIComponent(id)}/status`), { method: 'PATCH', body: JSON.stringify({ status }) })
 }

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Inventory;
 using SchoolManagement.Infrastructure.Persistence;
@@ -10,7 +11,7 @@ using SchoolManagement.Api.Services;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/inventory/stock-alerts")]
+[Route("api/v{version:apiVersion}/inventory/stock-alerts")]
 [Authorize(Policy = "Permission:inventory.read-stock-alerts")]
 public sealed class InventoryStockAlertsController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

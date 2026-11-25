@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Assessment;
@@ -8,7 +9,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/assessment-weighting-profiles")]
+[Route("api/v{version:apiVersion}/assessment-weighting-profiles")]
 [Authorize(Policy = AuthorizationPolicies.ExaminationManagement)]
 public sealed class AssessmentWeightingProfilesController(SchoolManagementDbContext db) : ControllerBase
 {
