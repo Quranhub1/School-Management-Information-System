@@ -111,7 +111,6 @@ export function deriveTimetableSelection(
     : ''
   const matchingCohortGroups = options.teachingGroups.filter(
     item =>
-      item.isActive !== false &&
       programmeIdSet.has(item.programmeId) &&
       item.semesterId === academicPeriodId &&
       (!item.curriculumId || item.curriculumId === selectedCurriculum?.id) &&
