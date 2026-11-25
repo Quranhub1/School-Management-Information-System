@@ -7,6 +7,7 @@ vi.mock('../api/auth', () => ({
 }))
 
 vi.mock('../api/finance', () => ({
+  getInvoices: vi.fn().mockResolvedValue([]),
   getDashboard: vi.fn().mockResolvedValue({
     totalBilled: 0,
     totalPaid: 0,
