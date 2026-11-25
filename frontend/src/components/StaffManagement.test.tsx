@@ -70,6 +70,7 @@ describe('StaffManagement', () => {
     render(<StaffManagement canManage canManageAccounts />)
     fireEvent.click(screen.getByRole('tab', { name: /Recruitment & Onboarding/ }))
     expect(await screen.findByRole('heading', { name: 'Permissions by module' })).toBeTruthy()
+    fireEvent.click(screen.getByText('Academic Management'))
     expect(await screen.findByLabelText('Manage timetable')).toBeEnabled()
     expect(screen.getByLabelText('Manage admissions')).toBeEnabled()
     expect(screen.getByLabelText('Manage settings (System Administrator only)')).toBeEnabled()
