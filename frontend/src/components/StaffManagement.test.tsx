@@ -4,6 +4,8 @@ import React from 'react'
 
 vi.mock('../api/staff', () => ({
   listStaff: vi.fn().mockResolvedValue([]),
+  listStaffPermissionCatalog: vi.fn().mockResolvedValue([]),
+  listStaffRoles: vi.fn().mockResolvedValue([]),
   listStaffDepartments: vi.fn().mockResolvedValue([]),
   listStaffCourseUnits: vi.fn().mockResolvedValue([]),
   createStaff: vi.fn().mockResolvedValue(null),
