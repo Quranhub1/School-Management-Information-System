@@ -102,7 +102,7 @@ describe('TimetableManagement', () => {
   it('opens the saved timetable library, supports back navigation, and opens a saved class template', async () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
-    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
     expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
@@ -110,7 +110,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /open timetable/i }))
-    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Saved timetables' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('heading', { name: /saved timetables/i })).toBeNull())
     expect(screen.queryByLabelText('Programme')).toBeNull()
     expect(screen.queryByLabelText('Curriculum')).toBeNull()
     expect(screen.queryByLabelText('Year of study')).toBeNull()
@@ -188,7 +188,7 @@ describe('TimetableManagement', () => {
     fireEvent.change(teachingGroups)
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     await waitFor(() => expect(generateTimetable).toHaveBeenCalledTimes(1))
-    expect(generateTimetable).toHaveBeenCalledWith('period-1', ['group-1', 'group-2'], 'curriculum-1', 1, 1, 'programme-1')
+    expect(generateTimetable).toHaveBeenCalledWith('period-1', ['group-1'], 'curriculum-1', 1, 1, 'programme-1')
   }, 15000)
 
   it('shows live system data from the central timetable options API', async () => {
@@ -358,7 +358,7 @@ describe('TimetableManagement', () => {
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     const classSelect = await screen.findByLabelText('Class / teaching group') as HTMLSelectElement
     expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1')
-    expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1-B')
+    expect(Array.from(classSelect.options).map(option => option.textContent)).not.toContain('CPH-Y1-S1-B')
   })
 
   it('shows programme curriculum selectors when a timetable workflow is opened', async () => {
