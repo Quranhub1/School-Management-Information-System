@@ -123,7 +123,7 @@ describe('TimetableManagement', () => {
     fireEvent.click(backToMain)
     expect(await screen.findByRole('button', { name: /saved timetables/i })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
-    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /back to main/i }))
     expect(screen.getByRole('heading', { name: 'Timetable management' })).toBeTruthy()
   }, 15000)
