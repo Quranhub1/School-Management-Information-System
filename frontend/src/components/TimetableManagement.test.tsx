@@ -103,7 +103,7 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
-    expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
+    expect(screen.getByText(/Save a class timetable from the timetable designer to see it here/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
     expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
@@ -365,9 +365,18 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     expect(await screen.findByLabelText('Programme')).toBeTruthy()
-    expect(screen.getByLabelText('Curriculum')).toBeTruthy()
-    expect(screen.getByLabelText('Year of study')).toBeTruthy()
-    expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
+    const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
+    expect(curriculum).toBeTruthy()
+    const programme = screen.getByLabelText('Programme') as HTMLSelectElement
+    await waitFor(() => expect(Array.from(programme.options).some(option => option.value === 'programme-1')).toBe(true))
+    fireEvent.change(programme, { target: { value: 'programme-1' } })
+    await waitFor(() => expect(curriculum.value).toBe('curriculum-1'))
+    const year = screen.getByLabelText('Year of study') as HTMLSelectElement
+    await waitFor(() => expect(Array.from(year.options).some(option => option.value === '1')).toBe(true))
+    fireEvent.change(year, { target: { value: '1' } })
+    const semester = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    await waitFor(() => expect(Array.from(semester.options).some(option => option.value === 'CPH11')).toBe(true))
+    fireEvent.change(semester, { target: { value: 'CPH11' } })
     expect(screen.getAllByRole('option', { name: /CPH 101 — Pharmacy Practice/ }).length).toBeGreaterThan(0)
   })
  
