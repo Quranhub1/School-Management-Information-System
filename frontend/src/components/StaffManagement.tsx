@@ -600,6 +600,15 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               <label className="field-label">Basic monthly salary
                 <input aria-label="Basic monthly salary" type="number" min="0" step="0.01" value={form.basicSalary} onChange={e => setForm({ ...form, basicSalary: e.target.value })} />
               </label>
+              <label className="field-label">Bank name
+                <input aria-label="Bank name" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} />
+              </label>
+              <label className="field-label">Bank account number
+                <input aria-label="Bank account number" value={form.bankAccountNumber} onChange={e => setForm({ ...form, bankAccountNumber: e.target.value })} />
+              </label>
+              <label className="field-label">Bank address
+                <input aria-label="Bank address" value={form.bankAddress} onChange={e => setForm({ ...form, bankAddress: e.target.value })} />
+              </label>
               {!editingStaffId && <fieldset className="field-label" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 700 }}>Login account and screen permissions</legend>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, cursor: 'pointer' }}>
