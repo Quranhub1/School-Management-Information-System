@@ -104,6 +104,20 @@ jobs:
             --configuration Release \
             --no-build
 
+      - name: Seed CI institution settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "postgresql://school_management:ci_validation@127.0.0.1:5432/school_management_ci" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO "InstitutionSettings"
+            ("Id", "InstitutionName", "Abbreviation", "Motto", "Country", "InstitutionType",
+             "PrimaryColor", "AccentColor", "SystemCurrencyCode", "SystemCurrencyLocale",
+             "SystemCurrencyFractionDigits", "EmailEnabled", "IsActive", "UpdatedAt")
+          SELECT gen_random_uuid(), 'KAMPALA SCHOOL OF HEALTH SCIENCES', 'KSHS', 'Health is Life',
+                 'Uganda', 'School', '#0505cc', '#0735ed', 'UGX', 'en-UG', 0, FALSE, TRUE, NOW()
+          WHERE NOT EXISTS (SELECT 1 FROM "InstitutionSettings" WHERE "IsActive" = TRUE);
+          SQL
+
       - name: Run application service unit tests
         working-directory: backend
         run: dotnet test tests/SchoolManagement.Application.Tests/SchoolManagement.Application.Tests.csproj --configuration Release --no-restore --no-build --verbosity normal
