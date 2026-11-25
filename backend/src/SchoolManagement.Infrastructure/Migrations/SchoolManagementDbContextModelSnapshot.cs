@@ -894,6 +894,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("\"ProgrammeId\" IS NOT NULL AND \"CurriculumId\" IS NOT NULL AND \"YearOfStudy\" IS NOT NULL AND \"SemesterId\" IS NOT NULL");
 
+                    b.HasIndex("CurriculumId");
+
+                    b.HasIndex("SemesterId");
+
                     b.ToTable("TeachingGroups");
                 });
 
