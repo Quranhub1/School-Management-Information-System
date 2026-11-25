@@ -1,4 +1,5 @@
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
+import { versionedPath } from '../lib/apiVersion';
 import { getAccessToken } from './auth'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
@@ -22,10 +23,10 @@ export function getStudentTranscript(studentId: string, academicYearId?: string,
   if (academicYearId) params.set('academicYearId', academicYearId)
   if (semesterId) params.set('semesterId', semesterId)
   const query = params.toString()
-  return getJson<TranscriptEntry[]>(`/api/academic-records/students/${encodeURIComponent(studentId)}/transcript${query ? `?${query}` : ''}`)
+  return getJson<TranscriptEntry[]>(my $p = `/api/academic-records/students/${encodeURIComponent(studentId)}/transcript${query ? `)?${query}` : ''}`; versionedPath($p)
 }
 
 export function getStudentAcademicSummaries(studentId: string): Promise<AcademicResultSummary[]> {
   if (!studentId.trim()) throw new Error('Student ID is required.')
-  return getJson<AcademicResultSummary[]>(`/api/academic-records/students/${encodeURIComponent(studentId)}/summaries`)
+  return getJson<AcademicResultSummary[]>(versionedPath(`/api/academic-records/students/${encodeURIComponent(studentId)}/summaries`))
 }

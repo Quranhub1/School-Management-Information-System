@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Calendar;
@@ -8,7 +9,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/calendar/{eventId:guid}/reminders")]
+[Route("api/v{version:apiVersion}/calendar/{eventId:guid}/reminders")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CalendarRemindersController(SchoolManagementDbContext db) : ControllerBase
 {

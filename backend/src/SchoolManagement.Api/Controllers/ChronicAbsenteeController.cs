@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using SchoolManagement.Domain.Attendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
@@ -10,7 +11,7 @@ using SchoolManagement.Api.Services;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/attendance/chronic")]
+[Route("api/v{version:apiVersion}/attendance/chronic")]
 [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
 public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

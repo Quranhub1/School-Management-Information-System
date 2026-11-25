@@ -25,6 +25,44 @@
     "edit": "Hariri",
     "search": "Tafuta",
     "actions": "Vitendo",
-    "empty": "Hakuna rekodi zilizopatikana."
+    "empty": "Hakuna rekodi zilizopatikana.",
+    "confirmDelete": "Je, una uhakika unataka kufuta {name}?",
+    "itemsSelected": "{count, plural, one{chaguo 1 kimetengenezwa} other{chaguo # zimetengenezwa}}",
+    "studentCount": "{count, plural, one{mwanafunzi 1} other{wanafunzi #}}",
+    "staffCount": "{count, plural, one{mfanyakazi 1} other{wafanyakazi #}}",
+    "recordCount": "{count, plural, one{rekodi 1} other{rekodi #}}",
+    "pageInfo": "Ukurasa {current} wa {total}",
+    "dateFormat": "{date, date, full}",
+    "timeFormat": "{date, time, short}",
+    "currencyFormat": "{amount, number, style:\"currency\", currency:\"UGX\"}",
+    "percentage": "{value, number, style:\"percent\"}",
+    "fileSize": "{bytes, number, style:\"unit\", unit:\"byte\", unitDisplay:\"short\"}"
+  },
+  "students": {
+    "title": "Wanafunzi",
+    "add": "Ongeza Mwanafunzi",
+    "edit": "Hariri Mwanafunzi",
+    "view": "Tazama Mwanafunzi",
+    "archive": "Arkifi",
+    "restore": "Repaa",
+    "guardians": "Walezi",
+    "enrollment": "Usajili",
+    "attendance": "Uwepo",
+    "finance": "Finansi",
+    "documents": "Hati"
+  },
+  "validation": {
+    "required": "{field} inahitajika",
+    "email": "Tafuta barua pepe halali",
+    "phone": "Tafuta nambari ya simu halali",
+    "minLength": "{field} inapaswa kuwa na angalau {min} herufi",
+    "maxLength": "{field} haipaswi kuisha {max} herufi",
+    "pattern": "Muundo wa {field} si sahihi"
+  },
+  "notifications": {
+    "saved": "{entity} imehifadhiwa kwa mafanikio",
+    "deleted": "{entity} imefutwa kwa mafanikio",
+    "updated": "{entity} imesasishwa kwa mafanikio",
+    "error": "Imeshindwa ku{action} {entity}"
   }
 }

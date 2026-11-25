@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Domain.Academic;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/hostel")]
+[Route("api/v{version:apiVersion}/hostel")]
 [Authorize(Policy = AuthorizationPolicies.HostelManagement)]
 public sealed class HostelController(HostelService service, SchoolManagementDbContext db, CampusAccessService campusAccess, ProgrammeService programmeService) : ControllerBase
 {

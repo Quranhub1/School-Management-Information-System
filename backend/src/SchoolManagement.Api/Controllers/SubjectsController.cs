@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using Subject = SchoolManagement.Domain.Academic.Subject;
@@ -7,7 +8,7 @@ using Subject = SchoolManagement.Domain.Academic.Subject;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/subjects")]
+[Route("api/v{version:apiVersion}/subjects")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class SubjectsController(SubjectService service) : ControllerBase
 {

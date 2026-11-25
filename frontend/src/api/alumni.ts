@@ -15,7 +15,7 @@ export function listAlumni(search = '', programme = '', fromDate = '', toDate = 
   if (fromDate) params.set('fromDate', fromDate)
   if (toDate) params.set('toDate', toDate)
   const qs = params.toString()
-  return request<Alumni[]>(`/api/alumni${qs ? `?${qs}` : ''}`)
+  return request<Alumni[]>(my $p = `/api/alumni${qs ? `)?${qs}` : ''}`; versionedPath($p)
 }
-export function createAlumni(input: Omit<Alumni,'id'|'isActive'>){ return request<Alumni>('/api/alumni',{method:'POST',body:JSON.stringify(input)}); }
-export function updateAlumni(id:string,input:Partial<Alumni>){ return request<void>(`/api/alumni/${id}`,{method:'PATCH',body:JSON.stringify(input)}); }
+export function createAlumni(input: Omit<Alumni,'id'|'isActive'>){ return request<Alumni>(versionedPath('/api/alumni'),{method:'POST',body:JSON.stringify(input)}); }
+export function updateAlumni(id:string,input:Partial<Alumni>){ return request<void>(versionedPath(`/api/alumni/${id}`),{method:'PATCH',body:JSON.stringify(input)}); }

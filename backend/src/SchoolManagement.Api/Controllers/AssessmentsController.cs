@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Assessment;
 using SchoolManagement.Application.Authorization;
@@ -10,7 +11,7 @@ using SchoolManagement.Api.Services;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/assessments")]
+[Route("api/v{version:apiVersion}/assessments")]
 [Authorize(Policy = AuthorizationPolicies.ExaminationManagement)]
 public sealed class AssessmentsController(AssessmentService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

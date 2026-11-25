@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Authorization;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/administration/institution-settings")]
+[Route("api/v{version:apiVersion}/administration/institution-settings")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed class InstitutionSettingsController(InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
 {

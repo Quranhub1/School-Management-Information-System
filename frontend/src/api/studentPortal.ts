@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 import type { TranscriptEntry, AcademicResultSummary } from '../types/academic'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
@@ -39,16 +40,16 @@ export interface StudentSemesterResult {
 }
 
 export function getStudentPortalProfile(): Promise<StudentPortalProfile> {
-  return request<StudentPortalProfile>('/api/student-portal/me')
+  return request<StudentPortalProfile>(versionedPath('/api/student-portal/me'))
 }
 
 export function getStudentTranscript(academicYearId?: string, semesterId?: string): Promise<TranscriptEntry[]> {
   const qs = new URLSearchParams()
   if (academicYearId) qs.set('academicYearId', academicYearId)
   if (semesterId) qs.set('semesterId', semesterId)
-  return request<TranscriptEntry[]>(`/api/student-portal/me/transcript${qs.toString() ? `?${qs.toString()}` : ''}`)
+  return request<TranscriptEntry[]>(my $p = `/api/student-portal/me/transcript${qs.toString() ? `)?${qs.toString()}` : ''}`; versionedPath($p)
 }
 
 export function getStudentSummaries(): Promise<AcademicResultSummary[]> {
-  return request<AcademicResultSummary[]>('/api/student-portal/me/summaries')
+  return request<AcademicResultSummary[]>(versionedPath('/api/student-portal/me/summaries'))
 }

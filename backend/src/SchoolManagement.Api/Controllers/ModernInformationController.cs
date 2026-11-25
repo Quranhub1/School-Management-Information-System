@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Authorization;
@@ -14,7 +15,7 @@ namespace SchoolManagement.Api.Controllers;
 /// predictive risk, global search, workflow summaries and admission document metadata.
 /// </summary>
 [ApiController]
-[Route("api/modern")]
+[Route("api/v{version:apiVersion}/modern")]
 [Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class ModernInformationController(SchoolManagementDbContext db, IWebHostEnvironment environment, InstitutionSettingsService institutionSettings) : ControllerBase
 {

@@ -1,10 +1,11 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = new URL(`${API_BASE_URL}${path}`, window.location.origin)
-  if (url.pathname === '/api/public/institution-settings/active') {
+  if (url.pathname === versionedPath('/api/public/institution-settings/active')) {
     url.searchParams.set('_live', String(Date.now()))
   }
   const headers = new Headers(init?.headers)
@@ -87,14 +88,14 @@ export interface GalleryItem {
 }
 
 export interface SystemCurrencySettings { code: string; locale: string; fractionDigits: number }
-export const getPublicSystemCurrencySettings = () => request<SystemCurrencySettings>('/api/public/institution-settings/currency')
-export const getPublicInstitutionSettings = () => request<InstitutionSettings>('/api/public/institution-settings/active')
-export const getInstitutionSettings = () => authedRequest<InstitutionSettings[]>('/api/administration/institution-settings')
-export const getActiveInstitutionSettings = () => authedRequest<InstitutionSettings>('/api/administration/institution-settings/active')
-export const createInstitutionSettings = (input: CreateInstitutionSettingsRequest) => authedRequest<InstitutionSettings>('/api/administration/institution-settings', { method: 'POST', body: JSON.stringify(input) })
+export const getPublicSystemCurrencySettings = () => request<SystemCurrencySettings>(versionedPath('/api/public/institution-settings/currency'))
+export const getPublicInstitutionSettings = () => request<InstitutionSettings>(versionedPath('/api/public/institution-settings/active'))
+export const getInstitutionSettings = () => authedRequest<InstitutionSettings[]>(versionedPath('/api/administration/institution-settings'))
+export const getActiveInstitutionSettings = () => authedRequest<InstitutionSettings>(versionedPath('/api/administration/institution-settings/active'))
+export const createInstitutionSettings = (input: CreateInstitutionSettingsRequest) => authedRequest<InstitutionSettings>(versionedPath('/api/administration/institution-settings'), { method: 'POST', body: JSON.stringify(input) })
 
 export async function uploadInstitutionLogoFromUrl(url: string): Promise<InstitutionSettings> {
-  return authedRequest<InstitutionSettings>('/api/administration/institution-settings/logo/from-url', {
+  return authedRequest<InstitutionSettings>(versionedPath('/api/administration/institution-settings/logo/from-url'), {
     method: 'POST',
     body: JSON.stringify({ url }),
   })
@@ -104,7 +105,7 @@ export async function uploadInstitutionLogo(file: File): Promise<InstitutionSett
   const form = new FormData()
   form.append('file', file)
   return authedRequest<InstitutionSettings>(
-    '/api/administration/institution-settings/logo',
+    versionedPath('/api/administration/institution-settings/logo'),
     { method: 'POST', body: form },
   )
 }
@@ -117,7 +118,7 @@ function resolveGalleryItem(item: GalleryItem): GalleryItem {
 }
 
 export async function getGallery(): Promise<GalleryItem[]> {
-  const items = await request<GalleryItem[]>('/api/public/institution-gallery')
+  const items = await request<GalleryItem[]>(versionedPath('/api/public/institution-gallery'))
   return items.map(resolveGalleryItem)
 }
 
@@ -126,7 +127,7 @@ export async function uploadGalleryImage(file: File, title: string, caption: str
   form.append('file', file)
   form.append('title', title)
   form.append('caption', caption)
-  const item = await authedRequest<GalleryItem>('/api/administration/institution-gallery/upload', {
+  const item = await authedRequest<GalleryItem>(versionedPath('/api/administration/institution-gallery/upload'), {
     method: 'POST',
     body: form,
   })
@@ -134,13 +135,13 @@ export async function uploadGalleryImage(file: File, title: string, caption: str
 }
 
 export const addGalleryUrl = (url: string, title: string, caption: string) =>
-  authedRequest<GalleryItem>('/api/administration/institution-gallery/url', {
+  authedRequest<GalleryItem>(versionedPath('/api/administration/institution-gallery/url'), {
     method: 'POST',
     body: JSON.stringify({ url, title, caption }),
   })
 
 export const deleteGalleryItem = (id: string) =>
-  authedRequest<void>(`/api/administration/institution-gallery/${id}`, { method: 'DELETE' })
+  authedRequest<void>(versionedPath(`/api/administration/institution-gallery/${id}`), { method: 'DELETE' })
 
 export interface InstitutionEmailSettings {
   emailEnabled: boolean
@@ -163,6 +164,6 @@ export interface SaveInstitutionEmailSettings {
   fromName: string
   clearPassword?: boolean
 }
-export const getInstitutionEmailSettings = () => authedRequest<InstitutionEmailSettings>('/api/administration/email-settings')
-export const saveInstitutionEmailSettings = (input: SaveInstitutionEmailSettings) => authedRequest<InstitutionEmailSettings>('/api/administration/email-settings', { method: 'PUT', body: JSON.stringify(input) })
-export const sendInstitutionEmailTest = (recipient: string) => authedRequest<{ sent: boolean; recipient: string }>('/api/administration/email-settings/test', { method: 'POST', body: JSON.stringify({ recipient }) })
+export const getInstitutionEmailSettings = () => authedRequest<InstitutionEmailSettings>(versionedPath('/api/administration/email-settings'))
+export const saveInstitutionEmailSettings = (input: SaveInstitutionEmailSettings) => authedRequest<InstitutionEmailSettings>(versionedPath('/api/administration/email-settings'), { method: 'PUT', body: JSON.stringify(input) })
+export const sendInstitutionEmailTest = (recipient: string) => authedRequest<{ sent: boolean; recipient: string }>(versionedPath('/api/administration/email-settings/test'), { method: 'POST', body: JSON.stringify({ recipient }) })

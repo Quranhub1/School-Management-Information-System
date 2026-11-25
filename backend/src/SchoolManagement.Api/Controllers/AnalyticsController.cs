@@ -3,12 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/analytics")]
+[Route("api/v{version:apiVersion}/analytics")]
 [Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class AnalyticsController(IConfiguration configuration, IHttpClientFactory httpClientFactory) : ControllerBase
 {

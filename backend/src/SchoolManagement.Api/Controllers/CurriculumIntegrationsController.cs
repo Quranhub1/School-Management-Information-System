@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/curriculum-integrations")]
+[Route("api/v{version:apiVersion}/curriculum-integrations")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CurriculumIntegrationsController(
     ElectiveGroupService electiveGroupService,

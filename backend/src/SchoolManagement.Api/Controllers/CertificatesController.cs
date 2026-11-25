@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Certificates;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/certificates")]
+[Route("api/v{version:apiVersion}/certificates")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CertificatesController(CertificateService service) : ControllerBase
 {

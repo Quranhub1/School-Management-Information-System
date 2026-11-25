@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Assessment;
 using SchoolManagement.Application.Authorization;
@@ -8,7 +9,7 @@ using SchoolManagement.Domain.Assessment;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/academic-records")]
+[Route("api/v{version:apiVersion}/academic-records")]
 [Authorize(Policy = AuthorizationPolicies.AcademicRead)]
 public sealed class AcademicRecordsController(AcademicRecordService service, ProgressionAssessment progression) : ControllerBase
 {

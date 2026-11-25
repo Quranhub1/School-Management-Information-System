@@ -9,6 +9,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type Message = { id:string; conversationId:string; senderId:string; recipientId?:string; subject?:string; body:string; sentAt:string; readAt?:string };
 export type Conversation = { conversationId:string; subject?:string; lastMessageAt:string; participants:string[] };
-export function getConversations(){ return request<Conversation[]>('/api/messages/conversations'); }
-export function getMessages(conversationId:string){ return request<Message[]>(`/api/messages/${conversationId}`); }
-export function sendMessage(input:{ conversationId:string; recipientId?:string; subject?:string; body:string }){ return request<Message>('/api/messages/send',{method:'POST',body:JSON.stringify(input)}); }
+export function getConversations(){ return request<Conversation[]>(versionedPath('/api/messages/conversations')); }
+export function getMessages(conversationId:string){ return request<Message[]>(versionedPath(`/api/messages/${conversationId}`)); }
+export function sendMessage(input:{ conversationId:string; recipientId?:string; subject?:string; body:string }){ return request<Message>(versionedPath('/api/messages/send'),{method:'POST',body:JSON.stringify(input)}); }

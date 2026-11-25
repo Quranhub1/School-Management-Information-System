@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Inventory;
@@ -10,7 +11,7 @@ using SchoolManagement.Api.Services;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/inventory/registers")]
+[Route("api/v{version:apiVersion}/inventory/registers")]
 [Authorize(Policy = AuthorizationPolicies.InventoryManagement)]
 public sealed class InventoryRegistersController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {

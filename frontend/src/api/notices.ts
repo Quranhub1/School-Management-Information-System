@@ -18,10 +18,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type Notice = { id:string; title:string; body:string; priority:string; audience:string; expiresAt?:string; createdBy:string; createdAt:string };
 export function listNotices() {
-  return request<Notice[]>('/api/notices/board');
+  return request<Notice[]>(versionedPath('/api/notices/board'));
 }
 export type CreateNoticeInput = Omit<Notice, 'id' | 'createdAt' | 'createdBy' | 'expiresAt'> & { expiresAt: string | null };
 export async function createNotice(input: CreateNoticeInput) {
-  const created = await request<Notice>('/api/notices/board',{method:'POST',body:JSON.stringify(input)});
+  const created = await request<Notice>(versionedPath('/api/notices/board'),{method:'POST',body:JSON.stringify(input)});
   return created;
 }

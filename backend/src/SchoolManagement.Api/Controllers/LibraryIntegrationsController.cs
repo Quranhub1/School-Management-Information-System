@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Library.External;
 using SchoolManagement.Infrastructure.Library;
@@ -7,7 +8,7 @@ using SchoolManagement.Infrastructure.Library;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/library/integrations")]
+[Route("api/v{version:apiVersion}/library/integrations")]
 [Authorize(Policy = LibraryPolicies.Management)]
 public sealed class LibraryIntegrationsController : ControllerBase
 {

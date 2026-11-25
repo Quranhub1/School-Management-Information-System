@@ -3,6 +3,7 @@ using System.Net.Mail;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
@@ -10,7 +11,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/administration/email-settings")]
+[Route("api/v{version:apiVersion}/administration/email-settings")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed class InstitutionEmailSettingsController : ControllerBase
 {

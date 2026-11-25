@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -38,19 +39,19 @@ export interface CreateSubjectRequest {
 
 export const getSubjectsByProgramme = (programmeId: string) => {
   if (!programmeId.trim()) throw new Error('Programme ID is required.')
-  return request<Subject[]>(`/api/subjects/by-programme/${encodeURIComponent(programmeId)}`)
+  return request<Subject[]>(versionedPath(`/api/subjects/by-programme/${encodeURIComponent(programmeId)}`))
 }
 
 export const getSubjectsByProgrammeAndYear = (programmeId: string, yearOfStudy: number) => {
   if (!programmeId.trim()) throw new Error('Programme ID is required.')
   if (yearOfStudy < 1) throw new Error('Year of study must be at least 1.')
-  return request<Subject[]>(`/api/subjects/by-programme/${encodeURIComponent(programmeId)}/year/${yearOfStudy}`)
+  return request<Subject[]>(versionedPath(`/api/subjects/by-programme/${encodeURIComponent(programmeId)}/year/${yearOfStudy}`))
 }
 
 export const createSubject = (input: CreateSubjectRequest) => {
   if (!input.programmeId.trim() || !input.courseId.trim()) throw new Error('Programme and course IDs are required.')
   if (input.yearOfStudy < 1) throw new Error('Year of study must be at least 1.')
-  return request<Subject>('/api/subjects', { method: 'POST', body: JSON.stringify(input) })
+  return request<Subject>(versionedPath('/api/subjects'), { method: 'POST', body: JSON.stringify(input) })
 }
 
 export interface UpdateSubjectRequest {
@@ -64,5 +65,5 @@ export interface UpdateSubjectRequest {
 export const updateSubject = (id: string, input: UpdateSubjectRequest) => {
   if (!id.trim() || !input.courseId.trim()) throw new Error('Subject ID and course are required.')
   if (input.yearOfStudy < 1 || (input.periodSequence != null && input.periodSequence < 1)) throw new Error('Year and period sequence must be positive.')
-  return request<void>(`/api/subjects/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+  return request<void>(versionedPath(`/api/subjects/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(input) })
 }

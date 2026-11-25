@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { versionedPath } from '../lib/apiVersion';
 import { readApiErrorMessage } from './errors'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import {
@@ -19,20 +20,20 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type PayrollRecord = { id:string; staffMemberId:string; month:number; year:number; basicSalary:number; allowances:number; deductions:number; netPay:number; currency:string; paymentDate:string | null; status:string; paymentMethod?: string | null; reference?: string | null }
 export async function listPayroll(staffMemberId?:string) {
-  const result = await request<unknown>(`/api/accounts-overview/payroll${staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''}`);
+  const result = await request<unknown>(my $p = `/api/accounts-overview/payroll${staffMemberId ? `)?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''}`; versionedPath($p);
   return parseApiResponse(z.array(payrollRecordResponseSchema), result, 'payroll list') as PayrollRecord[];
 }
 export function generatePayroll(month:number,year:number) {
   const data = parseApiInput(payrollGenerateRequestSchema, { month, year }, 'generate payroll');
-  return request<void>('/api/staff/payroll/generate',{method:'POST',body:JSON.stringify(data)});
+  return request<void>(versionedPath('/api/staff/payroll/generate'),{method:'POST',body:JSON.stringify(data)});
 }
 export function markPayrollPaid(id:string, method?: string) {
   const data = parseApiInput(payrollPaymentRequestSchema, { paymentMethod: method }, 'mark payroll paid');
   if (!id.trim()) throw new Error('Payroll record ID is required.');
-  return request<void>(`/api/staff/payroll/${encodeURIComponent(id)}/pay`,{method:'PATCH',body:JSON.stringify(data)});
+  return request<void>(versionedPath(`/api/staff/payroll/${encodeURIComponent(id)}/pay`),{method:'PATCH',body:JSON.stringify(data)});
 }
 export function updatePayrollAllowances(id:string,allowances:number,deductions:number) {
   const data = parseApiInput(payrollAdjustmentRequestSchema, { allowances, deductions }, 'update payroll allowances');
   if (!id.trim()) throw new Error('Payroll record ID is required.');
-  return request<void>(`/api/staff/payroll/${encodeURIComponent(id)}/allowances`,{method:'PATCH',body:JSON.stringify(data)});
+  return request<void>(versionedPath(`/api/staff/payroll/${encodeURIComponent(id)}/allowances`),{method:'PATCH',body:JSON.stringify(data)});
 }

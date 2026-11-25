@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { versionedPath } from '../lib/apiVersion';
 import { getAccessToken } from './auth'
 import { createCorrelationId } from '../lib/logging'
 import { readApiErrorMessage } from './errors'
@@ -72,7 +73,7 @@ export function globalSearch(q: string, from?: string, to?: string, signal?: Abo
   if (from) qs.set('from', from)
   if (to) qs.set('to', to)
   if (scope && scope !== 'dashboard') qs.set('scope', scope)
-  return request<GlobalSearchResponse>('/api/search?' + qs.toString(), { signal })
+  return request<GlobalSearchResponse>(versionedPath('/api/search?') + qs.toString(), { signal })
 }
 
 /** Search results include personal records; keep them in memory only, never in IndexedDB. */

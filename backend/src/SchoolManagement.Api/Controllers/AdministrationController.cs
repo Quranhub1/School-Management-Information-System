@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Npgsql;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Authorization;
@@ -8,7 +9,7 @@ using SchoolManagement.Api.Services;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/administration")]
+[Route("api/v{version:apiVersion}/administration")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed class AdministrationController(
     AdministrationService service,

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application.Authentication;
@@ -11,7 +12,7 @@ using SchoolManagement.Application.Authorization;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/v{version:apiVersion}/auth")]
 public sealed class AuthController(AuthService auth, IConfiguration configuration) : ControllerBase
 {
     [AllowAnonymous]

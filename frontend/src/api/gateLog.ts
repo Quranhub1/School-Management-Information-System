@@ -8,7 +8,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 export type GateLog = { id:string; personName:string; personType:string; purpose:string; entryTime:string; exitTime:string | null; issuedBy?:string; notes?:string };
-export function searchGateLogs(personName?:string,personType?:string){ const qs = new URLSearchParams(); if(personName) qs.set('personName',personName); if(personType) qs.set('personType',personType); return request<GateLog[]>(`/api/gate${qs.toString() ? '?' + qs.toString() : ''}`); }
-export function getGateLog(id:string){ return request<GateLog>(`/api/gate/${id}`); }
-export function createGateLog(input: Omit<GateLog,'id'|'entryTime'|'exitTime'>){ return request<GateLog>('/api/gate',{method:'POST',body:JSON.stringify(input)}); }
-export function logGateExit(id:string){ return request<void>(`/api/gate/${id}/exit`,{method:'PATCH'}); }
+export function searchGateLogs(personName?:string,personType?:string){ const qs = new URLSearchParams(); if(personName) qs.set('personName',personName); if(personType) qs.set('personType',personType); return request<GateLog[]>(versionedPath(`/api/gate${qs.toString() ? '?' + qs.toString() : ''}`)); }
+export function getGateLog(id:string){ return request<GateLog>(versionedPath(`/api/gate/${id}`)); }
+export function createGateLog(input: Omit<GateLog,'id'|'entryTime'|'exitTime'>){ return request<GateLog>(versionedPath('/api/gate'),{method:'POST',body:JSON.stringify(input)}); }
+export function logGateExit(id:string){ return request<void>(versionedPath(`/api/gate/${id}/exit`),{method:'PATCH'}); }

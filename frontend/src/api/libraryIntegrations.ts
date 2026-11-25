@@ -26,8 +26,8 @@ export const emptyLibraryPluginSettings: LibraryPluginSettings = {
   kohaOpacUrl: '', kohaApiUrl: '', kohaUsername: '', hasKohaPassword: false, kohaEnabled: false,
   dSpaceBaseUrl: '', dSpaceRestApiUrl: '', dSpaceOaiPmhUrl: '', dSpaceUsername: '', hasDSpacePassword: false, dSpaceEnabled: false,
 };
-export const getLibraryPluginSettings = () => request<LibraryPluginSettings>('/api/administration/library-plugins');
+export const getLibraryPluginSettings = () => request<LibraryPluginSettings>(versionedPath('/api/administration/library-plugins'));
 export const saveLibraryPluginSettings = (settings: LibraryPluginUpdate) =>
-  request<LibraryPluginSettings>('/api/administration/library-plugins', { method: 'PUT', body: JSON.stringify(settings) });
+  request<LibraryPluginSettings>(versionedPath('/api/administration/library-plugins'), { method: 'PUT', body: JSON.stringify(settings) });
 export const testLibraryPluginConnection = (service: 'koha' | 'dspace') =>
-  request<PluginConnectionTest>(`/api/administration/library-plugins/test/${service}`, { method: 'POST' });
+  request<PluginConnectionTest>(versionedPath(`/api/administration/library-plugins/test/${service}`), { method: 'POST' });

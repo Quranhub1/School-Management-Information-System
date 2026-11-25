@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 import { parseApiInput } from '../lib/validation'
 import { createProgrammeRequestSchema } from '../schemas'
 
@@ -65,24 +66,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function getProgrammes(): Promise<Programme[]> {
-  return request<Programme[]>('/api/programmes')
+  return request<Programme[]>(versionedPath('/api/programmes'))
 }
 
 export function createProgramme(input: CreateProgrammeRequest): Promise<Programme> {
   const validated = parseApiInput(createProgrammeRequestSchema, input, 'create programme')
-  return request<Programme>('/api/programmes', { method: 'POST', body: JSON.stringify(validated) })
+  return request<Programme>(versionedPath('/api/programmes'), { method: 'POST', body: JSON.stringify(validated) })
 }
 
 export function updateProgramme(id: string, input: CreateProgrammeRequest): Promise<Programme> {
   if (!id.trim()) throw new Error('Programme ID is required.')
   const validated = parseApiInput(createProgrammeRequestSchema, input, 'update programme')
-  return request<Programme>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) })
+  return request<Programme>(versionedPath(`/api/programmes/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(validated) })
 }
 
 export function deleteProgramme(id: string): Promise<void> {
-  return request<void>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  return request<void>(versionedPath(`/api/programmes/${encodeURIComponent(id)}`), { method: 'DELETE' })
 }
 
 export function setProgrammeActive(id: string, active: boolean): Promise<void> {
-  return request<void>(`/api/programmes/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
+  return request<void>(versionedPath(`/api/programmes/${encodeURIComponent(id)}/active`), { method: 'PATCH', body: JSON.stringify({ active }) })
 }

@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/academic-authorities")]
+[Route("api/v{version:apiVersion}/academic-authorities")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class AcademicAuthoritiesController(AcademicAuthorityService service) : ControllerBase
 {

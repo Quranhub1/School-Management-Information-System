@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface PrincipalDashboard {
   totalStudents: number
@@ -90,6 +91,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getPrincipalDashboard = () => request<PrincipalDashboard>('/api/principal/dashboard')
-export const getStaffPerformance = () => request<StaffPerformance[]>('/api/principal/staff-performance')
-export const getDepartmentalSummary = () => request<DepartmentalSummary[]>('/api/principal/departmental-summary')
+export const getPrincipalDashboard = () => request<PrincipalDashboard>(versionedPath('/api/principal/dashboard'))
+export const getStaffPerformance = () => request<StaffPerformance[]>(versionedPath('/api/principal/staff-performance'))
+export const getDepartmentalSummary = () => request<DepartmentalSummary[]>(versionedPath('/api/principal/departmental-summary'))

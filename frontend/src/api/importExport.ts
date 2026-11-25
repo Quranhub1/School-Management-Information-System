@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import { bulkImportRequestSchema, bulkImportResultSchema } from '../schemas'
 import { exportRowsToExcel, parseSpreadsheetFile } from '../lib/spreadsheets'
@@ -30,7 +31,7 @@ export interface ImportExportRequest {
 
 export async function importData(input: ImportExportRequest) {
   const validated = parseApiInput(bulkImportRequestSchema, input, 'bulk import')
-  const result = await request<unknown>('/api/import-export/import', { method: 'POST', body: JSON.stringify(validated) })
+  const result = await request<unknown>(versionedPath('/api/import-export/import'), { method: 'POST', body: JSON.stringify(validated) })
   return parseApiResponse(bulkImportResultSchema, result, 'bulk import result') as BulkImportResult
 }
 

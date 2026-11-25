@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/finance/bank-reconciliations")]
+[Route("api/v{version:apiVersion}/finance/bank-reconciliations")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
 public sealed class BankReconciliationController(BankReconciliationService service, BankReconciliationImportService importer) : ControllerBase
 {

@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface Student360ProfileDto {
   studentId: string
@@ -53,7 +54,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getStudent360Profile = (studentId: string) => request<Student360ProfileDto>(`/api/student360/${encodeURIComponent(studentId)}`)
+export const getStudent360Profile = (studentId: string) => request<Student360ProfileDto>(versionedPath(`/api/student360/${encodeURIComponent(studentId)}`))
 
 export interface StudentOfficeClearance {
   id: string
@@ -65,4 +66,4 @@ export interface StudentOfficeClearance {
   isCompleted: boolean
 }
 export const getStudentClearances = (studentId: string) =>
-  request<StudentOfficeClearance[]>(`/api/students/${encodeURIComponent(studentId)}/clearances`)
+  request<StudentOfficeClearance[]>(versionedPath(`/api/students/${encodeURIComponent(studentId)}/clearances`))

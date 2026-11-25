@@ -1,0 +1,167 @@
+name: Backup & Restore Verification
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly on Sunday 3 AM
+  push:
+    branches: [main]
+    paths:
+      - 'database/**'
+      - 'backend/src/SchoolManagement.Infrastructure/**'
+
+permissions:
+  contents: read
+
+jobs:
+  backup-restore-test:
+    name: PostgreSQL Backup & Restore Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: school_management_test
+          POSTGRES_USER: school_management
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U school_management -d school_management_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore backend
+        working-directory: backend
+        run: dotnet restore SchoolManagement.sln
+
+      - name: Build backend
+        working-directory: backend
+        run: dotnet build SchoolManagement.sln --configuration Release --no-restore
+
+      - name: Restore pinned EF Core CLI
+        working-directory: backend
+        run: dotnet tool restore
+
+      - name: Apply migrations to create schema
+        working-directory: backend
+        env:
+          ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_test;Username=school_management;Password=test_password
+        run: dotnet ef database update --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj --configuration Release
+
+      - name: Seed test data
+        working-directory: backend
+        env:
+          ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_test;Username=school_management;Password=test_password
+          SEED_ADMIN_PASSWORD: test-admin-password
+        run: |
+          dotnet run --project src/SchoolManagement.Api/SchoolManagement.Api.csproj --configuration Release --no-build --seed-test-data &
+          sleep 10
+          pkill -f "dotnet run" || true
+
+      - name: Create database backup
+        run: |
+          pg_dump -h 127.0.0.1 -U school_management -d school_management_test \
+            --format=custom --compress=9 --no-owner --no-privileges \
+            --file=/tmp/smis-backup.dump
+          ls -lh /tmp/smis-backup.dump
+
+      - name: Verify backup integrity
+        run: |
+          pg_restore --list /tmp/smis-backup.dump | head -20
+          pg_restore --list /tmp/smis-backup.dump | wc -l
+
+      - name: Create fresh database for restore
+        run: |
+          createdb -h 127.0.0.1 -U school_management school_management_restore
+
+      - name: Restore database from backup
+        run: |
+          pg_restore -h 127.0.0.1 -U school_management -d school_management_restore \
+            --clean --if-exists --no-owner --no-privileges \
+            /tmp/smis-backup.dump
+
+      - name: Verify restored data integrity
+        run: |
+          # Check table counts match
+          psql -h 127.0.0.1 -U school_management -d school_management_test -c "
+            SELECT schemaname, relname, n_live_tup 
+            FROM pg_stat_user_tables 
+            ORDER BY relname;
+          " > /tmp/original_counts.txt
+          
+          psql -h 127.0.0.1 -U school_management -d school_management_restore -c "
+            SELECT schemaname, relname, n_live_tup 
+            FROM pg_stat_user_tables 
+            ORDER BY relname;
+          " > /tmp/restored_counts.txt
+          
+          echo "=== Original ===" && cat /tmp/original_counts.txt
+          echo "=== Restored ===" && cat /tmp/restored_counts.txt
+          
+          # Compare row counts
+          diff -u /tmp/original_counts.txt /tmp/restored_counts.txt || {
+            echo "❌ Row count mismatch between original and restored databases"
+            exit 1
+          }
+
+      - name: Verify schema integrity
+        run: |
+          # Check all tables exist
+          psql -h 127.0.0.1 -U school_management -d school_management_restore -c "
+            SELECT count(*) as table_count 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public';
+          "
+          
+          # Check foreign keys
+          psql -h 127.0.0.1 -U school_management -d school_management_restore -c "
+            SELECT count(*) as fk_count 
+            FROM information_schema.table_constraints 
+            WHERE constraint_type = 'FOREIGN KEY';
+          "
+          
+          # Check indexes
+          psql -h 127.0.0.1 -U school_management -d school_management_restore -c "
+            SELECT count(*) as index_count 
+            FROM pg_indexes 
+            WHERE schemaname = 'public';
+          "
+
+      - name: Verify migration history
+        run: |
+          psql -h 127.0.0.1 -U school_management -d school_management_restore -c "
+            SELECT * FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\";
+          "
+
+      - name: Test application connectivity
+        working-directory: backend
+        env:
+          ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_restore;Username=school_management;Password=test_password
+          Authentication__JwtKey: test-jwt-key-that-is-long-enough-for-hmac-sha256-validation
+          Authentication__JwtIssuer: https://test.local
+          Authentication__JwtAudience: school-management-api
+        run: |
+          # Start API briefly to test DB connectivity
+          timeout 30 dotnet run --project src/SchoolManagement.Api/SchoolManagement.Api.csproj --configuration Release --no-build &
+          sleep 15
+          curl -f http://127.0.0.1:5000/health || exit 1
+          echo "✅ Application connects to restored database successfully"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          dropdb -h 127.0.0.1 -U school_management school_management_restore || true
+          rm -f /tmp/smis-backup.dump

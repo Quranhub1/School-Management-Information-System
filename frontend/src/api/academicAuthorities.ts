@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -35,10 +36,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const getAcademicAuthorities = (includeInactive = false) =>
-  request<AcademicAuthority[]>(`/api/academic-authorities?includeInactive=${includeInactive}`)
+  request<AcademicAuthority[]>(versionedPath(`/api/academic-authorities?includeInactive=${includeInactive}`))
 export const createAcademicAuthority = (input: SaveAcademicAuthorityRequest) =>
-  request<AcademicAuthority>('/api/academic-authorities', { method: 'POST', body: JSON.stringify(input) })
+  request<AcademicAuthority>(versionedPath('/api/academic-authorities'), { method: 'POST', body: JSON.stringify(input) })
 export const updateAcademicAuthority = (code: string, input: SaveAcademicAuthorityRequest) =>
-  request<void>(`/api/academic-authorities/${encodeURIComponent(code)}`, { method: 'PUT', body: JSON.stringify(input) })
+  request<void>(versionedPath(`/api/academic-authorities/${encodeURIComponent(code)}`), { method: 'PUT', body: JSON.stringify(input) })
 export const setAcademicAuthorityActive = (code: string, active: boolean) =>
-  request<void>(`/api/academic-authorities/${encodeURIComponent(code)}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
+  request<void>(versionedPath(`/api/academic-authorities/${encodeURIComponent(code)}/active`), { method: 'PATCH', body: JSON.stringify({ active }) })

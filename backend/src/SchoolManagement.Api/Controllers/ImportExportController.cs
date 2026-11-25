@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.ImportExport;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/import-export")]
+[Route("api/v{version:apiVersion}/import-export")]
 public sealed class ImportExportController(BulkImportService importExportService) : ControllerBase
 {
     [HttpPost("import")]

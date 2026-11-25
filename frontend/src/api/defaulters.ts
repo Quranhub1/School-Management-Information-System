@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface DefaulterOverview {
   totalOutstanding: number
@@ -59,7 +60,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getDefaulterOverview = () => request<DefaulterOverview>('/api/defaulters/overview')
-export const getDefaulters = (severity?: string) => request<Defaulter[]>('/api/defaulters/list' + (severity ? `?severity=${encodeURIComponent(severity)}` : ''))
-export const getStudentDefaulterDetails = (studentId: string) => request<DefaulterDetail>(`/api/defaulters/student/${encodeURIComponent(studentId)}`)
-export const getFollowUpActions = () => request<FollowUpAction[]>('/api/defaulters/actions')
+export const getDefaulterOverview = () => request<DefaulterOverview>(versionedPath('/api/defaulters/overview'))
+export const getDefaulters = (severity?: string) => request<Defaulter[]>(versionedPath('/api/defaulters/list') + (severity ? `?severity=${encodeURIComponent(severity)}` : ''))
+export const getStudentDefaulterDetails = (studentId: string) => request<DefaulterDetail>(versionedPath(`/api/defaulters/student/${encodeURIComponent(studentId)}`))
+export const getFollowUpActions = () => request<FollowUpAction[]>(versionedPath('/api/defaulters/actions'))

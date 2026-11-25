@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Academic;
@@ -9,7 +10,7 @@ using AcademicStream = SchoolManagement.Domain.Academic.Stream;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/academic-structure")]
+[Route("api/v{version:apiVersion}/academic-structure")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class AcademicStructureController(SchoolManagementDbContext db) : ControllerBase
 {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Academic;
@@ -7,7 +8,7 @@ using SchoolManagement.Domain.Academic;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/programmes")]
+[Route("api/v{version:apiVersion}/programmes")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class ProgrammesController(ProgrammeService service) : ControllerBase
 {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Finance;
@@ -7,7 +8,7 @@ using SchoolManagement.Domain.Finance;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/finance/fiscal-period-closing")]
+[Route("api/v{version:apiVersion}/finance/fiscal-period-closing")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
 public sealed class FiscalPeriodClosingController(FiscalPeriodClosingService service) : ControllerBase
 {

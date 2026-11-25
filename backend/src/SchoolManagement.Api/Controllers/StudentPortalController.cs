@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Assessment;
@@ -10,7 +11,7 @@ using SchoolManagement.Infrastructure.Reporting;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/student-portal")]
+[Route("api/v{version:apiVersion}/student-portal")]
 [Authorize(Policy = AuthorizationPolicies.StudentPortal)]
 public sealed class StudentPortalController(SchoolManagementDbContext db, ProgressionAssessment progression, IPdfReportGenerator pdf) : ControllerBase
 {

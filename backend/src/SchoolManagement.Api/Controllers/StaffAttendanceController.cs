@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
@@ -10,7 +11,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/staff-attendance")]
+[Route("api/v{version:apiVersion}/staff-attendance")]
 [Authorize(Policy = StaffPolicies.Read)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class StaffAttendanceController(

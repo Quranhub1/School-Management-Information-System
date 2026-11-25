@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface ChronicAbsentee {
   studentId: string
@@ -39,11 +40,11 @@ export const getChronicAbsenteeReport = (thresholdDays?: number, periodDays?: nu
   if (thresholdDays) params.set('thresholdDays', thresholdDays.toString())
   if (periodDays) params.set('periodDays', periodDays.toString())
   const qs = params.toString()
-  return request<ChronicAbsentee[]>(`/api/attendance/chronic/report${qs ? `?${qs}` : ''}`)
+  return request<ChronicAbsentee[]>(my $p = `/api/attendance/chronic/report${qs ? `)?${qs}` : ''}`; versionedPath($p)
 }
 export const getAbsenteeAlerts = (periodDays?: number) => {
   const params = new URLSearchParams()
   if (periodDays) params.set('periodDays', periodDays.toString())
   const qs = params.toString()
-  return request<AbsenteeAlert[]>(`/api/attendance/chronic/alerts${qs ? `?${qs}` : ''}`)
+  return request<AbsenteeAlert[]>(my $p = `/api/attendance/chronic/alerts${qs ? `)?${qs}` : ''}`; versionedPath($p)
 }

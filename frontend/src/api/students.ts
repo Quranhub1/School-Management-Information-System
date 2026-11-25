@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import { studentCreateRequestSchema, studentResponseSchema } from '../schemas'
@@ -84,24 +85,25 @@ export interface UpdateStudentRequest {
   email?: string
 }
 
-export async function getStudents() { return parseApiResponse(z.array(studentResponseSchema), await request<unknown>('/api/students'), 'students list') as Student[] }
+export async function getStudents() { return parseApiResponse(z.array(studentResponseSchema), await request<unknown>(versionedPath('/api/students')), 'students list') as Student[] }
 export async function getArchivedStudents(search = '') {
   const params = new URLSearchParams()
   if (search.trim()) params.set('search', search.trim())
   const query = params.toString()
-  return parseApiResponse(z.array(studentResponseSchema), await request<unknown>(`/api/students/archived${query ? `?${query}` : ''}`), 'archived students') as Student[]
+  const path = `/api/students/archived${query ? `?${query}` : ''}`
+  return parseApiResponse(z.array(studentResponseSchema), await request<unknown>(versionedPath(path)), 'archived students') as Student[]
 }
-export const archiveStudent = (id: string, reason?: string) => request<{ id: string; studentNumber: string; isArchived: boolean; archivedAt: string }>(`/api/students/${encodeURIComponent(id)}/archive`, { method: 'POST', body: JSON.stringify({ reason: reason?.trim() || null }) })
-export const restoreStudent = (id: string) => request<{ id: string; studentNumber: string; isArchived: boolean }>(`/api/students/${encodeURIComponent(id)}/restore`, { method: 'POST' })
+export const archiveStudent = (id: string, reason?: string) => request<{ id: string; studentNumber: string; isArchived: boolean; archivedAt: string }>(versionedPath(`/api/students/${encodeURIComponent(id)}/archive`), { method: 'POST', body: JSON.stringify({ reason: reason?.trim() || null }) })
+export const restoreStudent = (id: string) => request<{ id: string; studentNumber: string; isArchived: boolean }>(versionedPath(`/api/students/${encodeURIComponent(id)}/restore`), { method: 'POST' })
 
-export async function getStudent(id: string) { if (!id.trim()) throw new Error('Student ID is required.'); return parseApiResponse(studentResponseSchema, await request<unknown>(`/api/students/${encodeURIComponent(id)}`), 'student record') as Student }
-export async function createStudent(requestBody: CreateStudentRequest) { const input = parseApiInput(studentCreateRequestSchema, requestBody, 'create student'); return parseApiResponse(studentResponseSchema, await request<unknown>('/api/students', { method: 'POST', body: JSON.stringify(input) }), 'created student') as Student }
-export async function updateStudent(id: string, requestBody: UpdateStudentRequest) { if (!id.trim()) throw new Error('Student ID is required.'); const input = parseApiInput(studentCreateRequestSchema.extend({ id: z.string().optional() }), requestBody, 'update student'); return parseApiResponse(studentResponseSchema, await request<unknown>(`/api/students/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) }), 'updated student') as Student }
-export const deleteStudent = (id: string) => request<void>(`/api/students/${id}`, { method: 'DELETE' })
-export const getStudentGuardians = (studentId: string) => request<StudentGuardian[]>(`/api/students/${studentId}/guardians`)
-export const addStudentGuardian = (studentId: string, input: GuardianInput) => request<StudentGuardian>(`/api/students/${studentId}/guardians`, { method: 'POST', body: JSON.stringify(input) })
-export const updateStudentGuardian = (studentId: string, guardianId: string, input: GuardianInput) => request<StudentGuardian>(`/api/students/${studentId}/guardians/${guardianId}`, { method: 'PUT', body: JSON.stringify(input) })
-export const deleteStudentGuardian = (studentId: string, guardianId: string) => request<void>(`/api/students/${studentId}/guardians/${guardianId}`, { method: 'DELETE' })
+export async function getStudent(id: string) { if (!id.trim()) throw new Error('Student ID is required.'); return parseApiResponse(studentResponseSchema, await request<unknown>(versionedPath(`/api/students/${encodeURIComponent(id)}`)), 'student record') as Student }
+export async function createStudent(requestBody: CreateStudentRequest) { const input = parseApiInput(studentCreateRequestSchema, requestBody, 'create student'); return parseApiResponse(studentResponseSchema, await request<unknown>(versionedPath('/api/students'), { method: 'POST', body: JSON.stringify(input) }), 'created student') as Student }
+export async function updateStudent(id: string, requestBody: UpdateStudentRequest) { if (!id.trim()) throw new Error('Student ID is required.'); const input = parseApiInput(studentCreateRequestSchema.extend({ id: z.string().optional() }), requestBody, 'update student'); return parseApiResponse(studentResponseSchema, await request<unknown>(versionedPath(`/api/students/${encodeURIComponent(id)}`), { method: 'PUT', body: JSON.stringify(input) }), 'updated student') as Student }
+export const deleteStudent = (id: string) => request<void>(versionedPath(`/api/students/${id}`), { method: 'DELETE' })
+export const getStudentGuardians = (studentId: string) => request<StudentGuardian[]>(versionedPath(`/api/students/${studentId}/guardians`))
+export const addStudentGuardian = (studentId: string, input: GuardianInput) => request<StudentGuardian>(versionedPath(`/api/students/${studentId}/guardians`), { method: 'POST', body: JSON.stringify(input) })
+export const updateStudentGuardian = (studentId: string, guardianId: string, input: GuardianInput) => request<StudentGuardian>(versionedPath(`/api/students/${studentId}/guardians/${guardianId}`), { method: 'PUT', body: JSON.stringify(input) })
+export const deleteStudentGuardian = (studentId: string, guardianId: string) => request<void>(versionedPath(`/api/students/${studentId}/guardians/${guardianId}`), { method: 'DELETE' })
 export const getStudentQrCode = (id: string) => {
   const token = getAccessToken()
   return `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}/api/students/${id}/qrcode`
@@ -114,9 +116,9 @@ export interface SaveStudentApplicationFormRequest {
   photographFileName?: string | null
 }
 export const saveStudentApplicationForm = (studentId: string, input: SaveStudentApplicationFormRequest) =>
-  request<{ id: string; studentId: string; submittedAt: string; status: string }>(`/api/students/${studentId}/application-form`, {
+  request<{ id: string; studentId: string; submittedAt: string; status: string }>(versionedPath(`/api/students/${studentId}/application-form`), {
     method: 'PUT',
     body: JSON.stringify(input),
   })
 export const getStudentApplicationForm = (studentId: string) =>
-  request<{ id: string; studentId: string; application: Record<string, unknown>; photographContentType?: string; photographFileName?: string; submittedAt: string; status: string }>(`/api/students/${studentId}/application-form`)
+  request<{ id: string; studentId: string; application: Record<string, unknown>; photographContentType?: string; photographFileName?: string; submittedAt: string; status: string }>(versionedPath(`/api/students/${studentId}/application-form`))

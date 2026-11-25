@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Documents;
 using SchoolManagement.Infrastructure.Documents;
@@ -9,7 +10,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/documents")]
+[Route("api/v{version:apiVersion}/documents")]
 [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
 public sealed class DocumentsController(
     StudentDocumentService service,

@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Inventory;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/inventory/welfare")]
+[Route("api/v{version:apiVersion}/inventory/welfare")]
 [Authorize(Policy = AuthorizationPolicies.InventoryManagement)]
 public sealed class WelfareInventoryController(WelfareInventoryService service) : ControllerBase
 {

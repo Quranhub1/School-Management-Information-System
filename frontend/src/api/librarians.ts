@@ -41,11 +41,11 @@ export type Librarian = {
   deactivatedAtUtc?: string;
 };
 
-export const listLibrarians = () => request<Librarian[]>('/api/library/librarians');
+export const listLibrarians = () => request<Librarian[]>(versionedPath('/api/library/librarians'));
 
 export const addLibrarian = (staffMemberId: string, libraryRole: string) => {
   if (!staffMemberId || !libraryRole.trim()) throw new Error('Staff member and library role are required.');
-  return request<Librarian>('/api/library/librarians', {
+  return request<Librarian>(versionedPath('/api/library/librarians'), {
     method: 'POST',
     body: JSON.stringify({ staffMemberId, libraryRole: libraryRole.trim() }),
   });
@@ -53,12 +53,12 @@ export const addLibrarian = (staffMemberId: string, libraryRole: string) => {
 
 export const deleteLibrarian = (id: string) => {
   if (!id) throw new Error('Librarian id is required.');
-  return request<void>(`/api/library/librarians/${id}`, { method: 'DELETE' });
+  return request<void>(versionedPath(`/api/library/librarians/${id}`), { method: 'DELETE' });
 };
 
 export const updateLibrarian = (id: string, libraryRole: string, isActive: boolean) => {
   if (!id || !libraryRole.trim()) throw new Error('Librarian and library role are required.');
-  return request<Librarian>(`/api/library/librarians/${id}`, {
+  return request<Librarian>(versionedPath(`/api/library/librarians/${id}`), {
     method: 'PATCH',
     body: JSON.stringify({ libraryRole: libraryRole.trim(), isActive }),
   });

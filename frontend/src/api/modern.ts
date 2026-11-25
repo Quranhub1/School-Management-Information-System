@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 import { createCorrelationId } from '../lib/logging'
 import { useQuery } from '@tanstack/react-query'
 
@@ -34,7 +35,7 @@ export const getWorkflowSummary = () => api<WorkflowSummary>('/modern/workflows'
 export async function uploadAdmissionDocument(admissionId: string, file: File) {
   const form = new FormData(); form.append('file', file)
   const token = getAccessToken()
-  const response = await fetch('/api/modern/admissions/' + admissionId + '/documents', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+  const response = await fetch(versionedPath('/api/modern/admissions/') + admissionId + '/documents', { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : undefined })
   if (!response.ok) throw new Error(await response.text() || 'Upload failed')
   return response.json()
 }

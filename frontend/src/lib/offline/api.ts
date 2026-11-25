@@ -1,5 +1,6 @@
 import { getSession } from '../../api/auth'
 import { readCached, writeCached, offlineScopeFor } from './db'
+import { enqueueAuditedOperation, type SyncDomain } from './sync'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -8,6 +9,10 @@ export type OfflineApiOptions = RequestInit & {
   cacheTtlMs?: number
   maxStaleMs?: number
   allowStaleOnNetworkError?: boolean
+  syncDomain?: SyncDomain
+  syncOperation?: string
+  resourceKey?: string
+  idempotencyKey?: string
 }
 
 function currentScope(): string | null {
@@ -55,13 +60,13 @@ export async function readThroughCache<T>(
 }
 
 export async function offlineRequest<T>(path: string, options: OfflineApiOptions = {}): Promise<T> {
-  const { cacheKey, cacheTtlMs, maxStaleMs, allowStaleOnNetworkError, ...init } = options
+  const { 
+    cacheKey, cacheTtlMs, maxStaleMs, allowStaleOnNetworkError, 
+    syncDomain, syncOperation, resourceKey, idempotencyKey,
+    ...init 
+  } = options
   const method = (init.method ?? 'GET').toUpperCase()
   const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
-
-  if (isMutation && typeof navigator !== 'undefined' && !navigator.onLine) {
-    throw new Error('This action is not enabled for offline submission yet. Your data has not been queued or changed.')
-  }
 
   const token = sessionStorage.getItem('smis.accessToken') ?? localStorage.getItem('smis.accessToken')
   const load = async (): Promise<T> => {
@@ -82,6 +87,51 @@ export async function offlineRequest<T>(path: string, options: OfflineApiOptions
   if (method === 'GET' && cacheKey) {
     return readThroughCache(cacheKey, load, { ttlMs: cacheTtlMs, maxStaleMs, allowStaleOnNetworkError })
   }
+
+  // For mutations, try online first, then queue for offline sync if network fails
+  if (isMutation) {
+    const isOnline = getOnlineStatus()
+    if (!isOnline) {
+      // Queue for offline sync
+      if (syncDomain && syncOperation && resourceKey) {
+        const scope = currentScope()
+        if (scope) {
+          await enqueueAuditedOperation({
+            scope,
+            domain: syncDomain,
+            operation: syncOperation,
+            resourceKey,
+            payload: init.body ? JSON.parse(init.body as string) : {},
+            idempotencyKey,
+          })
+        }
+      }
+      throw new Error('You are offline. This change has been queued for synchronization when connectivity is restored.')
+    }
+
+    try {
+      return await load()
+    } catch (error) {
+      // If network error, queue for offline sync
+      const isNetworkFailure = error instanceof TypeError || (error instanceof Error && error.message.includes('Failed to fetch'))
+      if (isNetworkFailure && syncDomain && syncOperation && resourceKey) {
+        const scope = currentScope()
+        if (scope) {
+          await enqueueAuditedOperation({
+            scope,
+            domain: syncDomain,
+            operation: syncOperation,
+            resourceKey,
+            payload: init.body ? JSON.parse(init.body as string) : {},
+            idempotencyKey,
+          })
+        }
+        throw new Error('Network error. This change has been queued for synchronization when connectivity is restored.')
+      }
+      throw error
+    }
+  }
+
   return load()
 }
 

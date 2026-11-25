@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface PaymentSearchResult {
   id: string
@@ -44,7 +45,7 @@ export const searchPayments = (receiptNumber?: string, paymentMethod?: string, f
   if (from) params.set('from', from)
   if (to) params.set('to', to)
   const qs = params.toString()
-  return request<PaymentSearchResult[]>(`/api/accounts-overview/payments${qs ? `?${qs}` : ''}`)
+  return request<PaymentSearchResult[]>(my $p = `/api/accounts-overview/payments${qs ? `)?${qs}` : ''}`; versionedPath($p)
 }
 
-export const getPaymentReceipt = (paymentId: string) => request<FeeReceipt>(`/api/reports/payment/${encodeURIComponent(paymentId)}/receipt`)
+export const getPaymentReceipt = (paymentId: string) => request<FeeReceipt>(versionedPath(`/api/reports/payment/${encodeURIComponent(paymentId)}/receipt`))

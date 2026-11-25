@@ -1,0 +1,117 @@
+name: Security Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday 2 AM
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  frontend-security:
+    name: Frontend dependency scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit (high/critical)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      - name: Run npm audit (all levels)
+        run: npm audit --audit-level=low
+        continue-on-error: true
+
+      - name: Check for outdated packages
+        run: npm outdated --depth=0 || true
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: frontend/audit-results.json
+
+  backend-security:
+    name: Backend dependency scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore SchoolManagement.sln
+
+      - name: Check for vulnerable packages
+        run: dotnet list SchoolManagement.sln package --vulnerable --include-transitive
+        continue-on-error: true
+
+      - name: Check for outdated packages
+        run: dotnet list SchoolManagement.sln package --outdated --include-transitive || true
+
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['csharp', 'javascript']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Build C#
+        if: matrix.language == 'csharp'
+        run: |
+          cd backend
+          dotnet build SchoolManagement.sln --configuration Release
+
+      - name: Build JavaScript/TypeScript
+        if: matrix.language == 'javascript'
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
@@ -8,7 +9,7 @@ using SchoolManagement.Infrastructure.Reporting;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/reports")]
+[Route("api/v{version:apiVersion}/reports")]
 [Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class ReportsController(SchoolManagementDbContext db, ReportGenerator generator, IPdfReportGenerator pdf) : ControllerBase
 {

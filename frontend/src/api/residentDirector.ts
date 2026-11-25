@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { versionedPath } from '../lib/apiVersion';
 
 export interface ResidentDirectorDashboard {
   totalStudents: number
@@ -97,9 +98,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getResidentDirectorDashboard = () => request<ResidentDirectorDashboard>('/api/resident-director/dashboard')
-export const getResidentDirectorStudents = () => request<StudentOverview[]>('/api/resident-director/students')
-export const getResidentDirectorStaff = () => request<StaffOverview[]>('/api/resident-director/staff')
-export const getResidentDirectorHostelStatus = () => request<HostelStatus>('/api/resident-director/hostel-status')
-export const getResidentDirectorAttendanceSummary = () => request<AttendanceSummary>('/api/resident-director/attendance-summary')
-export const getResidentDirectorWelfareAlerts = () => request<WelfareAlerts>('/api/resident-director/welfare-alerts')
+export const getResidentDirectorDashboard = () => request<ResidentDirectorDashboard>(versionedPath('/api/resident-director/dashboard'))
+export const getResidentDirectorStudents = () => request<StudentOverview[]>(versionedPath('/api/resident-director/students'))
+export const getResidentDirectorStaff = () => request<StaffOverview[]>(versionedPath('/api/resident-director/staff'))
+export const getResidentDirectorHostelStatus = () => request<HostelStatus>(versionedPath('/api/resident-director/hostel-status'))
+export const getResidentDirectorAttendanceSummary = () => request<AttendanceSummary>(versionedPath('/api/resident-director/attendance-summary'))
+export const getResidentDirectorWelfareAlerts = () => request<WelfareAlerts>(versionedPath('/api/resident-director/welfare-alerts'))

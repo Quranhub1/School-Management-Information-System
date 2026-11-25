@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import { InstitutionSettingsProvider } from './components/InstitutionSettingsContext'
 import { installGlobalErrorHandlers } from './lib/logging'
+import { installUnhandledRejectionHandler } from './lib/errorHandling'
 import { QueryCacheProvider } from './lib/QueryCacheProvider'
+import { initializeOfflineSync } from './lib/offline/init'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles.css'
 import './institution-theme.css'
 import './tailadmin-inspired.css'
@@ -11,8 +14,11 @@ import './sidebar-fixed.css'
 import './table-font.css'
 import './workspace-density.css'
 import './system-button-layout.css'
+import './components/ErrorBoundary.css'
 
 installGlobalErrorHandlers()
+installUnhandledRejectionHandler()
+initializeOfflineSync()
 
 if ('serviceWorker' in navigator) {
   if (import.meta.env.DEV) {
@@ -35,7 +41,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryCacheProvider>
       <InstitutionSettingsProvider>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </InstitutionSettingsProvider>
     </QueryCacheProvider>
   </StrictMode>,

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
@@ -10,7 +11,7 @@ using SchoolManagement.Domain.People;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/accounts-overview")]
+[Route("api/v{version:apiVersion}/accounts-overview")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
 public sealed class AccountsOverviewController(SchoolManagementDbContext db, CampusAccessService campusAccess, InstitutionSettingsService institutionSettings) : ControllerBase
 {

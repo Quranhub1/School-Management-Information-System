@@ -1,4 +1,5 @@
 import { readApiErrorMessage } from './errors'
+import { versionedPath } from '../lib/apiVersion'
 import {
   attendanceMarkRequestSchema,
   attendanceBulkMarkRequestSchema,
@@ -83,7 +84,7 @@ export async function openAttendanceSession(input: {
   recordedByUserId?: string | null
   remarks?: string | null
 }) {
-  return request<AttendanceSession>('/api/attendance/sessions', {
+  return request<AttendanceSession>(versionedPath('/api/attendance/sessions'), {
     method: 'POST',
     body: JSON.stringify(input),
   })
@@ -91,7 +92,7 @@ export async function openAttendanceSession(input: {
 
 export async function closeAttendanceSession(sessionId: string) {
   return request<AttendanceSession>(
-    `/api/attendance/sessions/${encodeURIComponent(sessionId)}/close`,
+    versionedPath(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/close`),
     { method: 'POST' },
   )
 }
@@ -105,7 +106,7 @@ export async function markAttendance(
   remarks?: string | null,
 ) {
   return request<AttendanceRecord>(
-    `/api/attendance/sessions/${encodeURIComponent(sessionId)}/records`,
+    versionedPath(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/records`),
     {
       method: 'POST',
       body: JSON.stringify({ studentId, status, remarks: remarks?.trim() || null }),
@@ -125,7 +126,7 @@ export async function bulkMarkAttendance(
     markedCount: number
     records: Array<{ id: string; studentId: string; status: string; remarks?: string | null }>
   }>(
-    `/api/attendance/sessions/${encodeURIComponent(sessionId)}/bulk-mark`,
+    versionedPath(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/bulk-mark`),
     {
       method: 'POST',
       body: JSON.stringify({ marks }),
@@ -137,13 +138,13 @@ export async function bulkMarkAttendance(
 
 export async function getEligibleStudents(sessionId: string) {
   return request<EligibleStudent[]>(
-    `/api/attendance/sessions/${encodeURIComponent(sessionId)}/eligible-students`,
+    versionedPath(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/eligible-students`),
   )
 }
 
 export async function getSessionSummary(sessionId: string) {
   return request<SessionSummary>(
-    `/api/attendance/sessions/${encodeURIComponent(sessionId)}/summary`,
+    versionedPath(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/summary`),
   )
 }
 
@@ -158,6 +159,6 @@ export async function getStudentAttendanceHistory(
   if (from) params.set('from', from)
   if (to) params.set('to', to)
   return request<AttendanceRecord[]>(
-    `/api/attendance/students/${encodeURIComponent(studentId)}?${params.toString()}`,
+    versionedPath(`/api/attendance/students/${encodeURIComponent(studentId)}?${params.toString()}`),
   )
 }
