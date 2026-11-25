@@ -68,11 +68,11 @@ describe('StaffManagement', () => {
 
   it('places surname before first name in the staff registration form', () => {
     render(<StaffManagement canManage />)
+    expect(screen.getByRole('columnheader', { name: 'Surname, First name' })).toBeTruthy()
     fireEvent.click(screen.getByRole('tab', { name: /Recruitment/ }))
     const nameFields = screen.getAllByPlaceholderText(/Surname|First name/)
     expect(nameFields[0].getAttribute('aria-label')).toBe('Surname')
     expect(nameFields[1].getAttribute('aria-label')).toBe('First name')
-    expect(screen.getByRole('columnheader', { name: 'Surname, First name' })).toBeTruthy()
   })
 
   it('captures the complete staff recruitment profile including a photograph', () => {
