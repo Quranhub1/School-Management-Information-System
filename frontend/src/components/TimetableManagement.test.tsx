@@ -335,7 +335,7 @@ describe('TimetableManagement', () => {
     const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
     expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH31'])
     fireEvent.change(semesters, { target: { value: 'DPH31' } })
-    expect(Array.from(screen.getAllByLabelText('Course unit')[0].options).some(option => option.value === 'course-6')).toBe(true)
+    expect(Array.from((screen.getAllByLabelText('Course unit')[0] as HTMLSelectElement).options).some(option => option.value === 'course-6')).toBe(true)
   }, 15000)
 
   it('shows each programme code only once while retaining curricula attached to duplicate records', async () => {
