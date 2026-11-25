@@ -105,7 +105,7 @@ describe('TimetableManagement', () => {
     expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
-    expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
     expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /open timetable/i }))
