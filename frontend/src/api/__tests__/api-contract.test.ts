@@ -249,9 +249,9 @@ describe('API contracts — timetable', () => {
 describe('API contracts — curriculum', () => {
   it('validates a create programme request', () => {
     const result = createProgrammeRequestSchema.safeParse({
-      programmeNumber: 'PROG-001',
-      programmeName: 'Bachelor of Science',
-      awardType: 'Degree',
+      code: 'PROG-001',
+      name: 'Bachelor of Science',
+      award: 'Degree',
       durationYears: 3,
       durationUnit: 'Years',
       programmeType: 0,
