@@ -70,7 +70,7 @@ describe('StaffManagement', () => {
     render(<StaffManagement canManage canManageAccounts />)
     fireEvent.click(screen.getByRole('tab', { name: /Recruitment & Onboarding/ }))
     expect(await screen.findByRole('heading', { name: 'Permissions by module' })).toBeTruthy()
-    fireEvent.change(screen.getByLabelText('Search permissions'), { target: { value: 'timetable' } })
+    fireEvent.change(screen.getByLabelText('Search permissions'), { target: { value: 'manage' } })
     expect(await screen.findByLabelText(/Manage timetable/)).toBeEnabled()
     expect(screen.getByLabelText(/Manage admissions/)).toBeEnabled()
     expect(screen.getByLabelText(/Manage settings \(System Administrator only\)/)).toBeEnabled()
