@@ -102,7 +102,7 @@ describe('CurriculumManagement selectors', () => {
   it('loads authority, programme, curriculum, course and course-unit options in sequence', async () => {
     render(<CurriculumManagement canManage />)
 
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(within(authoritySelect).getByRole('option', { name: 'UHPAB' })).toBeInTheDocument())
 
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
