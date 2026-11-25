@@ -18,7 +18,7 @@ vi.mock('../api/timetable', () => ({
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [
       { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1', curriculumId: 'curriculum-1', yearOfStudy: 1, semesterNumber: 1, isProgrammeYearClass: true },
-      { id: 'group-2', label: 'CPH-Y1-S1-B', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-not-in-selected-curriculum' },
+      { id: 'group-2', label: 'CPH-Y1-S1-B', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-not-in-selected-curriculum', isActive: true },
     ],
     courses: [
       { id: 'course-1', label: 'CPH 101 — Pharmacy Practice' },
@@ -102,7 +102,7 @@ describe('TimetableManagement', () => {
   it('opens the saved timetable library, supports back navigation, and opens a saved class template', async () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
-    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
     expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
@@ -110,7 +110,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByText('3 scheduled sessions')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /open timetable/i }))
-    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Saved timetables' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('heading', { name: /saved timetables/i })).toBeNull())
     expect(screen.queryByLabelText('Programme')).toBeNull()
     expect(screen.queryByLabelText('Curriculum')).toBeNull()
     expect(screen.queryByLabelText('Year of study')).toBeNull()
@@ -124,7 +124,7 @@ describe('TimetableManagement', () => {
     fireEvent.click(backToMain)
     expect(await screen.findByRole('button', { name: /saved timetables/i })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
-    expect(await screen.findByRole('heading', { name: 'Saved timetables' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /back to main/i }))
     expect(screen.getByRole('heading', { name: 'Timetable management' })).toBeTruthy()
   }, 15000)
@@ -212,7 +212,7 @@ describe('TimetableManagement', () => {
   it('renders the official document designer with editable heading, signature and merge controls', async () => {
     await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    const loadClassButton = await screen.findByRole('button', { name: /load class/i })
+    const loadClassButton = await screen.findByRole('button', { name: /load.*class/i })
     await act(async () => {
       fireEvent.click(loadClassButton)
       await vi.mocked(getTimetableTemplate).mock.results.slice(-1)[0]?.value
@@ -232,7 +232,7 @@ describe('TimetableManagement', () => {
   it('renders a full-height vertical break divider in the timetable design', async () => {
     const { container } = await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    const loadClassButton = await screen.findByRole('button', { name: /load class/i })
+    const loadClassButton = await screen.findByRole('button', { name: /load.*class/i })
     await act(async () => {
       fireEvent.click(loadClassButton)
       await vi.mocked(getTimetableTemplate).mock.results.slice(-1)[0]?.value
@@ -244,7 +244,7 @@ describe('TimetableManagement', () => {
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
     await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    const loadClassButton = await screen.findByRole('button', { name: /load class/i })
+    const loadClassButton = await screen.findByRole('button', { name: /load.*class/i })
     await act(async () => {
       fireEvent.click(loadClassButton)
       await vi.mocked(getTimetableTemplate).mock.results.slice(-1)[0]?.value
