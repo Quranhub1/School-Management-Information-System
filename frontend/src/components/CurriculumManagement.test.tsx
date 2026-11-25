@@ -102,7 +102,7 @@ describe('CurriculumManagement selectors', () => {
   it('loads authority, programme, curriculum, course and course-unit options in sequence', async () => {
     render(<CurriculumManagement canManage />)
 
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(within(authoritySelect).getByRole('option', { name: 'UHPAB' })).toBeInTheDocument())
 
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
@@ -131,7 +131,7 @@ describe('CurriculumManagement selectors', () => {
   it('renders returned authority courses in the course-unit catalogue', async () => {
     render(<CurriculumManagement canManage />)
 
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
 
@@ -147,7 +147,7 @@ describe('CurriculumManagement selectors', () => {
     ])
 
     render(<CurriculumManagement canManage />)
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
@@ -171,7 +171,7 @@ describe('CurriculumManagement selectors', () => {
     })
 
     render(<CurriculumManagement canManage />)
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
 
     const curriculumSelect = screen.getByLabelText('Select curriculum')
@@ -202,7 +202,7 @@ describe('CurriculumManagement selectors', () => {
     })
 
     render(<CurriculumManagement canManage />)
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UVTAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UVTAB'))
@@ -233,7 +233,7 @@ describe('CurriculumManagement selectors', () => {
     })
 
     render(<CurriculumManagement canManage />)
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
@@ -257,7 +257,7 @@ describe('CurriculumManagement selectors', () => {
   it('does not let a pending refresh override a newly selected authority', async () => {
     render(<CurriculumManagement canManage />)
 
-    const authoritySelect = await screen.findByLabelText('Authority')
+    const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(within(authoritySelect).getByRole('option', { name: 'UHPAB' })).toBeInTheDocument())
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(getCourses).toHaveBeenCalledWith('UHPAB'))
