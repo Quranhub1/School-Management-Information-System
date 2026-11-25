@@ -6,6 +6,8 @@ vi.mock('../api/staff', () => ({
   listStaff: vi.fn().mockResolvedValue([]),
   listStaffDepartments: vi.fn().mockResolvedValue([]),
   listStaffCourseUnits: vi.fn().mockResolvedValue([]),
+  listStaffPermissionCatalog: vi.fn().mockResolvedValue([]),
+  listStaffRoles: vi.fn().mockResolvedValue([]),
   createStaff: vi.fn().mockResolvedValue(null),
   updateStaff: vi.fn().mockResolvedValue(null),
   deleteStaff: vi.fn().mockResolvedValue(null),
