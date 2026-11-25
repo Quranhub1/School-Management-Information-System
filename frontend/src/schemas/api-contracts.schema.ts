@@ -332,7 +332,7 @@ export const createProgrammeRequestSchema = z.object({
   studyMode: z.string().trim().max(60).optional(),
   deliveryType: z.string().trim().max(60).optional(),
   type: z.number().int().min(0).max(1).optional(),
-  regulator: requiredTextSchema.max(80),
+  regulator: requiredTextSchema.max(80).optional(),
   approvalReference: z.string().trim().max(160).optional(),
   approvalDate: z.iso.date().optional(),
   approvalStatus: z.string().trim().max(80).optional(),
