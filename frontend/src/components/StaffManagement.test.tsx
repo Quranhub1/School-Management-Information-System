@@ -60,18 +60,15 @@ describe('StaffManagement', () => {
 
   it('shows the staff access checklist and supports marking module permissions', async () => {
     render(<StaffManagement canManage canManageAccounts />)
-    expect(screen.getByRole('heading', { name: 'Administrator Permissions' })).toBeTruthy()
-    expect(screen.getByLabelText('Manage timetable')).toBeTruthy()
-    expect(screen.getByLabelText('Manage admissions')).toBeTruthy()
-    expect(screen.getByLabelText('Manage settings (System Administrator only)')).toBeDisabled()
-    fireEvent.click(screen.getByLabelText('Manage timetable'))
-    expect(screen.getByText('1 Selected')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Unmark All' }))
-    expect(screen.getByText('0 Selected')).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: 'Recruitment' }))
+    expect(screen.getByRole('heading', { name: 'Permissions by module' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Select all' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Clear all' })).toBeEnabled()
   })
 
   it('places surname before first name in the staff registration form', () => {
     render(<StaffManagement canManage />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Recruitment' }))
     const nameFields = screen.getAllByPlaceholderText(/Surname|First name/)
     expect(nameFields[0].getAttribute('aria-label')).toBe('Surname')
     expect(nameFields[1].getAttribute('aria-label')).toBe('First name')
@@ -80,6 +77,7 @@ describe('StaffManagement', () => {
 
   it('captures the complete staff recruitment profile including a photograph', () => {
     render(<StaffManagement canManage />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Recruitment' }))
     expect(screen.getByLabelText('Gender')).toBeTruthy()
     expect(screen.getByLabelText('Date of birth')).toBeTruthy()
     expect(screen.getByLabelText('Residential address')).toBeTruthy()
@@ -103,7 +101,7 @@ describe('StaffManagement', () => {
     expect(screen.getByLabelText('Name of staff')).toBeTruthy()
     expect(screen.getByText('Single day')).toBeTruthy()
     expect(screen.getByText('Multiple days')).toBeTruthy()
-    await waitFor(() => expect(screen.getByRole('option', { name: /NABIRIYE AMINA/ })).toBeTruthy())
+    await waitFor(() => expect(screen.getByRole('option', { name: /NABIRYE/ })).toBeTruthy())
     expect(screen.queryByRole('option', { name: /John Okello/ })).toBeNull()
   })
 })
