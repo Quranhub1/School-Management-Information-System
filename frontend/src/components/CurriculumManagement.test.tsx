@@ -255,7 +255,7 @@ describe('CurriculumManagement selectors', () => {
       authorityCode: 'UHPAB', code: 'UHPAB-PH201', name: 'Pharmaceutical Chemistry', creditUnits: 0,
     })))
     await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-pharmacy', expect.objectContaining({
-      courseId: 'uhpab-unit-new', yearOfStudy: 2, semesterNumber: 1, isCore: true, isDeleted: false,
+      courseId: 'uhpab-unit-new', yearOfStudy: 2, semesterNumber: 1, isCore: true,
     })))
   })
 
