@@ -90,7 +90,9 @@ test.describe('SMIS full-system smoke tests', () => {
     const token = await getAdminToken(request);
     const headers = { Authorization: `Bearer ${token}` };
     const unknownId = '00000000-0000-0000-0000-000000000011';
-    const zeroId = '00000000-0000-0000-0000-000000000000';
+    const programmeId = '00000000-0000-0000-0000-000000000012';
+    const intakeId = '00000000-0000-0000-0000-000000000013';
+    const academicYearId = '00000000-0000-0000-0000-000000000014';
 
     const list = await request.get(`${API_BASE_URL}/api/admissions`, { headers });
     expect(list.ok()).toBeTruthy();
@@ -102,9 +104,9 @@ test.describe('SMIS full-system smoke tests', () => {
     const admit = await request.post(`${API_BASE_URL}/api/admissions/${unknownId}/admit`, {
       headers,
       data: {
-        programmeId: zeroId,
-        intakeId: zeroId,
-        academicYearId: zeroId,
+        programmeId,
+        intakeId,
+        academicYearId,
         studentNumber: 'CI-NONEXISTENT',
         admissionNumber: null,
         admissionType: null,
