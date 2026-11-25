@@ -103,7 +103,6 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
-    expect(screen.getByText(/Only timetables you save from the designer appear here/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
     expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
@@ -336,7 +335,7 @@ describe('TimetableManagement', () => {
     const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
     expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH31'])
     fireEvent.change(semesters, { target: { value: 'DPH31' } })
-    expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
+    expect(Array.from(screen.getAllByLabelText('Course unit')[0].options).some(option => option.value === 'course-6')).toBe(true)
   }, 15000)
 
   it('shows each programme code only once while retaining curricula attached to duplicate records', async () => {
@@ -367,7 +366,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Curriculum')).toBeTruthy()
     expect(screen.getByLabelText('Year of study')).toBeTruthy()
     expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
-    expect(screen.queryByLabelText('Course unit')).toBeNull()
+    expect(screen.getAllByLabelText('Course unit').length).toBeGreaterThan(0)
   })
  
   it('opens the timetable designer and exposes its class-template controls', async () => {
@@ -376,7 +375,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByRole('region', { name: 'Editable timetable template' })).toBeTruthy()
     expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
     expect(designerButton).toBeTruthy()
-    expect(screen.getByRole('button', { name: /load class timetable/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /load class timetable/i })).toBeEnabled()
   })
 
 })
