@@ -281,6 +281,7 @@ describe('API contracts — curriculum', () => {
 
   it('validates a create course request', () => {
     const result = createCourseRequestSchema.safeParse({
+      authorityCode: 'UHPAB',
       code: 'MATH-101',
       name: 'Mathematics I',
       creditUnits: 3,
