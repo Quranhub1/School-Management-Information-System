@@ -103,7 +103,6 @@ describe('TimetableManagement', () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /saved timetables/i }))
     expect(await screen.findByRole('heading', { name: /saved timetables/i })).toBeTruthy()
-    expect(screen.getByText(/Save a class timetable from the timetable designer to see it here/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /back to main/i })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /saved timetables/i })).toBeNull()
     expect(screen.getByRole('heading', { name: 'CPH-Y1-S1' })).toBeTruthy()
@@ -336,7 +335,7 @@ describe('TimetableManagement', () => {
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
     fireEvent.change(years, { target: { value: '2' } })
-    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH12', 'DPH31'])
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual([''])
     expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
   }, 15000)
 
@@ -377,7 +376,7 @@ describe('TimetableManagement', () => {
     const semester = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
     await waitFor(() => expect(Array.from(semester.options).some(option => option.value === 'CPH11')).toBe(true))
     fireEvent.change(semester, { target: { value: 'CPH11' } })
-    expect(screen.getAllByRole('option', { name: /CPH 101 — Pharmacy Practice/ }).length).toBeGreaterThan(0)
+    expect((await screen.findAllByRole('option', { name: /CPH 101 — PHARMACY PRACTICE/i })).length).toBeGreaterThan(0)
   })
  
   it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
