@@ -1109,7 +1109,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           return [template.teachingGroupId, null] as const
         }
       }))
-      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, SavedTimetablePreview] => item[1] !== null)))
+      const previewsByGroup: Record<string, SavedTimetablePreview> = {}
+      for (const [groupId, preview] of previews) {
+        if (preview) previewsByGroup[groupId] = preview
+      }
+      setSavedTemplatePreviews(previewsByGroup)
     } catch (e) {
       setSavedTemplatesError(e instanceof Error ? e.message : 'Unable to load saved timetable templates.')
     } finally {
