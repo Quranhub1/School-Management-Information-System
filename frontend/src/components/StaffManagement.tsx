@@ -592,6 +592,11 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <label className="field-label">Attendance mode
+                <select aria-label="Attendance mode" value={form.attendanceMode} onChange={e => setForm({ ...form, attendanceMode: e.target.value })}>
+                  <option value="Biometric">Biometric</option><option value="Manual">Manual</option><option value="Hybrid">Hybrid</option>
+                </select>
+              </label>
               {!editingStaffId && <fieldset className="field-label" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 700 }}>Login account and screen permissions</legend>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, cursor: 'pointer' }}>
