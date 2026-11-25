@@ -120,7 +120,7 @@ describe('CurriculumManagement selectors', () => {
     await waitFor(() => expect(courseSelect).not.toBeDisabled())
     expect(within(courseSelect).getByRole('option', { name: /PH101 — Introduction to Pharmacy/ })).toBeInTheDocument()
 
-    const courseUnitTypeSelect = screen.getByLabelText('Course unit type')
+    const courseUnitTypeSelect = screen.getByLabelText('UHPAB course unit type')
     expect(within(courseUnitTypeSelect).getByRole('option', { name: 'Select course unit type' })).toBeInTheDocument()
     expect(within(courseUnitTypeSelect).getByRole('option', { name: 'Practical' })).toBeInTheDocument()
 
@@ -190,7 +190,7 @@ describe('CurriculumManagement selectors', () => {
       authorityCode: 'SCHOOL_BASED', code: 'KSHS101', name: 'Foundations of Public Health',
     })))
     await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-school', expect.objectContaining({
-      courseId: 'course-school-new', yearOfStudy: 1, semesterNumber: 1, isCore: true, isDeleted: false,
+      courseId: 'course-school-new', yearOfStudy: 1, semesterNumber: 1, isCore: true,
     })))
   })
 
@@ -241,6 +241,7 @@ describe('CurriculumManagement selectors', () => {
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
+    fireEvent.click(screen.getByRole('tab', { name: /Programmes & Curricula/ }))
     fireEvent.change(screen.getByLabelText('Select curriculum'), { target: { value: 'curriculum-pharmacy' } })
 
     expect(await screen.findByRole('heading', { name: 'Add or correct UHPAB course unit for this programme' })).toBeInTheDocument()
