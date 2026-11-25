@@ -548,6 +548,29 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               <input placeholder="Surname" aria-label="Surname" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
               <input placeholder="First name" aria-label="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
               <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
+              <label className="field-label">Gender
+                <select aria-label="Gender" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
+                  <option value="">Select gender</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option><option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </label>
+              <label className="field-label">Date of birth
+                <input aria-label="Date of birth" type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} />
+              </label>
+              <label className="field-label">Residential address
+                <textarea aria-label="Residential address" rows={2} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+              </label>
+              <label className="field-label">Staff photograph
+                <input aria-label="Staff photograph" type="file" accept="image/*" onChange={event => {
+                  const file = event.target.files?.[0]
+                  if (!file) return
+                  if (!file.type.startsWith('image/')) { setError('Select an image file for the staff photograph.'); return }
+                  if (file.size > 2 * 1024 * 1024) { setError('The staff photograph must be 2 MB or smaller.'); return }
+                  const reader = new FileReader()
+                  reader.onload = () => setForm(current => ({ ...current, photographDataUrl: typeof reader.result === 'string' ? reader.result : '' }))
+                  reader.onerror = () => setError('Unable to read the staff photograph.')
+                  reader.readAsDataURL(file)
+                }} />
+              </label>
               <label className="field-label">Staff category
                 <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
                   {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
