@@ -74,7 +74,7 @@ describe('StaffManagement', () => {
     expect(await screen.findByLabelText(/Manage timetable/)).toBeEnabled()
     expect(screen.getByLabelText(/Manage admissions/)).toBeEnabled()
     expect(screen.getByLabelText(/Manage settings \(System Administrator only\)/)).toBeEnabled()
-    fireEvent.click(screen.getByLabelText('Manage timetable'))
+    fireEvent.click(screen.getByLabelText(/Manage timetable/))
     await waitFor(() => expect(screen.getByText('1 / 3 effective')).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
     await waitFor(() => expect(screen.getByText('0 / 3 effective')).toBeTruthy())
