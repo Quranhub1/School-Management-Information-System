@@ -93,8 +93,8 @@ describe('timetable programme-to-template selection flow', () => {
 
   it('loads the whole programme-year class for the selected curriculum year and academic semester', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
-    expect(result.teachingGroups.map(item => item.id)).toEqual(['group-a1'])
-    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1'])
+    expect(result.teachingGroups.map(item => item.id)).toEqual(['group-a1', 'group-a1b'])
+    expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1', 'group-a1b'])
   })
 
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {

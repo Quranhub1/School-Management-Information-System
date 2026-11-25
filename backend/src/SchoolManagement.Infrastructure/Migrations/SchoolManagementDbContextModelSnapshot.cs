@@ -890,6 +890,10 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CurriculumId");
+
+                    b.HasIndex("SemesterId");
+
                     b.HasIndex("ProgrammeId", "CurriculumId", "YearOfStudy", "SemesterId", "GroupCode")
                         .IsUnique()
                         .HasFilter("\"ProgrammeId\" IS NOT NULL AND \"CurriculumId\" IS NOT NULL AND \"YearOfStudy\" IS NOT NULL AND \"SemesterId\" IS NOT NULL");

@@ -29,6 +29,7 @@ describe('programmes API — input validation', () => {
       name: 'Computer Science',
       award: 'Diploma',
       durationYears: 2,
+      regulator: 'UHPAB',
     })
 
     expect(mockFetch).toHaveBeenCalledWith(

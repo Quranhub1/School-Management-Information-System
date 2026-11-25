@@ -52,11 +52,11 @@ const compactCurriculumLabel = (label: string, programmeLabel?: string, fallback
       compact = compact.slice(0, programmeIndex) + compact.slice(programmeIndex + programmeName.length)
     }
   }
-  compact = compact.trim().replace(/^[-–—:|]+\\s*/, '').replace(/\\s+/g, ' ')
+  compact = compact.trim().replace(/^[-–—:|]+\s*/, '').replace(/\s+/g, ' ')
   if (!compact || compact.toLocaleLowerCase() === 'curriculum') return `Curriculum ${fallbackIndex + 1}`
-  if (/^\\d{4}$/.test(compact)) compact = `${compact} Curriculum`
+  if (/^\d{4}$/.test(compact)) compact = `${compact} Curriculum`
   else if (/^alternate record$/i.test(compact)) compact = 'Alternate curriculum'
-  else if (/^curriculum\\b/i.test(compact)) compact = compact.replace(/^curriculum\\s*/i, 'Curriculum ')
+  else if (/^curriculum\b/i.test(compact)) compact = compact.replace(/^curriculum\s*/i, 'Curriculum ')
   return compact.length > 36 ? `${compact.slice(0, 33).trimEnd()}…` : compact
 }
 
@@ -1109,7 +1109,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           return [template.teachingGroupId, null] as const
         }
       }))
-      setSavedTemplatePreviews(Object.fromEntries(previews.filter((item): item is readonly [string, SavedTimetablePreview] => item[1] !== null)))
+      const previewMap: Record<string, SavedTimetablePreview> = {}
+      for (const [groupId, preview] of previews) {
+        if (preview) previewMap[groupId] = preview
+      }
+      setSavedTemplatePreviews(previewMap)
     } catch (e) {
       setSavedTemplatesError(e instanceof Error ? e.message : 'Unable to load saved timetable templates.')
     } finally {
@@ -1883,6 +1887,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             </div>
           </div>
 
+          <h3>Edit the timetable grid</h3>
           <div className="timetable-grid-scroll">
               <table className="timetable-editable-grid">
                 <thead>

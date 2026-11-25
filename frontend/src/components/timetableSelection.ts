@@ -111,12 +111,11 @@ export function deriveTimetableSelection(
     : ''
   const matchingCohortGroups = options.teachingGroups.filter(
     item =>
-      item.isProgrammeYearClass &&
       programmeIdSet.has(item.programmeId) &&
       item.semesterId === academicPeriodId &&
-      item.curriculumId === selectedCurriculum?.id &&
-      item.yearOfStudy === (yearOfStudy ? Number(yearOfStudy) : undefined) &&
-      (!selectedCurriculumSemester || item.semesterNumber === selectedCurriculumSemester.semesterNumber)
+      (!item.curriculumId || item.curriculumId === selectedCurriculum?.id) &&
+      (!item.yearOfStudy || !yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) &&
+      (!selectedCurriculumSemester || !item.semesterNumber || item.semesterNumber === selectedCurriculumSemester.semesterNumber)
   )
   const allTeachingGroups = matchingCohortGroups
   const teachingGroups = allTeachingGroups

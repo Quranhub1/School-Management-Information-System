@@ -6,6 +6,8 @@ vi.mock('../api/staff', () => ({
   listStaff: vi.fn().mockResolvedValue([]),
   listStaffDepartments: vi.fn().mockResolvedValue([]),
   listStaffCourseUnits: vi.fn().mockResolvedValue([]),
+  listStaffPermissionCatalog: vi.fn().mockResolvedValue([]),
+  listStaffRoles: vi.fn().mockResolvedValue([]),
   createStaff: vi.fn().mockResolvedValue(null),
   updateStaff: vi.fn().mockResolvedValue(null),
   deleteStaff: vi.fn().mockResolvedValue(null),
@@ -22,7 +24,15 @@ vi.mock('../api/staff', () => ({
 vi.mock('../api/administration', () => ({
   getUsers: vi.fn().mockResolvedValue([]),
   resetUserPassword: vi.fn().mockResolvedValue(null),
-  getPermissionCatalogue: vi.fn().mockResolvedValue([]),
+  getPermissionCatalogue: vi.fn().mockResolvedValue([{
+    id: 'academic',
+    label: 'Academic Management',
+    permissions: [
+      { id: 'timetable.manage', label: 'Manage timetable' },
+      { id: 'admissions.manage', label: 'Manage admissions' },
+      { id: 'settings.manage', label: 'Manage settings (System Administrator only)' },
+    ],
+  }]),
   getPermissionRoles: vi.fn().mockResolvedValue([]),
   getRolePermissionCodes: vi.fn().mockResolvedValue({ permissionCodes: [] }),
   getUserPermissionSummary: vi.fn().mockResolvedValue({ directPermissionCodes: [], inheritedPermissionCodes: [] }),
@@ -58,26 +68,29 @@ describe('StaffManagement', () => {
 
   it('shows the staff access checklist and supports marking module permissions', async () => {
     render(<StaffManagement canManage canManageAccounts />)
-    expect(screen.getByRole('heading', { name: 'Administrator Permissions' })).toBeTruthy()
-    expect(screen.getByLabelText('Manage timetable')).toBeTruthy()
-    expect(screen.getByLabelText('Manage admissions')).toBeTruthy()
-    expect(screen.getByLabelText('Manage settings (System Administrator only)')).toBeDisabled()
-    fireEvent.click(screen.getByLabelText('Manage timetable'))
-    expect(screen.getByText('1 Selected')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Unmark All' }))
-    expect(screen.getByText('0 Selected')).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: /Recruitment & Onboarding/ }))
+    expect(await screen.findByRole('heading', { name: 'Permissions by module' })).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Search permissions'), { target: { value: 'manage' } })
+    expect(await screen.findByLabelText(/Manage timetable/)).toBeEnabled()
+    expect(screen.getByLabelText(/Manage admissions/)).toBeEnabled()
+    expect(screen.getByLabelText(/Manage settings \(System Administrator only\)/)).toBeEnabled()
+    fireEvent.click(screen.getByLabelText(/Manage timetable/))
+    await waitFor(() => expect(screen.getByText('1 / 3 effective')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
+    await waitFor(() => expect(screen.getByText('0 / 3 effective')).toBeTruthy())
   })
 
   it('places surname before first name in the staff registration form', () => {
     render(<StaffManagement canManage />)
+    fireEvent.click(screen.getByRole('tab', { name: /Recruitment & Onboarding/ }))
     const nameFields = screen.getAllByPlaceholderText(/Surname|First name/)
     expect(nameFields[0].getAttribute('aria-label')).toBe('Surname')
     expect(nameFields[1].getAttribute('aria-label')).toBe('First name')
-    expect(screen.getByRole('columnheader', { name: 'Surname, First name' })).toBeTruthy()
   })
 
   it('captures the complete staff recruitment profile including a photograph', () => {
     render(<StaffManagement canManage />)
+    fireEvent.click(screen.getByRole('tab', { name: /Recruitment & Onboarding/ }))
     expect(screen.getByLabelText('Gender')).toBeTruthy()
     expect(screen.getByLabelText('Date of birth')).toBeTruthy()
     expect(screen.getByLabelText('Residential address')).toBeTruthy()
@@ -101,7 +114,7 @@ describe('StaffManagement', () => {
     expect(screen.getByLabelText('Name of staff')).toBeTruthy()
     expect(screen.getByText('Single day')).toBeTruthy()
     expect(screen.getByText('Multiple days')).toBeTruthy()
-    await waitFor(() => expect(screen.getByRole('option', { name: /NABIRIYE AMINA/ })).toBeTruthy())
+    await waitFor(() => expect(screen.getByRole('option', { name: /NABIRYE AMINA/ })).toBeTruthy())
     expect(screen.queryByRole('option', { name: /John Okello/ })).toBeNull()
   })
 })

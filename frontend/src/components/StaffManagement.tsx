@@ -548,6 +548,29 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               <input placeholder="Surname" aria-label="Surname" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
               <input placeholder="First name" aria-label="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
               <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
+              <label className="field-label">Gender
+                <select aria-label="Gender" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
+                  <option value="">Select gender</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option><option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </label>
+              <label className="field-label">Date of birth
+                <input aria-label="Date of birth" type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} />
+              </label>
+              <label className="field-label">Residential address
+                <textarea aria-label="Residential address" rows={2} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+              </label>
+              <label className="field-label">Staff photograph
+                <input aria-label="Staff photograph" type="file" accept="image/*" onChange={event => {
+                  const file = event.target.files?.[0]
+                  if (!file) return
+                  if (!file.type.startsWith('image/')) { setError('Select an image file for the staff photograph.'); return }
+                  if (file.size > 2 * 1024 * 1024) { setError('The staff photograph must be 2 MB or smaller.'); return }
+                  const reader = new FileReader()
+                  reader.onload = () => setForm(current => ({ ...current, photographDataUrl: typeof reader.result === 'string' ? reader.result : '' }))
+                  reader.onerror = () => setError('Unable to read the staff photograph.')
+                  reader.readAsDataURL(file)
+                }} />
+              </label>
               <label className="field-label">Staff category
                 <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
                   {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -569,6 +592,23 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
               <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <label className="field-label">Attendance mode
+                <select aria-label="Attendance mode" value={form.attendanceMode} onChange={e => setForm({ ...form, attendanceMode: e.target.value })}>
+                  <option value="Biometric">Biometric</option><option value="Manual">Manual</option><option value="Hybrid">Hybrid</option>
+                </select>
+              </label>
+              <label className="field-label">Basic monthly salary
+                <input aria-label="Basic monthly salary" type="number" min="0" step="0.01" value={form.basicSalary} onChange={e => setForm({ ...form, basicSalary: e.target.value })} />
+              </label>
+              <label className="field-label">Bank name
+                <input aria-label="Bank name" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} />
+              </label>
+              <label className="field-label">Bank account number
+                <input aria-label="Bank account number" value={form.bankAccountNumber} onChange={e => setForm({ ...form, bankAccountNumber: e.target.value })} />
+              </label>
+              <label className="field-label">Bank address
+                <input aria-label="Bank address" value={form.bankAddress} onChange={e => setForm({ ...form, bankAddress: e.target.value })} />
+              </label>
               {!editingStaffId && <fieldset className="field-label" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 700 }}>Login account and screen permissions</legend>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, cursor: 'pointer' }}>
