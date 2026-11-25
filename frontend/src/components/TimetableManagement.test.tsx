@@ -322,7 +322,7 @@ describe('TimetableManagement', () => {
     expect(Array.from(courseSelect.options).some(option => option.value === 'course-2')).toBe(false)
   }, 15000)
 
-  it('uses programme duration for year options but does not invent unmapped semesters or course units', async () => {
+  it('uses programme duration for year options and only shows semesters mapped to the selected year', async () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     const programme = await screen.findByLabelText('Programme') as HTMLSelectElement
@@ -330,13 +330,12 @@ describe('TimetableManagement', () => {
 
     const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
     await waitFor(() => expect(curriculum.value).toBe('curriculum-2'))
-    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
-    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH12', 'DPH31'])
-
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
-    fireEvent.change(years, { target: { value: '2' } })
-    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH12', 'DPH31'])
+    fireEvent.change(years, { target: { value: '3' } })
+    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH31'])
+    fireEvent.change(semesters, { target: { value: 'DPH31' } })
     expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
   }, 15000)
 
@@ -353,7 +352,7 @@ describe('TimetableManagement', () => {
     expect(Array.from(curriculumSelect.options).some(option => option.value === 'curriculum-duplicate')).toBe(true)
   })
 
-  it('lists all active teaching groups for the selected programme and academic period in Load class', async () => {
+  it('lists only active teaching groups mapped to the selected programme curriculum and period', async () => {
     await renderTimetable()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     const classSelect = await screen.findByLabelText('Class / teaching group') as HTMLSelectElement
@@ -361,26 +360,23 @@ describe('TimetableManagement', () => {
     expect(Array.from(classSelect.options).map(option => option.textContent)).not.toContain('CPH-Y1-S1-B')
   })
 
-  it('shows programme curriculum selectors when a timetable workflow is opened', async () => {
+  it('shows programme and curriculum selectors before course-unit selection', async () => {
     await renderTimetable()
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
     expect(await screen.findByLabelText('Programme')).toBeTruthy()
     expect(screen.getByLabelText('Curriculum')).toBeTruthy()
     expect(screen.getByLabelText('Year of study')).toBeTruthy()
     expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
-    expect(screen.getAllByRole('option', { name: /CPH 101 — Pharmacy Practice/ }).length).toBeGreaterThan(0)
+    expect(screen.queryByLabelText('Course unit')).toBeNull()
   })
  
-  it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
+  it('opens the timetable designer and exposes its class-template controls', async () => {
     await renderTimetable()
-    expect(await screen.findByRole('heading', { name: /semester templates/i })).toBeTruthy()
-    expect(screen.getByText(/4 separate templates/)).toBeTruthy()
-    expect(screen.getAllByRole('heading', { name: 'Semester 1' })).toHaveLength(2)
-    expect(screen.getAllByRole('heading', { name: 'Semester 2' })).toHaveLength(2)
-    expect(screen.getAllByRole('button', { name: /open semester template/i })).toHaveLength(4)
-    expect(screen.getAllByText(/Blank template ready/)).toHaveLength(4)
-    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
+    const designerButton = screen.getByRole('button', { name: /hide timetable designer/i })
+    expect(screen.getByRole('region', { name: 'Editable timetable template' })).toBeTruthy()
+    expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
+    expect(designerButton).toBeTruthy()
+    expect(screen.getByRole('button', { name: /load class timetable/i })).toBeDisabled()
   })
 
 })
