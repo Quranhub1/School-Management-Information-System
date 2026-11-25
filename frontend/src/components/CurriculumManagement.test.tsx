@@ -107,6 +107,7 @@ describe('CurriculumManagement selectors', () => {
 
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(getCourses).toHaveBeenCalledWith('UHPAB'))
+    fireEvent.click(screen.getByRole('tab', { name: /Programmes & Curricula/ }))
 
     const programmeSelect = screen.getByLabelText('Select programme')
     expect(within(programmeSelect).getByRole('option', { name: /CPH — Certificate in Pharmacy/ })).toBeInTheDocument()
@@ -151,6 +152,7 @@ describe('CurriculumManagement selectors', () => {
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
+    fireEvent.click(screen.getByRole('tab', { name: /Programmes & Curricula/ }))
     fireEvent.change(screen.getByLabelText('Select curriculum'), { target: { value: 'curriculum-pharmacy' } })
 
     expect(await screen.findByRole('heading', { name: 'CPH11 · Year 1' })).toBeInTheDocument()
@@ -173,6 +175,7 @@ describe('CurriculumManagement selectors', () => {
     render(<CurriculumManagement canManage />)
     const authoritySelect = await screen.findByLabelText('Academic authority')
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+    fireEvent.click(screen.getByRole('tab', { name: /Programmes & Curricula/ }))
 
     const curriculumSelect = screen.getByLabelText('Select curriculum')
     fireEvent.change(curriculumSelect, { target: { value: 'curriculum-school' } })
@@ -206,6 +209,7 @@ describe('CurriculumManagement selectors', () => {
     await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
     fireEvent.change(authoritySelect, { target: { value: 'UVTAB' } })
     await waitFor(() => expect(authoritySelect).toHaveValue('UVTAB'))
+    fireEvent.click(screen.getByRole('tab', { name: /Programmes & Curricula/ }))
     fireEvent.change(screen.getByLabelText('Select curriculum'), { target: { value: 'curriculum-uvtab' } })
 
     expect(await screen.findByRole('heading', { name: 'Add UVTAB competence area / unit' })).toBeInTheDocument()
