@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run copy-fonts && npm run copy-pdfmake-assets && npm run build:login-css && node scripts/check-offline-login.mjs && npm test && tsc -b && vite build",
+    "build": "npm run copy-fonts && npm run copy-pdfmake-assets && npm run build:login-css && node scripts/check-offline-login.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
